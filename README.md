@@ -1,82 +1,56 @@
-# ◐ ChillSpace — Góc làm việc chill
+# Chụp & Quét
 
-Web app vừa làm việc vừa thư giãn: chọn một **không gian**, bật âm thanh nền và nhạc YouTube, rồi bấm vào **đồ vật trong cảnh** để mở công cụ
-(máy tính → ghi chú, ly cà phê → đếm ly, đồng hồ → Pomodoro, bút chì → bảng vẽ…).
+Web app (PWA) gộp 2 chức năng trong 1:
 
-Không cần build, không cần server riêng, không có ảnh hay nhạc mang bản quyền: cảnh vẽ bằng SVG, âm thanh nền tự tạo bằng Web Audio.
-Cài được lên máy tính/điện thoại như app thật (PWA).
+1. **Ảnh logo** – chụp ảnh tự gắn khung thương hiệu: logo, tên công ty, ngày giờ, địa chỉ, số điện thoại, tọa độ GPS, ghi chú.
+2. **Quét tài liệu** – chụp giấy tờ, tự nhận mép giấy, làm phẳng, làm trắng nền / đen trắng, gộp nhiều trang thành **PDF**.
 
-## Chạy thử
+Mọi file được lưu cố định trong mục **Thư viện** của app (ngay trên điện thoại). Từ đó có thể lưu vào Ảnh, Tệp (Files), Google Drive, Zalo… bằng nút **Lưu / Chia sẻ**. PDF tự tải về thư mục *Downloads* (bật/tắt trong Cài đặt). Trên máy tính Chrome/Edge có thể chọn 1 thư mục để app tự ghi file vào.
 
-```bash
-python3 -m http.server 8000      # hoặc: npx serve .
-# mở http://localhost:8000
-```
+Không cần server, không cần tài khoản, chạy được khi mất mạng sau lần mở đầu tiên. Không dùng thư viện ngoài.
 
-> Phải mở qua `http://` (không mở thẳng file `index.html`), vì YouTube không cho nhúng video vào trang `file://`.
-> Muốn có link dùng mọi nơi: bật **GitHub Pages** cho repo này (Settings → Pages → Branch), hoặc kéo thả thư mục lên Netlify/Vercel/Cloudflare Pages.
+## Cài lên điện thoại
 
-## 10 không gian
+App phải được mở qua **https** (camera chỉ hoạt động trên https). Cách miễn phí: GitHub Pages.
 
-| Không gian | Tâm trạng | Âm thanh nền | Đồ vật → công cụ |
-|---|---|---|---|
-| 📚 Bàn học | Học tập | đồng hồ tích tắc, mưa nhẹ | 💻 ghi chú · 📖 sách · 🎧 sách nói · 🗂️ flashcard · ☕ đếm cà phê · ✏️ bút vẽ · 📝 bài tập · ⏰ Pomodoro 25/5 |
-| 💼 Bàn làm việc | Deep work | tiếng ồn nâu, gõ phím | 📋 việc hôm nay · ⏱️ phiên 50/10 · 📒 ghi chú · 🪴 giãn cơ / nghỉ mắt |
-| 🏖️ Bờ biển | Nghỉ ngơi | sóng, gió, chim | 🌴 hít thở theo sóng · 🥥 nhắc uống nước · 🐚 nhật ký biết ơn · ⛱️ nghỉ 15 phút |
-| 🏴‍☠️ Tàu hải tặc | Anime phiêu lưu, vui vẻ | sóng, gió, hải âu | 🗺️ nhiệm vụ săn kho báu (xong việc = 💰) · 🦜 vẹt cổ vũ · 🧭 nhật ký hải trình · 🚩 ra khơi 25 phút |
-| ⚽ Sân bóng | Sôi động | khán đài cổ vũ | ⚽ "bàn thắng" hôm nay · ⏱️ hiệp đấu 45/15 · 📋 bảng chiến thuật (vẽ trên sân) · 🥅 khởi động |
-| 🛏️ Phòng ngủ | Thư giãn | mưa, mèo gừ gừ | 🧸 thở 4-7-8 · 📔 nhật ký · 📚 sách nói · 🌙 hẹn giờ tắt nhạc |
-| ☕ Cà phê phố cổ | Sáng tạo, viết lách | tiếng quán, mưa nhẹ | ☕ đếm ly · 📓 viết tự do · 🎨 phác thảo · 🎷 jazz |
-| 🌧️ Đêm mưa | Đọc sách | mưa, sấm xa | 🕯️ hít thở · 📖 sách · 🍵 trà · 📔 nhật ký |
-| 🏕️ Lửa trại | Tĩnh tâm | lửa tí tách, dế, gió | 🔥 ngắm lửa hít thở · 🌠 điều ước · ⛺ hẹn giờ ngủ · 🎸 guitar |
-| 🚀 Trạm vũ trụ | Coding / deep work | động cơ tàu, sóng não (binaural) | 🛰️ chu kỳ 90 phút · 📋 nhiệm vụ · 📡 log · 👩‍🚀 giãn cơ |
+1. Vào repo trên GitHub → **Settings → Pages**.
+2. *Source*: **Deploy from a branch**, chọn branch chứa code và thư mục `/ (root)` → **Save**.
+3. Sau 1–2 phút sẽ có link dạng `https://<tên-tài-khoản>.github.io/<tên-repo>/`.
+4. Mở link trên điện thoại:
+   - **iPhone (Safari)**: nút Chia sẻ → **Thêm vào MH chính**.
+   - **Android (Chrome)**: menu ⋮ → **Thêm vào màn hình chính / Cài đặt ứng dụng**.
+5. Mở app từ biểu tượng, cho phép quyền **Camera** (và **Vị trí** nếu muốn hiện GPS).
 
-Thêm hoặc sửa không gian: chỉnh mảng `SPACES` trong `js/spaces.js` (vị trí đồ vật tính theo % khung cảnh 16:9), vẽ cảnh trong `SCENES`.
+> GitHub Pages với repo riêng tư cần gói GitHub trả phí. Nếu repo private, có thể dùng Netlify Drop (kéo thả thư mục lên app.netlify.com/drop) hoặc Cloudflare Pages, đều miễn phí.
 
-## Công cụ có sẵn
+## Sử dụng
 
-Pomodoro (vòng tròn đếm giờ, thông báo, thống kê theo ngày) · Việc cần làm (pháo giấy khi xong) · Ghi chú (tự lưu, tải .txt) ·
-Bút vẽ (màu, tẩy, hoàn tác, tải PNG) · Flashcard (lật thẻ, lặp lại ngắt quãng) · Tủ sách & sách nói (theo dõi số trang) ·
-Nhật ký + cảm xúc · Hít thở (5-5, hộp 4-4-4-4, 4-7-8) · Giãn cơ 7 động tác · Đếm cà phê/nước/trà · Lời động viên ·
-Hẹn giờ tắt nhạc · Bộ trộn 16 âm thanh nền · Trình phát YouTube.
+- **Camera** (⚙️ → Camera):
+  - *Camera của máy* (mặc định trên iPhone): bấm chụp sẽ mở camera gốc của điện thoại, không phải cấp quyền mỗi lần mở app.
+  - *Camera trong app*: thấy khung logo ngay khi ngắm, nhưng iPhone có thể hỏi quyền mỗi lần mở app.
+- **Xem lại**: bấm ô ảnh nhỏ góc trái để mở ảnh hoặc PDF mới nhất.
+  - Vuốt ngang để chuyển file, chụm 2 ngón hoặc chạm 2 lần để phóng to, chạm 1 lần để ẩn/hiện thanh công cụ.
+  - PDF xem từng trang ngay trong app. Nút *Tất cả* để mở lưới thư viện.
 
-Phím tắt: `M` âm thanh · `Y` YouTube · `P` Pomodoro · `T` công cụ · `H` ẩn giao diện · `F` toàn màn hình · `1`–`0` đổi không gian · `Esc` đóng cửa sổ.
-
-Dữ liệu (ghi chú, việc, nhật ký…) lưu trong trình duyệt (localStorage), không gửi đi đâu cả.
-
-## YouTube & YouTube Premium
-
-- Dán link video, playlist hoặc livestream vào cửa sổ ▶️ YouTube. Link hay dùng có thể ⭐ lưu riêng cho từng không gian.
-- Trình phát dùng chính tài khoản YouTube đang đăng nhập trong trình duyệt: **đăng nhập tài khoản Premium là nghe không quảng cáo**.
-  Không có API nào để "kết nối" Premium trực tiếp, và cũng không cần.
-- Safari, hoặc trình duyệt chặn cookie bên thứ ba, có thể không nhận đăng nhập trong khung nhúng (khi đó vẫn có quảng cáo).
-
-## ⚠️ Nếu muốn bán
-
-1. **One Piece là tài sản trí tuệ của Eiichiro Oda / Shueisha / Toei.** Vì vậy không gian "Tàu hải tặc" chỉ là phong cách anime phiêu lưu
-   *tự sáng tác* — không có nhân vật, logo hay tên riêng của One Piece. Dùng hình, nhạc hoặc tên One Piece trong sản phẩm bán là vi phạm bản quyền.
-   Dùng riêng cho bản thân thì tuỳ bạn.
-2. **YouTube**: chỉ được phát qua trình phát nhúng chính thức, đúng như app đang làm. Không tách lấy âm thanh, không ẩn hẳn khung video
-   (điều khoản yêu cầu khung tối thiểu 200×200px), không chặn quảng cáo.
-3. Link Lofi Girl gợi ý sẵn là kênh công khai, cho phép nhúng. Nếu chủ kênh đổi livestream thì cập nhật link trong `js/spaces.js`.
-4. Âm thanh nền và hình vẽ trong app đều tự tạo, bán được không vướng bản quyền.
-
-## Hướng phát triển (gợi ý)
-
-- Tài khoản + đồng bộ dữ liệu giữa các máy (Supabase/Firebase) → làm gói trả phí
-- Kết nối Spotify (Web Playback SDK, yêu cầu người dùng có Premium)
-- Cảnh động vẽ tay hoặc thuê hoạ sĩ, thêm theme theo mùa (Tết, Trung thu, Noel)
-- Phòng học nhóm (học chung, đếm giờ chung với bạn bè), bảng xếp hạng giờ tập trung
-- Đóng gói app desktop (Tauri/Electron) và mobile (Capacitor) để đưa lên store
+- Lần đầu: bấm ⚙️ → nhập tên công ty, SĐT, địa chỉ, chọn logo, vị trí và màu khung.
+- **ẢNH LOGO**: bấm nút chụp → ảnh đã gắn khung được lưu vào Thư viện.
+- **QUÉT TÀI LIỆU**: chụp → chỉnh 4 góc (app tự đoán) → chọn *Làm rõ / Đen trắng / Xám / Gốc* → *Thêm & chụp tiếp* cho nhiều trang, hoặc *Thêm & tạo PDF*.
+- Nút 🖼️ trên cùng: dùng ảnh có sẵn trong máy thay vì chụp mới.
 
 ## Cấu trúc
 
-```
-index.html            khung trang
-css/style.css         giao diện (kính mờ, responsive, hoạt ảnh)
-js/spaces.js          10 không gian + cảnh SVG
-js/audio.js           16 âm thanh nền tổng hợp bằng Web Audio
-js/tools.js           các công cụ, Pomodoro, YouTube
-js/app.js             quản lý cửa sổ, hiệu ứng hạt, chuyển cảnh, phím tắt
-sw.js, manifest       cài đặt như app (PWA)
-```
+| File | Nội dung |
+|---|---|
+| `index.html` | Giao diện |
+| `style.css` | Kiểu dáng |
+| `app.js` | Camera, khung thương hiệu, cắt / làm phẳng / lọc ảnh, thư viện (IndexedDB) |
+| `pdf.js` | Tạo file PDF từ ảnh JPEG |
+| `sw.js`, `manifest.webmanifest`, `icons/` | Cài như app, chạy offline |
+
+Chạy thử trên máy tính: `python3 -m http.server 8000` rồi mở http://localhost:8000.
+
+---
+
+## Ứng dụng khác trong repo
+
+- **ChillSpace** – góc làm việc chill: thư mục [`chillspace/`](chillspace/) · https://khoatay.github.io/Techcompany/chillspace/

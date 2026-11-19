@@ -1,11 +1,25 @@
-/* Service worker: lưu sẵn giao diện để mở nhanh & dùng offline (YouTube vẫn cần mạng) */
-const CACHE = 'chillspace-v1';
-const ASSETS = ['./', 'index.html', 'css/style.css', 'js/spaces.js', 'js/audio.js', 'js/tools.js', 'js/app.js', 'icon.svg', 'manifest.webmanifest'];
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS))); self.skipWaiting(); });
-self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
+const CACHE = 'chup-quet-v2';
+const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'pdf.js', 'manifest.webmanifest',
+  'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.keys()
+    .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
+// Network first (to pick up updates), fall back to cache when offline.
 self.addEventListener('fetch', (e) => {
-  const u = new URL(e.request.url);
-  if (e.request.method !== 'GET' || u.origin !== location.origin) return;
-  // mạng trước, lỗi mạng thì dùng bản lưu
-  e.respondWith(fetch(e.request).then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); return r; }).catch(() => caches.match(e.request)));
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(e.request, { ignoreSearch: true }))
+  );
 });

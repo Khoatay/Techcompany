@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>ChillSpace · Góc làm việc chill</title>
+  <meta name="description" content="Không gian làm việc, học tập và thư giãn: âm thanh nền, nhạc YouTube, Pomodoro, ghi chú, việc cần làm, bút vẽ, hít thở...">
+  <meta name="theme-color" content="#14161f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="scene">
+    <div class="stage" id="stage"><div class="scenery" id="scenery"></div><div class="objects" id="objects"></div></div>
+    <canvas id="fx"></canvas>
+    <div class="vignette"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand"><img class="logo" src="icon.svg" alt=""><div><b>ChillSpace</b><small id="spaceMood"></small></div></div>
+    <div class="top-actions">
+      <button class="pomo-badge" id="pomoBadge" hidden></button>
+      <button id="playBtn" title="Tắt/bật âm thanh nền">🔊</button>
+      <button data-open="mixer" title="Âm thanh nền (M)">🎧<span>Âm thanh</span></button>
+      <button data-open="youtube" title="YouTube (Y)">▶️<span>YouTube</span></button>
+      <button data-open="pomodoro" title="Pomodoro (P)">⏱️<span>Pomodoro</span></button>
+      <button data-open="toolbox" title="Tất cả công cụ (T)">🧰<span>Công cụ</span></button>
+      <button id="zenBtn" title="Ẩn giao diện (H)">👁️</button>
+      <button id="fsBtn" title="Toàn màn hình (F)">⛶</button>
+    </div>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="clock" id="clock"></div>
+    <div class="date" id="date"></div>
+    <p class="quote" id="quote"></p>
+  </section>
+
+  <div class="quickbar" id="quickbar"></div>
+  <nav class="dock" id="dock" aria-label="Chọn không gian"></nav>
+  <div id="windows"></div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="overlay" id="welcome">
+    <div class="welcome-box">
+      <img class="logo big" src="icon.svg" alt="">
+      <h1>ChillSpace</h1>
+      <p>Chọn một không gian để bắt đầu. Bấm vào đồ vật trong cảnh để mở công cụ — máy tính để ghi chú, ly cà phê để đếm ly, đồng hồ để bấm Pomodoro…</p>
+      <div class="cards"></div>
+      <p class="muted small">🎧 Nên đeo tai nghe · Dữ liệu lưu ngay trên máy của bạn</p>
+    </div>
+  </div>
+
+  <script src="js/spaces.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/tools.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
