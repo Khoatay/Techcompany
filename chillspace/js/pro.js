@@ -298,7 +298,7 @@ const Lunar = (() => {
   };
 
 
-  /* ================= CHUYẾN BAY QUỐC TẾ ĐẾN (AeroDataBox qua RapidAPI) ================= */
+  /* ================= CHUYẾN BAY QUỐC TẾ ĐẾN / ĐI (AeroDataBox qua RapidAPI) ================= */
   const FL_HOST = 'aerodatabox.p.rapidapi.com';
   const AIRPORTS = { CXR: 'Cam Ranh', HAN: 'Nội Bài', SGN: 'Tân Sơn Nhất', DAD: 'Đà Nẵng', PQC: 'Phú Quốc', HPH: 'Cát Bi', VCA: 'Cần Thơ', VDO: 'Vân Đồn' };
   const COUNTRY = { KR: 'Hàn Quốc', CN: 'Trung Quốc', TW: 'Đài Loan', HK: 'Hồng Kông', MO: 'Ma Cao', JP: 'Nhật Bản', RU: 'Nga', KZ: 'Kazakhstan', UZ: 'Uzbekistan', IN: 'Ấn Độ', TH: 'Thái Lan', SG: 'Singapore', MY: 'Malaysia', KH: 'Campuchia', LA: 'Lào', PH: 'Philippines', ID: 'Indonesia', AU: 'Úc', US: 'Mỹ', MN: 'Mông Cổ', AE: 'UAE', QA: 'Qatar' };
@@ -326,8 +326,8 @@ const Lunar = (() => {
     };
   }
 
-  async function fetchArrivals(key, iata, from, to) {
-    const u = `https://${FL_HOST}/flights/airports/iata/${iata}/${vnLocal(from)}/${vnLocal(to)}?withLeg=false&direction=Arrival&withCancelled=true&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false`;
+  async function fetchFlights(key, iata, from, to, dir) {
+    const u = `https://${FL_HOST}/flights/airports/iata/${iata}/${vnLocal(from)}/${vnLocal(to)}?withLeg=false&direction=${dir}&withCancelled=true&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false`;
     const r = await fetch(u, { headers: { 'X-RapidAPI-Key': key, 'X-RapidAPI-Host': FL_HOST } });
     const used = store.get('fl.used', {}), m = todayISO().slice(0, 7); used[m] = (used[m] || 0) + 1; store.set('fl.used', used);
     if (r.status === 204) return [];
@@ -335,80 +335,101 @@ const Lunar = (() => {
     if (r.status === 429) throw new Error('Hết lượt gọi API của gói hiện tại – thử lại sau hoặc nâng gói');
     if (!r.ok) throw new Error(`Máy chủ chuyến bay báo lỗi ${r.status}`);
     const j = await r.json();
-    return (j.arrivals || []).map(normArrival);
+    return ((dir === 'Departure' ? j.departures : j.arrivals) || []).map(normArrival); // movement.airport = sân bay đầu kia (nơi đi / nơi đến)
   }
 
-  // Dữ liệu chuyến bay dùng chung cho bảng trên tường và cửa sổ chi tiết
-  const FL = {
-    loading: false, err: '', cache: store.get('fl.cache', null),
-    key: () => store.get('fl.key', ''), iata: () => store.get('fl.airport', 'CXR'),
-    fresh() { const c = this.cache; return !!(c && c.iata === this.iata() && Date.now() - c.at < 30 * 60000); },
-    emit() { document.dispatchEvent(new Event('cs:flights')); },
-    async load(force) {
-      if (!this.key() || this.loading) return;
-      if (!force && (this.fresh() || (this.lastTry && Date.now() - this.lastTry < 60000))) return; // không gọi dồn khi đang lỗi
-      this.lastTry = Date.now(); this.loading = true; this.err = ''; this.emit();
-      try {
-        const now = new Date(), from = new Date(now - 3 * 3600e3), to = new Date(+now + 9 * 3600e3 - 60000); // 12 giờ: 3 giờ trước → 9 giờ tới
-        const list = await fetchArrivals(this.key(), this.iata(), from, to);
-        this.cache = { iata: this.iata(), at: Date.now(), from: +from, to: +to, list: list.map((f) => ({ ...f, sched: f.sched && +f.sched, est: f.est && +f.est })) };
-        store.set('fl.cache', this.cache);
-      } catch (e) { this.err = e.message || String(e); if (/Failed to fetch|NetworkError|Load failed/i.test(this.err)) this.err = 'Không kết nối được máy chủ chuyến bay – kiểm tra mạng'; }
-      this.loading = false; this.emit();
-    },
-    intl() {
-      const c = this.cache;
-      return (c && c.iata === this.iata() ? c.list : []).filter((f) => f.cc && f.cc !== 'VN' && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
-    },
-    isPast: (f) => f.status === 'Arrived' || ((f.est || f.sched) && (f.est || f.sched) < Date.now() - 20 * 60000),
-  };
+  // Dữ liệu chuyến bay dùng chung cho bảng trên tường và cửa sổ chi tiết.
+  // Arrival = chuyến đến (nhập cảnh) · Departure = chuyến đi (xuất cảnh)
+  const OPEN_BEFORE = 3 * 3600e3, LAST_BEFORE = 40 * 60000; // mở quầy trước 3 giờ · hết khách trước 40 phút
+  const DEP_STATUS = { ...FL_STATUS, Expected: ['Dự kiến', 'plan'], CheckIn: ['Đang làm thủ tục', 'soon'], Boarding: ['Đang lên máy bay', 'soon'], GateClosed: ['Đã đóng cửa', 'air'], Departed: ['Đã cất cánh', 'done'], EnRoute: ['Đã cất cánh', 'done'] };
+  function makeFL(dir) {
+    const dep = dir === 'Departure', ck = dep ? 'fl.cacheD' : 'fl.cache';
+    return {
+      dir, dep, loading: false, err: '', cache: store.get(ck, null), status: dep ? DEP_STATUS : FL_STATUS,
+      key: () => store.get('fl.key', ''), iata: () => store.get('fl.airport', 'CXR'),
+      fresh() { const c = this.cache; return !!(c && c.iata === this.iata() && Date.now() - c.at < 30 * 60000); },
+      emit() { document.dispatchEvent(new Event('cs:flights')); },
+      async load(force) {
+        if (!this.key() || this.loading) return;
+        if (!force && (this.fresh() || (this.lastTry && Date.now() - this.lastTry < 60000))) return; // không gọi dồn khi đang lỗi
+        this.lastTry = Date.now(); this.loading = true; this.err = ''; this.emit();
+        try {
+          // khung 12 giờ: chuyến đến 3 giờ trước → 9 giờ tới; chuyến đi 1 giờ trước → 11 giờ tới (để thấy quầy mở trước 3 giờ)
+          const now = Date.now(), from = new Date(now - (dep ? 1 : 3) * 3600e3), to = new Date(now + (dep ? 11 : 9) * 3600e3 - 60000);
+          const list = await fetchFlights(this.key(), this.iata(), from, to, dir);
+          this.cache = { iata: this.iata(), at: Date.now(), from: +from, to: +to, list: list.map((f) => ({ ...f, sched: f.sched && +f.sched, est: f.est && +f.est })) };
+          store.set(ck, this.cache);
+        } catch (e) { this.err = e.message || String(e); if (/Failed to fetch|NetworkError|Load failed/i.test(this.err)) this.err = 'Không kết nối được máy chủ chuyến bay – kiểm tra mạng'; }
+        this.loading = false; this.emit();
+      },
+      intl() {
+        const c = this.cache;
+        return (c && c.iata === this.iata() ? c.list : []).filter((f) => f.cc && f.cc !== 'VN' && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
+      },
+      isPast(f) {
+        const t = f.est || f.sched;
+        return dep ? ['Departed', 'EnRoute', 'Arrived'].includes(f.status) || (t && t < Date.now() - 10 * 60000) : f.status === 'Arrived' || (t && t < Date.now() - 20 * 60000);
+      },
+    };
+  }
+  const FL = makeFL('Arrival'), FLD = makeFL('Departure');
   // tự tải lại (dùng bộ nhớ đệm 30 phút) khi đang ở không gian có bảng chuyến bay
-  setInterval(() => { const sp = window.currentSpace && currentSpace(); if (!document.hidden && sp && (sp.boards || []).includes('flights') && Boards.state('flights') !== 'closed') FL.load(false); }, 5 * 60000);
+  setInterval(() => {
+    const sp = window.currentSpace && currentSpace(); if (document.hidden || !sp) return;
+    if ((sp.boards || []).includes('flights') && Boards.state('flights') !== 'closed') FL.load(false);
+    if ((sp.boards || []).includes('departures') && Boards.state('departures') !== 'closed') FLD.load(false);
+  }, 5 * 60000);
 
-  TOOLS.flights = {
-    title: 'Chuyến quốc tế đến', icon: '✈️', width: 460, global: true, place: 'right',
-    render(b) {
-      let filter = 'all', showSet = !FL.key();
-      function draw() {
-        const iata = FL.iata(), key = FL.key(), cache = FL.cache && FL.cache.iata === iata ? FL.cache : null;
-        const used = store.get('fl.used', {})[todayISO().slice(0, 7)] || 0;
-        const all = FL.intl(), byC = {}; all.forEach((f) => (byC[f.cc] = (byC[f.cc] || 0) + 1));
-        const list = filter === 'all' ? all : all.filter((f) => f.cc === filter);
-        let nextMarked = false;
-        b.innerHTML = `<div class="fl-head"><div class="grow"><b>${flag('VN')} ${esc(AIRPORTS[iata] || iata)} (${esc(iata)}) · chuyến quốc tế đến</b>
-            <small>${cache ? `Cập nhật ${hhmm(new Date(cache.at))} · từ ${hhmm(new Date(cache.from))} đến ${hhmm(new Date(cache.to))} (giờ VN)` : 'Chưa có dữ liệu'}</small></div>
-            <button class="btn ghost" data-r title="Tải lại">${FL.loading ? '⏳' : '↻'}</button><button class="btn ghost" data-set title="Cài đặt">⚙️</button></div>
-          ${Boards.state('flights') === 'closed' ? '<button class="btn ghost" data-pin>📌 Hiện lại bảng chuyến bay trên tường</button>' : ''}
-          ${showSet ? `<div class="fl-set">
-              <p class="small"><b>Kết nối dữ liệu chuyến bay (AeroDataBox)</b></p>
-              <ol class="small"><li>Vào <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox/pricing" target="_blank" rel="noopener">rapidapi.com → AeroDataBox ↗</a>, đăng nhập bằng Google</li><li>Chọn gói <b>Basic (miễn phí)</b> → Subscribe</li><li>Sang tab <b>Endpoints</b>, copy giá trị <b>X-RapidAPI-Key</b> rồi dán vào đây</li></ol>
-              <input type="password" data-key placeholder="Dán X-RapidAPI-Key" value="${esc(key)}" autocomplete="off">
-              <div class="row"><select data-ap>${Object.entries(AIRPORTS).map(([k, n]) => `<option value="${k}"${k === iata ? ' selected' : ''}>${n} (${k})</option>`).join('')}</select><span class="grow"></span><button class="btn primary" data-save>Lưu & tải</button></div>
-              <p class="muted small">Khoá chỉ lưu trên máy này, không gửi đi đâu ngoài máy chủ AeroDataBox. Tháng này đã dùng ${used} lượt. Mỗi lần tải dùng 1 lượt, app tự giữ kết quả 30 phút để tiết kiệm.</p></div>` : ''}
-          ${FL.err ? `<p class="fl-err">⚠️ ${esc(FL.err)}</p>` : ''}
-          ${all.length ? `<div class="chips fl-filter"><button class="chip${filter === 'all' ? ' on' : ''}" data-f="all">Tất cả <b>${all.length}</b></button>${Object.entries(byC).sort((a, c) => c[1] - a[1]).map(([cc, n]) => `<button class="chip${filter === cc ? ' on' : ''}" data-f="${cc}">${flag(cc)} ${esc(COUNTRY[cc] || cc)} <b>${n}</b></button>`).join('')}</div>` : ''}
-          <ul class="fl-list">${list.map((f) => {
-            const st = FL_STATUS[f.status] || FL_STATUS.Unknown, past = FL.isPast(f);
-            const isNext = !nextMarked && !past && st[1] !== 'cancel' && (nextMarked = true);
-            const late = f.est && f.sched && f.est - f.sched > 10 * 60000;
-            return `<li class="${past ? 'past' : ''}${isNext ? ' next' : ''}"><span class="fl-time">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${f.est && f.sched && Math.abs(f.est - f.sched) > 5 * 60000 ? `<small class="${late ? 'late' : ''}">→ ${hhmm(new Date(f.est))}</small>` : ''}</span>
-              <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span><small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}</small></span>
-              <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : st[0]}</span></li>`;
-          }).join('') || (FL.loading ? '<li class="empty">Đang tải…</li>' : key && !FL.err ? '<li class="empty">Không có chuyến quốc tế đến trong khung giờ này.</li>' : '')}</ul>
-          <p class="muted small">Nguồn: AeroDataBox. Giờ hiển thị là giờ Việt Nam. Chỉ để tham khảo – lịch chính thức theo sân bay/hãng bay.</p>`;
-        const q = (s) => b.querySelector(s);
-        q('[data-r]').onclick = () => FL.load(true);
-        q('[data-set]').onclick = () => { showSet = !showSet; draw(); };
-        if (q('[data-pin]')) q('[data-pin]').onclick = () => Boards.setState('flights', 'normal');
-        b.querySelectorAll('[data-f]').forEach((x) => (x.onclick = () => { filter = x.dataset.f; draw(); }));
-        if (showSet) q('[data-save]').onclick = () => { store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value); showSet = !FL.key(); filter = 'all'; FL.load(true); draw(); };
-      }
-      const on = () => draw();
-      document.addEventListener('cs:flights', on); document.addEventListener('cs:boards', on);
-      draw(); FL.load(false);
-      return () => { document.removeEventListener('cs:flights', on); document.removeEventListener('cs:boards', on); };
-    },
-  };
+  function flightsTool(F, boardId) {
+    const dep = F.dep;
+    return {
+      title: dep ? 'Chuyến quốc tế đi' : 'Chuyến quốc tế đến', icon: dep ? '🛫' : '✈️', width: 480, global: true, place: 'right',
+      render(b) {
+        let filter = 'all', showSet = !F.key();
+        function draw() {
+          const iata = F.iata(), key = F.key(), cache = F.cache && F.cache.iata === iata ? F.cache : null;
+          const used = store.get('fl.used', {})[todayISO().slice(0, 7)] || 0;
+          const all = F.intl(), byC = {}; all.forEach((f) => (byC[f.cc] = (byC[f.cc] || 0) + 1));
+          const list = filter === 'all' ? all : all.filter((f) => f.cc === filter);
+          let nextMarked = false;
+          b.innerHTML = `<div class="fl-head"><div class="grow"><b>${flag('VN')} ${esc(AIRPORTS[iata] || iata)} (${esc(iata)}) · chuyến quốc tế ${dep ? 'đi' : 'đến'}</b>
+              <small>${cache ? `Cập nhật ${hhmm(new Date(cache.at))} · từ ${hhmm(new Date(cache.from))} đến ${hhmm(new Date(cache.to))} (giờ VN)` : 'Chưa có dữ liệu'}</small></div>
+              <button class="btn ghost" data-r title="Tải lại">${F.loading ? '⏳' : '↻'}</button><button class="btn ghost" data-set title="Cài đặt">⚙️</button></div>
+            ${Boards.state(boardId) === 'closed' ? `<button class="btn ghost" data-pin>📌 Hiện lại bảng chuyến ${dep ? 'đi' : 'đến'} trên tường</button>` : ''}
+            ${showSet ? `<div class="fl-set">
+                <p class="small"><b>Kết nối dữ liệu chuyến bay (AeroDataBox)</b></p>
+                <ol class="small"><li>Vào <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox/pricing" target="_blank" rel="noopener">rapidapi.com → AeroDataBox ↗</a>, đăng nhập bằng Google</li><li>Chọn gói <b>Basic (miễn phí)</b> → Subscribe</li><li>Sang tab <b>Endpoints</b>, copy giá trị <b>X-RapidAPI-Key</b> rồi dán vào đây</li></ol>
+                <input type="password" data-key placeholder="Dán X-RapidAPI-Key" value="${esc(key)}" autocomplete="off">
+                <div class="row"><select data-ap>${Object.entries(AIRPORTS).map(([k, n]) => `<option value="${k}"${k === iata ? ' selected' : ''}>${n} (${k})</option>`).join('')}</select><span class="grow"></span><button class="btn primary" data-save>Lưu & tải</button></div>
+                <p class="muted small">Khoá dùng chung cho chuyến đến và chuyến đi, chỉ lưu trên máy này. Tháng này đã dùng ${used} lượt. Mỗi lần tải dùng 1 lượt, app tự giữ kết quả 30 phút để tiết kiệm.</p></div>` : ''}
+            ${F.err ? `<p class="fl-err">⚠️ ${esc(F.err)}</p>` : ''}
+            ${all.length ? `<div class="chips fl-filter"><button class="chip${filter === 'all' ? ' on' : ''}" data-f="all">Tất cả <b>${all.length}</b></button>${Object.entries(byC).sort((a, c) => c[1] - a[1]).map(([cc, n]) => `<button class="chip${filter === cc ? ' on' : ''}" data-f="${cc}">${flag(cc)} ${esc(COUNTRY[cc] || cc)} <b>${n}</b></button>`).join('')}</div>` : ''}
+            <ul class="fl-list">${list.map((f) => {
+              const st = F.status[f.status] || F.status.Unknown, past = F.isPast(f);
+              const isNext = !nextMarked && !past && st[1] !== 'cancel' && (nextMarked = true);
+              const late = f.est && f.sched && f.est - f.sched > 10 * 60000;
+              const extra = dep && f.sched ? `<span class="fl-dep">Mở quầy <b>${hhmm(new Date(f.sched - OPEN_BEFORE))}</b> · Hết khách <b>${hhmm(new Date(f.sched - LAST_BEFORE))}</b></span>` : '';
+              return `<li class="${past ? 'past' : ''}${isNext ? ' next' : ''}"><span class="fl-time">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${f.est && f.sched && Math.abs(f.est - f.sched) > 5 * 60000 ? `<small class="${late ? 'late' : ''}">→ ${hhmm(new Date(f.est))}</small>` : ''}</span>
+                <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${dep ? '→ ' : ''}${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span>${extra}<small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${!dep && f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}${dep && f.gate ? ' · Cửa ' + esc(f.gate) : ''}</small></span>
+                <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : st[0]}</span></li>`;
+            }).join('') || (F.loading ? '<li class="empty">Đang tải…</li>' : key && !F.err ? `<li class="empty">Không có chuyến quốc tế ${dep ? 'đi' : 'đến'} trong khung giờ này.</li>` : '')}</ul>
+            <p class="muted small">Nguồn: AeroDataBox. Giờ hiển thị là giờ Việt Nam.${dep ? ' Mở quầy = giờ khởi hành theo lịch − 3 giờ · Hết khách = giờ khởi hành theo lịch − 40 phút.' : ''} Chỉ để tham khảo – lịch chính thức theo sân bay/hãng bay.</p>`;
+          const q = (s) => b.querySelector(s);
+          q('[data-r]').onclick = () => F.load(true);
+          q('[data-set]').onclick = () => { showSet = !showSet; draw(); };
+          if (q('[data-pin]')) q('[data-pin]').onclick = () => Boards.setState(boardId, 'normal');
+          b.querySelectorAll('[data-f]').forEach((x) => (x.onclick = () => { filter = x.dataset.f; draw(); }));
+          if (showSet) q('[data-save]').onclick = () => { store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value); showSet = !F.key(); filter = 'all'; F.load(true); draw(); };
+        }
+        const on = () => draw();
+        document.addEventListener('cs:flights', on); document.addEventListener('cs:boards', on);
+        draw(); F.load(false);
+        return () => { document.removeEventListener('cs:flights', on); document.removeEventListener('cs:boards', on); };
+      },
+    };
+  }
+  TOOLS.flights = flightsTool(FL, 'flights');
+  TOOLS.departures = flightsTool(FLD, 'departures');
 
   /* ================= BÁO THỨC 00:00 – ĐỔI NGÀY CON DẤU (tự động) ================= */
   const Alarm = (window.Alarm = {
@@ -448,7 +469,7 @@ const Lunar = (() => {
   document.addEventListener('click', (e) => { if (e.target.closest('#alarmChip')) Alarm.toggle(); });
 
   /* ================= BẢNG TREO TƯỜNG (thu nhỏ / phóng to / tắt như cửa sổ) ================= */
-  window.Flights = FL;
+  window.Flights = FL; window.FlightsOut = FLD;
   const Boards = (window.Boards = {
     state: (id) => store.get('board.' + id, 'normal'),
     setState(id, s) { store.set('board.' + id, s); document.dispatchEvent(new Event('cs:boards')); },
@@ -467,6 +488,19 @@ const Lunar = (() => {
         if (!up.length) return `<p class="fb-empty">${FL.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đến trong 9 giờ tới.'}</p>`;
         const n = st === 'max' ? 10 : 5;
         return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span><span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : s[0]}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+      },
+    },
+    departures: {
+      icon: '🛫', title: 'CHUYẾN QUỐC TẾ ĐI', tool: 'departures',
+      sub: () => `${esc(AIRPORTS[FLD.iata()] || FLD.iata())}${FLD.cache && FLD.cache.iata === FLD.iata() ? ` · cập nhật ${hhmm(new Date(FLD.cache.at))}` : ''}${FLD.loading ? ' · đang tải…' : ''}`,
+      body(st) {
+        if (!FLD.key()) return '<p class="fb-empty">Chưa kết nối dữ liệu chuyến bay.<br><b>Bấm vào đây để cài đặt (5 phút)</b></p>';
+        if (FLD.err) return `<p class="fb-empty err">⚠️ ${esc(FLD.err)}<br><b>Bấm để xem chi tiết</b></p>`;
+        const up = FLD.intl().filter((f) => !FLD.isPast(f) && (DEP_STATUS[f.status] || DEP_STATUS.Unknown)[1] !== 'cancel');
+        if (!up.length) return `<p class="fb-empty">${FLD.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đi trong 11 giờ tới.'}</p>`;
+        const n = st === 'max' ? 10 : 6;
+        return `<div class="dh"><span>Giờ đi</span><span>Chuyến bay</span><span>Mở quầy</span><span>Hết khách</span></div>
+          <ul class="fb">${up.slice(0, n).map((f, i) => { const late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="dr${i === 0 ? ' next' : ''}"><span class="ft">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${late ? `<small>→ ${hhmm(new Date(f.est))}</small>` : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>→ ${flag(f.cc)} ${esc(f.from)}</small></span><span class="dt">${f.sched ? hhmm(new Date(f.sched - OPEN_BEFORE)) : '--:--'}</span><span class="dt last">${f.sched ? hhmm(new Date(f.sched - LAST_BEFORE)) : '--:--'}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
       },
     },
   });

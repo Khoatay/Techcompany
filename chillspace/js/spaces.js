@@ -816,7 +816,7 @@
   ];
   window.SPACES.unshift(
     {
-      id: 'border', name: 'Immigration space', short: 'Immigration', emoji: '🛂', mood: 'Không gian của tôi', accent: '#38bdf8', fx: null, boards: ['stay', 'flights'],
+      id: 'border', name: 'Immigration space', short: 'Immigration', emoji: '🛂', mood: 'Không gian của tôi · Nhập cảnh', accent: '#38bdf8', fx: null, boards: ['stay', 'flights'],
       quote: 'Đúng từng ngày, chuẩn từng con dấu.',
       sounds: { airport: 0.35, brown: 0.12 },
       yt: { q: 'lofi music for work', picks: [YT_LOFI] },
@@ -854,5 +854,24 @@
       ],
     }
   );
+  // Nhánh Xuất cảnh của Immigration space (chuyển bằng công tắc Nhập ⇄ Xuất, không hiện riêng ở thanh dưới)
+  SCENES.borderout = (p) => SCENES.border(p).replace('NHẬP CẢNH · IMMIGRATION', 'XUẤT CẢNH · DEPARTURE');
+  window.SPACES.splice(1, 0, {
+    id: 'borderout', parent: 'border', hidden: true, name: 'Immigration space', short: 'Immigration', emoji: '🛫', mood: 'Không gian của tôi · Xuất cảnh', accent: '#38bdf8', fx: null, boards: ['departures'],
+    quote: 'Đúng từng ngày, chuẩn từng con dấu.',
+    sounds: { airport: 0.35, brown: 0.12 },
+    yt: { q: 'lofi music for work', picks: [YT_LOFI] },
+    journal: 'Ca trực hôm nay thế nào?',
+    objects: [
+      { e: '⏱️', x: 20, y: 62.5, s: 6, label: 'Pomodoro ca trực', tool: 'pomodoro', opts: { preset: [50, 10] } },
+      { e: '☕', x: 28, y: 63, s: 6, label: 'Cà phê ca trực', tool: 'tracker', opts: { kind: 'coffee' } },
+      { e: '📅', x: 37, y: 62, s: 7, label: 'Lịch âm dương', tool: 'calendar' },
+      { e: '🛂', x: 50, y: 59.5, s: 11, label: 'Chuyến quốc tế đi', tool: 'departures' },
+      { e: '📝', x: 61, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
+      { e: '🎧', x: 69, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
+      { e: '🌏', x: 77, y: 62.5, s: 6.5, label: 'Giờ các nước', tool: 'clocks' },
+      { e: '🛫', x: 86, y: 51, s: 6, label: 'Chuyến quốc tế đi', tool: 'departures' },
+    ],
+  });
   window.SCENES = SCENES;
 })();

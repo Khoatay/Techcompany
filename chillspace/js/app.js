@@ -200,7 +200,10 @@
     FX.set(space.fx, space.fxClip);
     $('#spaceMood').textContent = `${space.emoji} ${space.name} · ${space.mood}`;
     $('#quote').textContent = space.quote;
-    $$('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+    $$('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.id === id || b.dataset.id === space.parent));
+    const fam = space.id === 'border' || space.parent === 'border';
+    $('#cornerBar').hidden = !fam;
+    $$('#dirSwitch [data-dir]').forEach((b) => b.classList.toggle('on', b.dataset.dir === space.id));
     if (store.get('autoSound', true) && (changed || first)) Sound.setAll(space.sounds);
     document.dispatchEvent(new Event('cs:audio'));
     WM.onSpace();
@@ -210,7 +213,8 @@
   window.setSpace = (id, o = {}) => setSpace(id, false, o.remote);
   const $$ = (s) => [...document.querySelectorAll(s)];
 
-  $('#dock').innerHTML = SPACES.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.short || s.name)}</small></button>`).join('');
+  const VISIBLE = SPACES.filter((s) => !s.hidden);
+  $('#dock').innerHTML = VISIBLE.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.short || s.name)}</small></button>`).join('');
   $('#dock').onclick = (e) => { const b = e.target.closest('button'); if (b) { Sound.init(); setSpace(b.dataset.id); } };
   const objClick = (e) => { const b = e.target.closest('[data-i]'); if (b) { Sound.init(); openObject(space.objects[+b.dataset.i]); } };
   $('#objects').onclick = objClick; $('#quickbar').onclick = objClick;
@@ -230,6 +234,7 @@
     $('#mboard').innerHTML = ids.map((id) => boardHtml(id, true)).join('');
     document.body.classList.toggle('board-max', ids.some((id) => Boards.state(id) === 'max'));
     if (ids.includes('flights') && Boards.state('flights') !== 'closed' && window.Flights) setTimeout(() => Flights.load(false), 0);
+    if (ids.includes('departures') && Boards.state('departures') !== 'closed' && window.FlightsOut) setTimeout(() => FlightsOut.load(false), 0);
   }
   document.addEventListener('click', (e) => {
     const bd = e.target.closest('.board'); if (!bd) return;
@@ -244,7 +249,8 @@
     if (e.target.closest('.bb')) WM.open(Boards[id].tool);
   });
   document.addEventListener('cs:boards', renderBoards);
-  document.addEventListener('cs:flights', () => { if ((space.boards || []).includes('flights')) renderBoards(); });
+  document.addEventListener('cs:flights', () => { if ((space.boards || []).some((b) => b === 'flights' || b === 'departures')) renderBoards(); });
+  $('#dirSwitch').onclick = (e) => { const b = e.target.closest('[data-dir]'); if (b && b.dataset.dir !== space.id) { Sound.init(); setSpace(b.dataset.dir); } };
   let boardDay = ''; // qua 0 giờ (giờ VN) thì tính lại bảng hạn lưu trú
   setInterval(() => { if (!space.boards || !window.ProDate) return; const d = ProDate.todayISO(); if (d !== boardDay) { boardDay = d; renderBoards(); } }, 30000);
 
@@ -304,13 +310,13 @@
     else if (k === 'h') zen();
     else if (k === 'f') fs();
     else if (k === 'escape') { if (document.body.classList.contains('zen')) zen(false); else WM.closeTop(); }
-    else if (/^[0-9]$/.test(k)) { const s = SPACES[(+k + 9) % 10]; if (s) setSpace(s.id); }
+    else if (/^[0-9]$/.test(k)) { const s = VISIBLE[(+k + 9) % 10]; if (s) setSpace(s.id); }
     else if (k === ' ' && document.body.classList.contains('zen')) { e.preventDefault(); Pomo.running ? Pomo.pause() : Pomo.start(); }
   });
 
   /* ---------- Màn chào ---------- */
   const welcome = $('#welcome');
-  welcome.querySelector('.cards').innerHTML = SPACES.map((s) => `<button class="wcard${s.id === space.id ? ' last' : ''}" data-id="${s.id}" style="--a:${s.accent}"><span class="e">${s.emoji}</span><b>${esc(s.name)}</b><small>${esc(s.mood)}</small></button>`).join('');
+  welcome.querySelector('.cards').innerHTML = VISIBLE.map((s) => `<button class="wcard${s.id === space.id || s.id === space.parent ? ' last' : ''}" data-id="${s.id}" style="--a:${s.accent}"><span class="e">${s.emoji}</span><b>${esc(s.name)}</b><small>${esc(s.mood)}</small></button>`).join('');
   welcome.onclick = (e) => {
     const b = e.target.closest('[data-id]'); if (!b) return;
     Sound.init(); welcome.classList.add('out'); setTimeout(() => (welcome.hidden = true), 400);

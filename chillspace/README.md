@@ -61,6 +61,10 @@ Bảng treo trên tường luôn hiện ngày hết hạn tính từ **hôm nay 
 
 Tự động: đúng 00:00 giờ Việt Nam app đổ chuông và hiện bảng **ĐỔI NGÀY CON DẤU** kèm ngày mới, chuông kêu đến khi bấm **Đã quay dấu**. Chỉ kêu khi app đang mở ở Immigration space lúc qua 00:00 (mở app sau 00:00 thì không kêu). Bật/tắt bằng nút nhỏ **⏰ 00:00 BẬT/TẮT** ở góc trên bên trái. Chuông chỉ kêu khi app đang mở.
 
+## 🛫 Xuất cảnh (nhánh của Immigration space)
+
+Công tắc **🛬 Nhập cảnh | 🛫 Xuất cảnh** ở góc trên bên trái. Bên Xuất cảnh không có bảng hạn lưu trú, thay bằng bảng **chuyến quốc tế đi**: giờ đi, **mở quầy** (giờ khởi hành − 3 giờ), **hết khách** (giờ khởi hành − 40 phút). Khung dữ liệu từ 1 giờ trước đến 11 giờ tới.
+
 ## ✈️ Chuyến quốc tế đến (Immigration space)
 
 Bấm ✈️ ngoài cửa kính để xem chuyến quốc tế đến **Cam Ranh** (đổi được sang Nội Bài, Tân Sơn Nhất, Đà Nẵng, Phú Quốc…), lấy trong khung từ 3 giờ trước đến 9 giờ tới. Chuyến nội địa và chuyến hàng đã được lọc bỏ.
