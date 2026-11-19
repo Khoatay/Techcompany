@@ -413,7 +413,7 @@ const Lunar = (() => {
   /* ================= BÁO THỨC 00:00 – ĐỔI NGÀY CON DẤU (tự động) ================= */
   const Alarm = (window.Alarm = {
     on: () => store.get('alarm.on', true),
-    ringing: false, _beep: null, _stop: null,
+    ringing: false, _beep: null, _day: null,
     vnNow() { const o = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, hour: '2-digit', minute: '2-digit' }).formatToParts(new Date()).map((p) => [p.type, p.value])); return { h: +o.hour % 24, m: +o.minute }; },
     toggle() { store.set('alarm.on', !this.on()); this.paintChip(); toast(this.on() ? '⏰ Đã BẬT báo thức 00:00 đổi ngày con dấu' : '🔕 Đã TẮT báo thức 00:00'); },
     paintChip() { const c = document.getElementById('alarmChip'); if (c) { c.classList.toggle('on', this.on()); c.innerHTML = this.on() ? '⏰ 00:00 <b>BẬT</b>' : '🔕 00:00 <b>TẮT</b>'; } },
@@ -426,20 +426,23 @@ const Lunar = (() => {
       const d = todayISO();
       const el = document.createElement('div'); el.className = 'alarm-overlay'; el.id = 'alarmOverlay';
       el.innerHTML = `<div class="alarm-box"><div class="alarm-ico">🕛</div><div class="alarm-time">00:00</div><div class="alarm-title">ĐỔI NGÀY CON DẤU</div>
-        <div class="alarm-date">Ngày mới: <b>${dow(d)}, ${vn(d)}</b></div><button class="btn primary alarm-ok">✅ Đã đổi ngày</button></div>`;
+        <div class="alarm-date">Ngày mới: <b>${dow(d)}, ${vn(d)}</b></div><button class="btn primary alarm-ok">✅ Đã quay dấu</button></div>`;
       document.body.append(el);
-      el.querySelector('.alarm-ok').onclick = () => this.stop();
-      this._stop = setTimeout(() => this.stop(), 3 * 60000); // tự tắt sau 3 phút nếu không ai bấm
+      el.querySelector('.alarm-ok').onclick = () => this.stop(); // kêu đến khi có người bấm
     },
-    stop() { this.ringing = false; clearInterval(this._beep); clearTimeout(this._stop); const el = document.getElementById('alarmOverlay'); if (el) el.remove(); },
+    stop() { this.ringing = false; clearInterval(this._beep); const el = document.getElementById('alarmOverlay'); if (el) el.remove(); },
+    // Chỉ kêu khi app ĐANG MỞ lúc qua 00:00 (giờ VN) và đang ở Immigration space.
+    // Mở app sau 00:00 thì không kêu.
     tick() {
-      if (!this.on()) return;
-      const t = this.vnNow(), d = todayISO();
-      if (t.h === 0 && t.m < 10 && store.get('alarm.last', '') !== d) { store.set('alarm.last', d); this.ring(); } // mở app trễ vài phút vẫn báo
+      const d = todayISO(), prev = this._day;
+      this._day = d;
+      if (!prev || prev === d) return;
+      const sp = window.currentSpace && currentSpace();
+      if (this.on() && sp && sp.id === 'border') this.ring();
     },
   });
+  Alarm.tick(); // ghi nhận ngày lúc mở app
   setInterval(() => Alarm.tick(), 5000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) Alarm.tick(); });
   document.addEventListener('DOMContentLoaded', () => Alarm.paintChip());
   Alarm.paintChip();
   document.addEventListener('click', (e) => { if (e.target.closest('#alarmChip')) Alarm.toggle(); });

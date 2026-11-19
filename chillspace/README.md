@@ -59,7 +59,7 @@ Bảng treo trên tường luôn hiện ngày hết hạn tính từ **hôm nay 
 
 ## 🕛 Báo thức 00:00 – đổi ngày con dấu (Immigration space)
 
-Tự động: đúng 00:00 giờ Việt Nam app đổ chuông và hiện bảng **ĐỔI NGÀY CON DẤU** kèm ngày mới, bấm **Đã đổi ngày** để tắt chuông. Bật/tắt bằng nút nhỏ **⏰ 00:00 BẬT/TẮT** ở góc trên bên trái. Chuông chỉ kêu khi app đang mở.
+Tự động: đúng 00:00 giờ Việt Nam app đổ chuông và hiện bảng **ĐỔI NGÀY CON DẤU** kèm ngày mới, chuông kêu đến khi bấm **Đã quay dấu**. Chỉ kêu khi app đang mở ở Immigration space lúc qua 00:00 (mở app sau 00:00 thì không kêu). Bật/tắt bằng nút nhỏ **⏰ 00:00 BẬT/TẮT** ở góc trên bên trái. Chuông chỉ kêu khi app đang mở.
 
 ## ✈️ Chuyến quốc tế đến (Immigration space)
 
