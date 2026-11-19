@@ -410,74 +410,39 @@ const Lunar = (() => {
     },
   };
 
-  /* ================= BÁO THỨC 00:00 – ĐỔI NGÀY CON DẤU ================= */
+  /* ================= BÁO THỨC 00:00 – ĐỔI NGÀY CON DẤU (tự động) ================= */
   const Alarm = (window.Alarm = {
-    on: () => store.get('alarm.on', true), pre: () => store.get('alarm.pre', true), keepAwake: () => store.get('alarm.wake', false),
-    ringing: false, _beep: null, _stop: null, _lock: null,
-    vnNow() { const o = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date()).map((p) => [p.type, p.value])); return { h: +o.hour % 24, m: +o.minute, s: +o.second }; },
-    set(k, v) { store.set('alarm.' + k, v); if (k === 'wake') this.applyWake(); document.dispatchEvent(new Event('cs:boards')); document.dispatchEvent(new Event('cs:alarm')); },
-    toggle() { this.set('on', !this.on()); toast(this.on() ? '⏰ Đã BẬT báo thức 00:00 đổi ngày con dấu' : '🔕 Đã TẮT báo thức 00:00'); },
+    on: () => store.get('alarm.on', true),
+    ringing: false, _beep: null, _stop: null,
+    vnNow() { const o = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, hour: '2-digit', minute: '2-digit' }).formatToParts(new Date()).map((p) => [p.type, p.value])); return { h: +o.hour % 24, m: +o.minute }; },
+    toggle() { store.set('alarm.on', !this.on()); this.paintChip(); toast(this.on() ? '⏰ Đã BẬT báo thức 00:00 đổi ngày con dấu' : '🔕 Đã TẮT báo thức 00:00'); },
+    paintChip() { const c = document.getElementById('alarmChip'); if (c) { c.classList.toggle('on', this.on()); c.innerHTML = this.on() ? '⏰ 00:00 <b>BẬT</b>' : '🔕 00:00 <b>TẮT</b>'; } },
     beepOnce(ctx, out, t0) { [0, 0.18, 0.36, 0.54].forEach((d) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 1046; g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.22, t0 + d + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.13); o.connect(g).connect(out); o.start(t0 + d); o.stop(t0 + d + 0.15); }); },
-    ring(test) {
+    ring() {
       if (this.ringing) return;
       this.ringing = true;
       const ctx = Sound.init();
       if (ctx) { const out = ctx.createGain(); out.gain.value = 0.9; out.connect(ctx.destination); const go = () => this.beepOnce(ctx, out, ctx.currentTime + 0.05); go(); this._beep = setInterval(go, 1200); }
-      try { navigator.vibrate && navigator.vibrate([400, 200, 400, 200, 400]); } catch (e) {}
       const d = todayISO();
-      try { if (!test && 'Notification' in window && Notification.permission === 'granted') new Notification('🕛 00:00 – Đổi ngày con dấu', { body: `Ngày mới: ${dow(d)}, ${vn(d)}`, icon: 'icon.svg', requireInteraction: true }); } catch (e) {}
       const el = document.createElement('div'); el.className = 'alarm-overlay'; el.id = 'alarmOverlay';
       el.innerHTML = `<div class="alarm-box"><div class="alarm-ico">🕛</div><div class="alarm-time">00:00</div><div class="alarm-title">ĐỔI NGÀY CON DẤU</div>
-        <div class="alarm-date">Ngày mới: <b>${dow(d)}, ${vn(d)}</b></div>${test ? '<div class="muted small">(Đang thử chuông)</div>' : ''}
-        <button class="btn primary alarm-ok">✅ Đã đổi ngày</button></div>`;
+        <div class="alarm-date">Ngày mới: <b>${dow(d)}, ${vn(d)}</b></div><button class="btn primary alarm-ok">✅ Đã đổi ngày</button></div>`;
       document.body.append(el);
       el.querySelector('.alarm-ok').onclick = () => this.stop();
-      this._stop = setTimeout(() => this.stop(), 3 * 60000); // tự tắt sau 3 phút
+      this._stop = setTimeout(() => this.stop(), 3 * 60000); // tự tắt sau 3 phút nếu không ai bấm
     },
-    stop() {
-      this.ringing = false; clearInterval(this._beep); clearTimeout(this._stop);
-      const el = document.getElementById('alarmOverlay'); if (el) el.remove();
-      try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
-    },
-    async applyWake() {
-      try {
-        if (this.keepAwake() && 'wakeLock' in navigator && document.visibilityState === 'visible') { if (!this._lock) { this._lock = await navigator.wakeLock.request('screen'); this._lock.addEventListener('release', () => (this._lock = null)); } }
-        else if (this._lock) { await this._lock.release(); this._lock = null; }
-      } catch (e) {}
-    },
+    stop() { this.ringing = false; clearInterval(this._beep); clearTimeout(this._stop); const el = document.getElementById('alarmOverlay'); if (el) el.remove(); },
     tick() {
       if (!this.on()) return;
       const t = this.vnNow(), d = todayISO();
-      if (t.h === 0 && t.m < 10 && store.get('alarm.last', '') !== d) { store.set('alarm.last', d); this.ring(false); } // mở app trễ vài phút vẫn báo
-      if (this.pre() && t.h === 23 && t.m >= 55 && store.get('alarm.preLast', '') !== d) { store.set('alarm.preLast', d); Sound.chime(); toast('⏰ Còn 5 phút nữa là 00:00 – chuẩn bị đổi ngày con dấu', 8000); }
+      if (t.h === 0 && t.m < 10 && store.get('alarm.last', '') !== d) { store.set('alarm.last', d); this.ring(); } // mở app trễ vài phút vẫn báo
     },
   });
   setInterval(() => Alarm.tick(), 5000);
-  document.addEventListener('visibilitychange', () => { Alarm.applyWake(); if (!document.hidden) Alarm.tick(); });
-  Alarm.applyWake();
-  // nút bật/tắt nhanh trên bảng (chặn trước để không mở cửa sổ)
-  document.addEventListener('click', (e) => { if (e.target.closest('[data-alarm-toggle]')) { e.stopPropagation(); e.preventDefault(); Alarm.toggle(); } }, true);
-
-  TOOLS.alarm = {
-    title: 'Báo thức đổi ngày', icon: '🕛', width: 360, global: true,
-    render(b) {
-      const draw = () => {
-        const t = Alarm.vnNow(), left = ((24 * 60) - (t.h * 60 + t.m)) % (24 * 60) || 24 * 60;
-        b.innerHTML = `<label class="switch-row"><span><b>Báo thức 00:00 tự động</b><small>Nhắc đổi ngày trên con dấu, theo giờ Việt Nam</small></span><input type="checkbox" class="switch" data-k="on" ${Alarm.on() ? 'checked' : ''}></label>
-          <label class="switch-row"><span>Nhắc trước 5 phút<small>Chuông nhẹ lúc 23:55</small></span><input type="checkbox" class="switch" data-k="pre" ${Alarm.pre() ? 'checked' : ''}></label>
-          <label class="switch-row"><span>Giữ màn hình luôn sáng<small>Để máy không tự khoá, chuông mới kêu được</small></span><input type="checkbox" class="switch" data-k="wake" ${Alarm.keepAwake() ? 'checked' : ''}></label>
-          <div class="alarm-next ${Alarm.on() ? '' : 'off'}">${Alarm.on() ? `⏰ Sẽ báo sau <b>${Math.floor(left / 60)} giờ ${left % 60} phút</b>` : '🔕 Đang tắt'}</div>
-          <div class="row"><button class="btn" data-test>🔔 Thử chuông</button><span class="grow"></span>${'Notification' in window && Notification.permission !== 'granted' ? '<button class="btn ghost" data-perm>Cho phép thông báo</button>' : ''}</div>
-          <p class="muted small">⚠️ Chuông chỉ kêu khi app đang mở (trên máy tính: tab có thể ở phía sau). Trên iPhone, app phải đang mở và màn hình không khoá. Vì vậy nên bật "Giữ màn hình luôn sáng" và cắm sạc.</p>`;
-        b.querySelectorAll('[data-k]').forEach((x) => (x.onchange = () => { Alarm.set(x.dataset.k, x.checked); if (x.dataset.k === 'on') toast(x.checked ? '⏰ Đã bật báo thức 00:00' : '🔕 Đã tắt báo thức 00:00'); draw(); }));
-        b.querySelector('[data-test]').onclick = () => Alarm.ring(true);
-        const pm = b.querySelector('[data-perm]'); if (pm) pm.onclick = () => Notification.requestPermission().then(draw);
-      };
-      draw(); const iv = setInterval(draw, 30000);
-      const on = () => draw(); document.addEventListener('cs:alarm', on);
-      return () => { clearInterval(iv); document.removeEventListener('cs:alarm', on); };
-    },
-  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) Alarm.tick(); });
+  document.addEventListener('DOMContentLoaded', () => Alarm.paintChip());
+  Alarm.paintChip();
+  document.addEventListener('click', (e) => { if (e.target.closest('#alarmChip')) Alarm.toggle(); });
 
   /* ================= BẢNG TREO TƯỜNG (thu nhỏ / phóng to / tắt như cửa sổ) ================= */
   window.Flights = FL;
@@ -486,7 +451,6 @@ const Lunar = (() => {
     setState(id, s) { store.set('board.' + id, s); document.dispatchEvent(new Event('cs:boards')); },
     stay: {
       icon: '🛂', title: 'HẠN LƯU TRÚ', tool: 'stay',
-      extra: () => `<button class="alarm-chip${Alarm.on() ? ' on' : ''}" data-alarm-toggle title="Bật/tắt báo thức 00:00 đổi ngày con dấu">${Alarm.on() ? '⏰' : '🔕'} 00:00</button>`,
       sub: () => `nhập cảnh hôm nay ${vn(todayISO())}`,
       body: () => `<ul class="sb">${stayRows()}</ul>`,
     },

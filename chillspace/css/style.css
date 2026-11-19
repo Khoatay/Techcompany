@@ -599,16 +599,6 @@ table.quick tr { cursor: pointer; }
 body.board-max .hero { opacity: 0; pointer-events: none; }
 
 /* báo thức 00:00 */
-.alarm-chip { height: 1.7em; padding: 0 .6em; border: 0; border-radius: 999px; font-size: .78em; font-weight: 700; background: rgba(255,255,255,.1); color: #94a3b8; white-space: nowrap; }
-.alarm-chip.on { background: #f97316; color: #fff; }
-.alarm-chip:hover { filter: brightness(1.15); }
-.switch-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); cursor: pointer; }
-.switch-row > span { flex: 1; } .switch-row small { display: block; font-size: 11.5px; color: var(--muted); }
-input.switch { appearance: none; -webkit-appearance: none; width: 46px; height: 26px; border-radius: 13px; background: rgba(255,255,255,.2); position: relative; flex: none; cursor: pointer; transition: background .2s; }
-input.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
-input.switch:checked { background: #f97316; } input.switch:checked::after { transform: translateX(20px); }
-.alarm-next { padding: 10px 12px; border-radius: 12px; background: rgba(249,115,22,.15); border: 1px solid rgba(249,115,22,.45); text-align: center; }
-.alarm-next.off { background: rgba(255,255,255,.05); border-color: var(--line); color: var(--muted); }
 .alarm-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: rgba(10,5,0,.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); animation: alarm-bg 1.2s ease-in-out infinite; }
 @keyframes alarm-bg { 50% { background: rgba(80,25,0,.8); } }
 .alarm-box { width: min(420px, 100%); text-align: center; padding: 28px 24px; border-radius: 24px; background: #1a120b; border: 3px solid #f97316; box-shadow: 0 0 80px rgba(249,115,22,.5); display: flex; flex-direction: column; gap: 8px; }
@@ -617,4 +607,10 @@ input.switch:checked { background: #f97316; } input.switch:checked::after { tran
 .alarm-title { font-size: 22px; font-weight: 800; letter-spacing: .08em; color: #fdba74; }
 .alarm-date { font-size: 16px; }
 .alarm-ok { height: 52px; font-size: 18px; margin-top: 10px; }
-.bc .alarm-chip { width: auto; height: 1.7em; display: inline-flex; align-items: center; }
+
+/* nút bật/tắt báo thức ở góc (chỉ trong Immigration space) */
+.alarm-corner { display: none; position: fixed; left: 16px; top: 64px; z-index: 25; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 13px; color: var(--muted); align-items: center; gap: 4px; }
+.alarm-corner.on { border-color: #f97316; color: #fff; } .alarm-corner.on b { color: #fdba74; }
+body[data-space="border"] .alarm-corner { display: inline-flex; }
+body.zen .alarm-corner { opacity: .5; }
+@media (max-width: 720px) { .alarm-corner { left: 12px; top: calc(max(14px, env(safe-area-inset-top)) + 50px); height: 30px; padding: 0 10px; font-size: 12px; } }
