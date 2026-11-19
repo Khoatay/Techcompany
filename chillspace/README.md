@@ -57,6 +57,13 @@ Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](su
 
 Bảng treo trên tường luôn hiện ngày hết hạn tính từ **hôm nay (giờ Việt Nam)**: 21 · **30** · **45** · 90 · 180 ngày. Hai mốc 30 và 45 được tô nổi bật. Ngày nhập cảnh tính là ngày thứ 1, qua 0 giờ bảng tự sang ngày mới. Bấm vào bảng để mở cửa sổ, bấm vào một dòng để copy.
 
+## ✈️ Chuyến quốc tế đến (Immigration space)
+
+Bấm ✈️ ngoài cửa kính để xem chuyến quốc tế đến **Cam Ranh** (đổi được sang Nội Bài, Tân Sơn Nhất, Đà Nẵng, Phú Quốc…), lấy trong khung từ 3 giờ trước đến 9 giờ tới. Chuyến nội địa và chuyến hàng đã được lọc bỏ.
+- Giờ theo lịch, giờ dự kiến (vàng là trễ), trạng thái, nước xuất phát, nhà ga, băng chuyền. Chuyến kế tiếp được làm nổi
+- Lọc theo nước, ví dụ chỉ chuyến từ 🇰🇷 Hàn Quốc
+- Dữ liệu từ **AeroDataBox** (RapidAPI). Cần đăng ký gói Basic miễn phí rồi dán khoá vào ⚙️. Khoá chỉ lưu trên máy đó. Kết quả được giữ 30 phút để tiết kiệm lượt gọi
+
 ## Công cụ có sẵn
 
 Pomodoro (vòng tròn đếm giờ, thông báo, thống kê theo ngày) · Việc cần làm (pháo giấy khi xong) · Ghi chú (tự lưu, tải .txt) ·

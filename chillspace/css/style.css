@@ -542,3 +542,21 @@ table.quick tr { cursor: pointer; }
   .stay-board.m { position: static; width: auto; font-size: 13px; padding: 12px; border-radius: 14px; }
   body[data-space="border"] .hero .quote { display: none; }
 }
+
+/* chuyến bay */
+.fl-head { display: flex; align-items: center; gap: 6px; } .fl-head small { display: block; color: var(--muted); font-size: 11.5px; }
+.fl-set { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.3); }
+.fl-set ol { margin: 0; padding-left: 18px; } .fl-set a { color: #7dd3fc; }
+.fl-err { padding: 9px 11px; border-radius: 10px; background: rgba(239,68,68,.15); color: #fca5a5; font-size: 13px; }
+.fl-filter .chip b { margin-left: 3px; }
+.fl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 52vh; overflow: auto; }
+.fl-list li { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 11px; background: rgba(255,255,255,.05); }
+.fl-list li.past { opacity: .45; }
+.fl-list li.next { background: rgba(56,189,248,.16); box-shadow: inset 0 0 0 1px #38bdf8; }
+.fl-time { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.fl-time small { display: block; font-size: 12px; font-weight: 600; color: #86efac; } .fl-time small.late { color: #fbbf24; }
+.fl-main { min-width: 0; font-size: 13.5px; } .fl-main small { display: block; color: var(--muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fl-from { white-space: nowrap; }
+.fl-st { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.08); white-space: nowrap; }
+.fl-st.done { color: #94a3b8; } .fl-st.soon { background: #fbbf24; color: #1c1300; } .fl-st.air { color: #7dd3fc; } .fl-st.late { color: #fbbf24; } .fl-st.cancel { background: rgba(239,68,68,.25); color: #fca5a5; } .fl-st.plan { color: #e2e8f0; }
+.fl-list li.next .fl-st { background: #38bdf8; color: #04243a; }

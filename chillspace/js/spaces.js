@@ -829,6 +829,7 @@
         { e: '📝', x: 61, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
         { e: '🎧', x: 69, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
         { e: '🌏', x: 77, y: 62.5, s: 6.5, label: 'Giờ các nước', tool: 'clocks' },
+        { e: '✈️', x: 74, y: 40, s: 7, label: 'Chuyến quốc tế đến', tool: 'flights' },
       ],
     },
     {

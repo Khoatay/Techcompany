@@ -632,7 +632,7 @@
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace();
-      const all = ['room', 'stay', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
+      const all = ['room', 'stay', 'flights', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
         <p class="muted small">Phím tắt: <kbd>M</kbd> âm thanh · <kbd>Y</kbd> YouTube · <kbd>P</kbd> Pomodoro · <kbd>T</kbd> công cụ · <kbd>H</kbd> ẩn giao diện · <kbd>F</kbd> toàn màn hình · <kbd>1</kbd>–<kbd>0</kbd> đổi không gian</p>`;

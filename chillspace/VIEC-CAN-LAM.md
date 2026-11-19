@@ -13,8 +13,9 @@ Trên máy tính làm sẽ nhanh hơn điện thoại (dễ copy/dán, mở đư
 5. Thử thêm trên iPhone: vào bằng link mời, chụp ảnh làm avatar.
 
 ## Immigration space
-- [ ] Xác nhận quy ước: ngày nhập cảnh là **ngày thứ 1** (19/11 + 45 ngày → 02/01)
+- [x] Quy ước: ngày nhập cảnh là **ngày thứ 1** (đã xác nhận)
 - [ ] Mục 3 trong yêu cầu sửa (bị bỏ trống) – bổ sung
-- [ ] Danh sách chuyến bay: chọn sân bay + chiều đến/đi, quyết định nguồn dữ liệu
+- [ ] Chuyến bay: đăng ký AeroDataBox trên RapidAPI (gói Basic miễn phí), dán khoá vào ✈️ → ⚙️, kiểm tra với lịch thật ở Cam Ranh
+- [ ] Sau này: chuyển khoá API lên máy chủ Supabase để nhiều người dùng chung, không ai phải tự đăng ký
 
 Link app: https://khoatay.github.io/Techcompany/chillspace/
