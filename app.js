@@ -10,7 +10,11 @@ const stamp = (d = new Date()) =>
   `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 const tick = () => new Promise((r) => setTimeout(r, 30));
 
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 const DEFAULTS = {
+  camMode: isIOS ? 'native' : 'live',
   brand: '', phone: '', address: '', note: '', logo: '',
   position: 'bl', size: 'm', accent: '#f5a524',
   showTime: true, showGPS: false,
@@ -169,13 +173,58 @@ async function startCamera() {
     $('#noCam').hidden = false;
   }
 }
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopCamera();
-  else if ($('#cropView').hidden && $('#filterView').hidden) startCamera();
-});
+// Keep the stream alive: on iPhone every new getUserMedia call can trigger a new permission prompt.
+function ensureCamera() {
+  if (state.settings.camMode !== 'live') return;
+  const t = state.stream && state.stream.getVideoTracks()[0];
+  if (!t || t.readyState === 'ended') startCamera();
+  else video.play().catch(() => {});
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ensureCamera(); });
+
+function applyCamMode() {
+  const native = state.settings.camMode === 'native';
+  $('#cam').classList.toggle('native', native);
+  $('#btnFlip').hidden = native;
+  if (native) { stopCamera(); $('#noCam').hidden = true; }
+  else ensureCamera();
+}
+
+let lastPlaceholder = 0;
+function drawPlaceholder() {
+  // Canvas matches the screen; a sample "photo" card sits between the top and bottom bars.
+  const w = 1080, h = Math.round(1080 * (innerHeight / Math.max(1, innerWidth)));
+  if (preview.width !== w || preview.height !== h) { preview.width = w; preview.height = h; }
+  pctx.fillStyle = '#000';
+  pctx.fillRect(0, 0, w, h);
+  const top = h * 0.11, bottom = h * 0.30;
+  const ch = Math.min(h - top - bottom, w * 0.9 * 4 / 3), cw = ch * 3 / 4;
+  const cx = (w - cw) / 2, cy = top;
+  pctx.save();
+  roundRect(pctx, cx, cy, cw, ch, 28);
+  pctx.clip();
+  const g = pctx.createLinearGradient(0, cy, 0, cy + ch);
+  g.addColorStop(0, '#2a2d34'); g.addColorStop(1, '#15161a');
+  pctx.fillStyle = g;
+  pctx.fillRect(cx, cy, cw, ch);
+  pctx.textAlign = 'center';
+  pctx.textBaseline = 'middle';
+  pctx.fillStyle = 'rgba(255,255,255,.88)';
+  pctx.font = `600 44px ${FONT}`;
+  pctx.fillText(state.mode === 'photo' ? 'Bấm nút tròn để chụp ảnh' : 'Bấm nút tròn để quét giấy tờ', w / 2, cy + ch * 0.38);
+  pctx.fillStyle = 'rgba(255,255,255,.5)';
+  pctx.font = `400 30px ${FONT}`;
+  pctx.fillText(state.mode === 'photo' ? 'Ảnh sẽ có khung logo như mẫu bên dưới' : 'Đặt giấy trên nền tối để app tự nhận mép', w / 2, cy + ch * 0.38 + 60);
+  pctx.textAlign = 'left';
+  if (state.mode === 'photo') { pctx.translate(cx, cy); drawStamp(pctx, cw, ch, new Date()); }
+  pctx.restore();
+}
 
 function previewLoop() {
-  if (state.stream && video.readyState >= 2 && video.videoWidth) {
+  if (state.settings.camMode === 'native') {
+    const now = Date.now();
+    if (now - lastPlaceholder > 1000) { lastPlaceholder = now; drawPlaceholder(); }
+  } else if (state.stream && video.readyState >= 2 && video.videoWidth) {
     const vw = video.videoWidth, vh = video.videoHeight;
     const k = Math.min(1, 1440 / Math.max(vw, vh));
     const w = Math.round(vw * k), h = Math.round(vh * k);
@@ -439,7 +488,6 @@ function defaultPts(w, h, inset = 0.06) {
   ];
 }
 function openCrop(srcCanvas) {
-  stopCamera();
   $('#toast').hidden = true;
   crop.src = srcCanvas;
   crop.pts = detectDocument(srcCanvas) || defaultPts(srcCanvas.width, srcCanvas.height);
@@ -449,7 +497,7 @@ function openCrop(srcCanvas) {
 function closeCropAndFilter() {
   $('#cropView').hidden = true;
   $('#filterView').hidden = true;
-  startCamera();
+  ensureCamera();
 }
 function layoutCrop() {
   const area = $('#cropArea');
@@ -784,19 +832,22 @@ async function makePdf() {
 
 /* ---------- Library ---------- */
 let libFilter = 'all';
+async function allRecords() {
+  let items = [];
+  try { items = await DB.all(); } catch (e) { console.error(e); }
+  return items.sort((a, b) => b.created - a.created);
+}
 async function openLibrary() {
   openSheet($('#librarySheet'));
   await renderLibrary();
 }
 async function renderLibrary() {
   const grid = $('#libGrid');
-  let items = [];
-  try { items = await DB.all(); } catch (e) { console.error(e); }
-  items.sort((a, b) => b.created - a.created);
+  let items = await allRecords();
   if (libFilter !== 'all') items = items.filter((x) => x.type === libFilter);
   grid.innerHTML = '';
   $('#libEmpty').hidden = items.length > 0;
-  for (const rec of items) {
+  items.forEach((rec, i) => {
     const b = document.createElement('button');
     b.className = 'libItem';
     const d = new Date(rec.created);
@@ -806,41 +857,235 @@ async function renderLibrary() {
     b.querySelector('.cap').textContent = rec.type === 'pdf'
       ? `${rec.name} · ${rec.pages || '?'} tr`
       : `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    b.onclick = () => openViewer(rec);
+    b.onclick = () => openViewer(items, i);
     grid.appendChild(b);
-  }
-}
-let viewerRec = null, viewerUrl = null;
-function openViewer(rec) {
-  viewerRec = rec;
-  if (rec.type === 'pdf') {
-    // PDFs open in the system viewer
-    const url = URL.createObjectURL(rec.blob);
-    const w = window.open(url, '_blank');
-    if (!w) shareRec(rec);
-    setTimeout(() => URL.revokeObjectURL(url), 120000);
-    toast(rec.name, 'Xóa', () => deleteRec(rec));
-    return;
-  }
-  if (viewerUrl) URL.revokeObjectURL(viewerUrl);
-  viewerUrl = URL.createObjectURL(rec.blob);
-  $('#viewerImg').src = viewerUrl;
-  $('#viewerName').textContent = rec.name;
-  $('#viewer').hidden = false;
-}
-async function deleteRec(rec) {
-  if (!confirm(`Xóa "${rec.name}"?`)) return;
-  await DB.del(rec.id);
-  $('#viewer').hidden = true;
-  await refreshLastThumb();
-  if (!$('#librarySheet').hidden) renderLibrary();
+  });
 }
 async function refreshLastThumb() {
-  try {
-    const all = await DB.all();
-    all.sort((a, b) => b.created - a.created);
-    $('#lastThumb').src = all[0] ? all[0].thumb : '';
-  } catch { /* ignore */ }
+  const all = await allRecords();
+  $('#lastThumb').src = all[0] ? all[0].thumb : '';
+}
+
+/* ---------- Viewer: swipe, pinch-zoom, double-tap, in-app PDF pages ---------- */
+const viewer = { items: [], index: 0, slides: [] };
+const slider = $('#slider');
+
+// Our PDFs are plain JPEG pages, so the page images can be pulled straight out of the file.
+async function pdfPageBlobs(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  const txt = new TextDecoder('latin1').decode(buf);
+  const re = /\/Filter \/DCTDecode \/Length (\d+) >>\nstream\n/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(txt))) {
+    const start = m.index + m[0].length, n = +m[1];
+    out.push(new Blob([buf.subarray(start, start + n)], { type: 'image/jpeg' }));
+    re.lastIndex = start + n;
+  }
+  return out;
+}
+
+function setupZoom(box, content, type, onZoom) {
+  let z = 1;
+  const base = () => {
+    const bw = box.clientWidth, bh = box.clientHeight;
+    if (type === 'photo') {
+      const img = content.firstChild;
+      const r = (img.naturalWidth || 3) / (img.naturalHeight || 4);
+      let w = bw, h = bw / r;
+      if (h > bh) { h = bh; w = bh * r; }
+      return { w, h };
+    }
+    return { w: Math.min(bw - 20, 900), h: 0 };
+  };
+  const layout = () => {
+    const b = base();
+    content.style.width = b.w * z + 'px';
+    if (b.h) content.style.height = b.h * z + 'px';
+  };
+  const setZ = (nz, cx, cy) => {
+    nz = Math.min(5, Math.max(1, nz));
+    const r = box.getBoundingClientRect();
+    if (cx == null) { cx = r.left + r.width / 2; cy = r.top + r.height / 2; }
+    const ox = cx - r.left, oy = cy - r.top;
+    const px = box.scrollLeft + ox - content.offsetLeft, py = box.scrollTop + oy - content.offsetTop;
+    const k = nz / z;
+    z = nz;
+    layout();
+    box.scrollLeft = px * k + content.offsetLeft - ox;
+    box.scrollTop = py * k + content.offsetTop - oy;
+    onZoom(z > 1.01);
+  };
+
+  // pinch (touch)
+  let pinch = null;
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  box.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      pinch = { d: dist(e.touches[0], e.touches[1]) || 1, z0: z };
+    }
+  }, { passive: false });
+  box.addEventListener('touchmove', (e) => {
+    if (pinch && e.touches.length === 2) {
+      e.preventDefault();
+      const [a, b] = e.touches;
+      setZ(pinch.z0 * dist(a, b) / pinch.d, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+    }
+  }, { passive: false });
+  box.addEventListener('touchend', (e) => { if (e.touches.length < 2) pinch = null; });
+
+  // ctrl/⌘ + wheel or trackpad pinch on desktop
+  box.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    setZ(z * Math.exp(-e.deltaY / 200), e.clientX, e.clientY);
+  }, { passive: false });
+
+  // single tap = show/hide bars, double tap = zoom
+  let lastTap = 0, lastX = 0, lastY = 0, tapTimer = null;
+  box.addEventListener('click', (e) => {
+    const now = Date.now();
+    if (now - lastTap < 300 && Math.hypot(e.clientX - lastX, e.clientY - lastY) < 40) {
+      clearTimeout(tapTimer);
+      lastTap = 0;
+      setZ(z > 1.01 ? 1 : (type === 'pdf' ? 2 : 2.5), e.clientX, e.clientY);
+      return;
+    }
+    lastTap = now; lastX = e.clientX; lastY = e.clientY;
+    tapTimer = setTimeout(() => $('#viewer').classList.toggle('bare'), 300);
+  });
+
+  layout();
+  return { layout, reset: () => { if (z !== 1) setZ(1); } };
+}
+
+async function buildSlide(j) {
+  const s = viewer.slides[j];
+  if (!s || s._built) return;
+  s._built = true;
+  s._urls = [];
+  const rec = viewer.items[j];
+  const box = document.createElement('div');
+  box.className = 'zbox';
+  const content = document.createElement('div');
+  content.className = 'zcontent ' + rec.type;
+  box.appendChild(content);
+  s.appendChild(box);
+  const lock = (zoomed) => slider.classList.toggle('locked', zoomed);
+  if (rec.type === 'photo') {
+    const url = URL.createObjectURL(rec.blob);
+    s._urls.push(url);
+    const img = new Image();
+    img.alt = '';
+    img.draggable = false;
+    img.src = url;
+    content.appendChild(img);
+    s._zoom = setupZoom(box, content, 'photo', lock);
+    img.onload = () => s._zoom && s._zoom.layout();
+  } else {
+    let pages = [];
+    try { pages = await pdfPageBlobs(rec.blob); } catch (e) { console.warn(e); }
+    if (!s._built) return; // unloaded while reading
+    if (!pages.length) {
+      s.innerHTML = '<div class="msg">Không xem trước được PDF này.<br>Bấm "Lưu / Chia sẻ" để mở bằng ứng dụng khác.</div>';
+      return;
+    }
+    pages.forEach((b, k) => {
+      const url = URL.createObjectURL(b);
+      s._urls.push(url);
+      const img = new Image();
+      img.alt = '';
+      img.draggable = false;
+      img.decoding = 'async';
+      img.src = url;
+      const lab = document.createElement('div');
+      lab.className = 'plabel';
+      lab.textContent = `Trang ${k + 1} / ${pages.length}`;
+      content.append(img, lab);
+    });
+    s._zoom = setupZoom(box, content, 'pdf', lock);
+  }
+}
+function unloadSlide(s) {
+  if (!s._built) return;
+  (s._urls || []).forEach((u) => URL.revokeObjectURL(u));
+  s._urls = [];
+  s._zoom = null;
+  s._built = false;
+  s.innerHTML = '';
+}
+function loadAround(i) {
+  viewer.slides.forEach((s, j) => {
+    if (Math.abs(j - i) <= 1) buildSlide(j);
+    else if (Math.abs(j - i) > 2) unloadSlide(s);
+  });
+}
+function updateViewerTitle() {
+  const rec = viewer.items[viewer.index];
+  if (!rec) return;
+  const d = new Date(rec.created);
+  $('#viewerName').textContent = rec.type === 'pdf' ? rec.name : `${pad(d.getHours())}:${pad(d.getMinutes())}  ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  $('#viewerSub').textContent = `${viewer.index + 1} / ${viewer.items.length}` +
+    (rec.type === 'pdf' ? ` · PDF ${rec.pages || ''} trang` : '');
+}
+function openViewer(items, index) {
+  if (!items.length) { openLibrary(); return; }
+  closeViewerSlides();
+  viewer.items = items.slice();
+  viewer.index = Math.min(index, items.length - 1);
+  viewer.slides = viewer.items.map(() => {
+    const s = document.createElement('div');
+    s.className = 'slide';
+    slider.appendChild(s);
+    return s;
+  });
+  $('#toast').hidden = true;
+  $('#viewer').classList.remove('bare');
+  $('#viewer').hidden = false;
+  slider.classList.remove('locked');
+  slider.scrollLeft = viewer.index * slider.clientWidth;
+  loadAround(viewer.index);
+  updateViewerTitle();
+}
+function closeViewerSlides() {
+  viewer.slides.forEach(unloadSlide);
+  viewer.slides = [];
+  slider.innerHTML = '';
+}
+function closeViewer() {
+  $('#viewer').hidden = true;
+  closeViewerSlides();
+}
+let scrollRaf = 0;
+slider.addEventListener('scroll', () => {
+  cancelAnimationFrame(scrollRaf);
+  scrollRaf = requestAnimationFrame(() => {
+    const i = Math.round(slider.scrollLeft / Math.max(1, slider.clientWidth));
+    if (i === viewer.index || i < 0 || i >= viewer.slides.length) return;
+    const old = viewer.slides[viewer.index];
+    if (old && old._zoom) old._zoom.reset();
+    viewer.index = i;
+    loadAround(i);
+    updateViewerTitle();
+  });
+});
+window.addEventListener('resize', () => {
+  if ($('#viewer').hidden) return;
+  viewer.slides.forEach((s) => s._zoom && s._zoom.layout());
+  slider.scrollLeft = viewer.index * slider.clientWidth;
+});
+document.addEventListener('gesturestart', (e) => e.preventDefault()); // stop iOS page zoom
+
+async function deleteCurrent() {
+  const rec = viewer.items[viewer.index];
+  if (!rec || !confirm(`Xóa "${rec.name}"?`)) return;
+  await DB.del(rec.id);
+  const items = viewer.items.filter((x) => x.id !== rec.id);
+  await refreshLastThumb();
+  if (!$('#librarySheet').hidden) renderLibrary();
+  if (!items.length) { closeViewer(); return; }
+  openViewer(items, Math.min(viewer.index, items.length - 1));
 }
 
 /* ---------- Settings ---------- */
@@ -888,9 +1133,11 @@ function bindSettings() {
   });
   $$('#settingsSheet [data-k] > button[data-v]').forEach((b) => {
     b.addEventListener('click', () => {
-      state.settings[b.parentElement.dataset.k] = b.dataset.v;
+      const k = b.parentElement.dataset.k;
+      state.settings[k] = b.dataset.v;
       saveSettings();
       renderSettings();
+      if (k === 'camMode') applyCamMode();
     });
   });
   $('#logoPick').onclick = () => $('#logoInput').click();
@@ -931,6 +1178,7 @@ function bindSettings() {
 /* ---------- Mode / main controls ---------- */
 function setMode(m) {
   state.mode = m;
+  lastPlaceholder = 0;
   $$('.modes button').forEach((b) => b.classList.toggle('active', b.dataset.mode === m));
   $('#scanGuide').hidden = m !== 'scan';
   $('#shutter').classList.toggle('scan', m === 'scan');
@@ -939,6 +1187,7 @@ function setMode(m) {
 
 async function onShutter() {
   if (state.busy) return;
+  if (state.settings.camMode === 'native') { $('#camInput').click(); return; }
   if (!state.stream || !video.videoWidth) { $('#fileInput').click(); return; }
   flash();
   const frame = grabFrame();
@@ -977,11 +1226,12 @@ function bindMain() {
   };
   $('#btnGps').onclick = () => setGps(!state.settings.showGPS);
   $('#btnSettings').onclick = () => { openSheet($('#settingsSheet')); renderSettings(); };
-  $('#btnLibrary').onclick = openLibrary;
+  $('#btnLibrary').onclick = async () => openViewer(await allRecords(), 0);
   $('#btnImport').onclick = () => $('#fileInput').click();
   $('#importAlt').onclick = () => $('#fileInput').click();
   $('#retryCam').onclick = startCamera;
   $('#fileInput').onchange = onImport;
+  $('#camInput').onchange = onImport;
   $('#btnDoc').onclick = openDoc;
 
   $('#libFilter').addEventListener('click', (e) => {
@@ -1041,9 +1291,10 @@ function bindMain() {
   };
 
   // viewer
-  $('#viewerClose').onclick = () => ($('#viewer').hidden = true);
-  $('#viewerShare').onclick = () => viewerRec && shareRec(viewerRec);
-  $('#viewerDelete').onclick = () => viewerRec && deleteRec(viewerRec);
+  $('#viewerClose').onclick = closeViewer;
+  $('#viewerAll').onclick = () => { closeViewer(); openLibrary(); };
+  $('#viewerShare').onclick = () => { const r = viewer.items[viewer.index]; if (r) shareRec(r); };
+  $('#viewerDelete').onclick = deleteCurrent;
 }
 
 /* ---------- init ---------- */
@@ -1059,7 +1310,7 @@ function bindMain() {
   setMode('photo');
   refreshLastThumb();
   requestAnimationFrame(previewLoop);
-  startCamera();
+  applyCamMode();
   if (!state.settings.brand && !state.settings.logo) {
     setTimeout(() => toast('Chưa có thông tin thương hiệu', 'Thiết lập', () => $('#btnSettings').click()), 800);
   }

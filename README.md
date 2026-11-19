@@ -25,6 +25,13 @@ App phải được mở qua **https** (camera chỉ hoạt động trên https)
 
 ## Sử dụng
 
+- **Camera** (⚙️ → Camera):
+  - *Camera của máy* (mặc định trên iPhone): bấm chụp sẽ mở camera gốc của điện thoại, không phải cấp quyền mỗi lần mở app.
+  - *Camera trong app*: thấy khung logo ngay khi ngắm, nhưng iPhone có thể hỏi quyền mỗi lần mở app.
+- **Xem lại**: bấm ô ảnh nhỏ góc trái để mở ảnh hoặc PDF mới nhất.
+  - Vuốt ngang để chuyển file, chụm 2 ngón hoặc chạm 2 lần để phóng to, chạm 1 lần để ẩn/hiện thanh công cụ.
+  - PDF xem từng trang ngay trong app. Nút *Tất cả* để mở lưới thư viện.
+
 - Lần đầu: bấm ⚙️ → nhập tên công ty, SĐT, địa chỉ, chọn logo, vị trí và màu khung.
 - **ẢNH LOGO**: bấm nút chụp → ảnh đã gắn khung được lưu vào Thư viện.
 - **QUÉT TÀI LIỆU**: chụp → chỉnh 4 góc (app tự đoán) → chọn *Làm rõ / Đen trắng / Xám / Gốc* → *Thêm & chụp tiếp* cho nhiều trang, hoặc *Thêm & tạo PDF*.

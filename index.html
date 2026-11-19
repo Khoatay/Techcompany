@@ -96,15 +96,21 @@
 
 <!-- Viewer -->
 <section id="viewer" class="full" hidden>
-  <div class="fullHead">
+  <div class="fullHead viewerHead">
     <button id="viewerClose" class="txt">Đóng</button>
-    <span id="viewerName"></span>
-    <span class="w60"></span>
+    <span id="viewerTitle"><b id="viewerName"></b><small id="viewerSub"></small></span>
+    <button id="viewerAll" class="txt">Tất cả</button>
   </div>
-  <div id="viewerArea"><img id="viewerImg" alt=""></div>
-  <div class="fullFoot">
-    <button id="viewerDelete" class="btn danger">Xóa</button>
-    <button id="viewerShare" class="btn">Lưu / Chia sẻ</button>
+  <div id="slider"></div>
+  <div class="viewerFoot">
+    <button id="viewerShare" class="vbtn">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+      <span>Lưu / Chia sẻ</span>
+    </button>
+    <button id="viewerDelete" class="vbtn danger">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+      <span>Xóa</span>
+    </button>
   </div>
 </section>
 
@@ -147,6 +153,13 @@
     <label class="toggle"><input data-k="showTime" type="checkbox"> Hiện ngày giờ</label>
     <label class="toggle"><input data-k="showGPS" type="checkbox"> Hiện tọa độ GPS</label>
 
+    <h3>Camera</h3>
+    <div class="seg" data-k="camMode">
+      <button data-v="native">Camera của máy</button><button data-v="live">Camera trong app</button>
+    </div>
+    <p class="muted"><b>Camera của máy</b>: mở camera gốc của điện thoại, không phải cấp quyền lại mỗi lần. Khung logo được gắn ngay sau khi chụp.<br>
+      <b>Camera trong app</b>: thấy khung logo ngay lúc ngắm, nhưng iPhone có thể hỏi quyền mỗi lần mở app.</p>
+
     <h3>Lưu file</h3>
     <label class="toggle"><input data-k="autoDownloadPdf" type="checkbox"> Tự tải PDF về máy sau khi tạo</label>
     <label class="toggle"><input data-k="autoDownloadPhoto" type="checkbox"> Tự tải ảnh về máy sau khi chụp</label>
@@ -184,6 +197,7 @@
 <div id="busy" hidden><div class="spin"></div><span id="busyMsg">Đang xử lý…</span></div>
 
 <input id="fileInput" type="file" accept="image/*" hidden>
+<input id="camInput" type="file" accept="image/*" capture="environment" hidden>
 <input id="logoInput" type="file" accept="image/*" hidden>
 
 <script src="pdf.js"></script>
