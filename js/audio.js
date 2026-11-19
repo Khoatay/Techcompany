@@ -5,6 +5,8 @@ window.Sound = (function () {
 
   function ensure() {
     if (!ctx) {
+      // iPhone: phát cả khi gạt nút im lặng (Safari 16.4+)
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
