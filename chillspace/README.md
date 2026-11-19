@@ -16,7 +16,7 @@ cd chillspace && python3 -m http.server 8000      # hoặc: npx serve .
 > Phải mở qua `http://` (không mở thẳng file `index.html`), vì YouTube không cho nhúng video vào trang `file://`.
 > Muốn có link dùng mọi nơi: bật **GitHub Pages** cho repo này (Settings → Pages → Branch), hoặc kéo thả thư mục lên Netlify/Vercel/Cloudflare Pages.
 
-## 10 không gian
+## 16 không gian
 
 | Không gian | Tâm trạng | Âm thanh nền | Đồ vật → công cụ |
 |---|---|---|---|
@@ -30,6 +30,12 @@ cd chillspace && python3 -m http.server 8000      # hoặc: npx serve .
 | 🌧️ Đêm mưa | Đọc sách | mưa, sấm xa | 🕯️ hít thở · 📖 sách · 🍵 trà · 📔 nhật ký |
 | 🏕️ Lửa trại | Tĩnh tâm | lửa tí tách, dế, gió | 🔥 ngắm lửa hít thở · 🌠 điều ước · ⛺ hẹn giờ ngủ · 🎸 guitar |
 | 🚀 Trạm vũ trụ | Coding / deep work | động cơ tàu, sóng não (binaural) | 🛰️ chu kỳ 90 phút · 📋 nhiệm vụ · 📡 log · 👩‍🚀 giãn cơ |
+| 🌸 Vườn Nhật | Thiền, viết | suối, chuông gió, chim | 📜 viết haiku · 🖌️ thư pháp · 🍵 trà xanh · 🧘 thiền 25′ · 🪷 nhật ký · 🎋 hít thở (hoa anh đào rơi) |
+| 🚂 Tàu đêm | Đọc sách, mơ màng | tiếng tàu xình xịch, mưa | 🧳 chặng 30′ · 💻 nhật ký hành trình · 🎫 lịch trình · 🌙 ngủ tới ga (cảnh chạy ngoài cửa sổ, mưa trên kính) |
+| ❄️ Cabin tuyết | Ấm áp | lửa lò sưởi, gió | 🧶 việc nhỏ · 🍫 cacao · 🐕 cún động viên · 🔥 ngắm lửa (tuyết rơi ngoài cửa sổ) |
+| 🐠 Đáy biển | Tập trung sâu | dưới nước, bong bóng | 🐙 việc cần làm · 🪸 lặn 50′ · 🐢 hít thở · 💎 kho ý tưởng (cá bơi, bong bóng) |
+| 🌾 Đồng quê | Bình yên, quê nhà | ếch nhái, dế, gió | 🐃 vận động · 🐓 gà gáy 25′ · 🌾 việc hôm nay · 🍵 trà đá · 🪁 thả diều (đom đóm) |
+| 🏮 Phố Hội | Lãng mạn | sông nước, dế, chuông gió | 🪷 **thả hoa đăng gửi điều ước** · 🏮 đèn sáng 25′ · ☕ cà phê ven sông (đèn trời bay lên) |
 
 Thêm hoặc sửa không gian: chỉnh mảng `SPACES` trong `js/spaces.js` (vị trí đồ vật tính theo % khung cảnh 16:9), vẽ cảnh trong `SCENES`.
 
@@ -50,7 +56,7 @@ Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](su
 Pomodoro (vòng tròn đếm giờ, thông báo, thống kê theo ngày) · Việc cần làm (pháo giấy khi xong) · Ghi chú (tự lưu, tải .txt) ·
 Bút vẽ (màu, tẩy, hoàn tác, tải PNG) · Flashcard (lật thẻ, lặp lại ngắt quãng) · Tủ sách & sách nói (theo dõi số trang) ·
 Nhật ký + cảm xúc · Hít thở (5-5, hộp 4-4-4-4, 4-7-8) · Giãn cơ 7 động tác · Đếm cà phê/nước/trà · Lời động viên ·
-Hẹn giờ tắt nhạc · Bộ trộn 16 âm thanh nền · Trình phát YouTube.
+Hẹn giờ tắt nhạc · Thả hoa đăng (gửi điều ước) · Bộ trộn 21 âm thanh nền · Trình phát YouTube.
 
 Phím tắt: `R` phòng chung · `M` âm thanh · `Y` YouTube · `P` Pomodoro · `T` công cụ · `H` ẩn giao diện · `F` toàn màn hình · `1`–`0` đổi không gian · `Esc` đóng cửa sổ.
 

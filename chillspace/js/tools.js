@@ -333,6 +333,7 @@
     coffee: { icon: '☕', name: 'Cà phê', unit: 'ly', goal: 3, hint: 'Đừng quá 3–4 ly/ngày nhé' },
     water: { icon: '💧', name: 'Uống nước', unit: 'ly', goal: 8, hint: 'Khoảng 8 ly (2 lít) mỗi ngày' },
     tea: { icon: '🍵', name: 'Trà', unit: 'ly', goal: 4, hint: 'Trà ấm giúp thư giãn' },
+    cocoa: { icon: '🍫', name: 'Cacao nóng', unit: 'ly', goal: 2, hint: 'Ấm bụng ngày lạnh' },
   };
   TOOLS.tracker = {
     title: 'Theo dõi', icon: '☕', width: 320, key: (o) => 'tracker:' + (o.kind || 'water'),
@@ -506,6 +507,12 @@
     camp: ['Điều ước của bạn đã được ngôi sao ghi lại ✨', 'Lửa vẫn cháy, bạn cũng vậy.', 'Tĩnh lặng một chút, câu trả lời sẽ đến.'],
     space: ['Houston nhắn: nhiệm vụ đang đi đúng quỹ đạo 🛰️', 'Mặt đất vẫn dõi theo bạn. Tiếp tục nhé!', 'Không trọng lực, nhưng có trọng tâm.'],
     cafe: ['Ly cà phê này là để dành cho người chăm chỉ ☕', 'Viết dở cũng được, miễn là viết.'],
+    zen: ['Mỗi hơi thở là một lần bắt đầu lại.', 'Cá koi bơi ngược dòng mới hoá rồng 🐟', 'Chậm một chút, sâu một chút.'],
+    train: ['Ga tiếp theo: Hoàn thành! 🚉', 'Không cần biết còn bao xa, cứ tiếp tục đi.', 'Ngồi yên một chỗ mà vẫn đi được rất xa.'],
+    cabin: ['Gâu! Bạn làm tốt lắm, nghỉ một chút sưởi ấm nào 🐕', 'Ngoài trời có lạnh, việc vẫn chạy đều.', 'Từng mũi đan nhỏ thành chiếc khăn ấm.'],
+    ocean: ['Càng xuống sâu càng yên – cứ tập trung tiếp nhé 🐡', 'Từng con sóng nhỏ làm nên đại dương.', 'Thở đều, bơi chậm, tới đích.'],
+    village: ['Chiều nay về sớm, mẹ nấu cơm ngon 🍚', 'Lúa chín là nhờ từng ngày chăm.', 'Con diều bay cao nhờ ngược gió 🪁'],
+    hoian: ['Trăng rằm soi đường cho người chăm chỉ 🌕', 'Phố cổ trăm năm vẫn đẹp vì người ta giữ gìn từng ngày.', 'Điều ước của bạn đang trôi về nơi nó cần tới.'],
   };
   TOOLS.cheer = {
     title: 'Lời động viên', icon: '💬', width: 320,
@@ -594,13 +601,36 @@
     },
   };
 
+  TOOLS.lantern = {
+    title: 'Thả hoa đăng', icon: '🪷', width: 340,
+    render(b, { opts }) {
+      const ico = opts.lamp || '🪷';
+      let wishes = store.get('wishes', []);
+      b.innerHTML = `<p class="prompt">${esc(opts.prompt || 'Gửi một điều ước, một nỗi lo hay một lời cảm ơn theo dòng nước…')}</p>
+        <textarea class="notes short" maxlength="140" placeholder="Mình ước…"></textarea>
+        <div class="row"><span class="muted small grow">Viết ra rồi thả đi – nhẹ lòng hơn đấy.</span><button class="btn primary" data-go>${ico} Thả</button></div>
+        <h4>Đã thả</h4><ul class="entries"></ul>`;
+      const ta = $(b, 'textarea');
+      const draw = () => { $(b, '.entries').innerHTML = wishes.slice(0, 20).map((w) => `<li><div class="row small muted"><span>${ico} ${new Date(w.at).toLocaleDateString('vi-VN')}</span></div><div class="pre">${esc(w.text)}</div></li>`).join('') || '<li class="empty">Chưa thả chiếc nào.</li>'; };
+      $(b, '[data-go]').onclick = () => {
+        const t = ta.value.trim(); if (!t) return ta.focus();
+        wishes.unshift({ at: Date.now(), text: t }); store.set('wishes', wishes.slice(0, 100)); ta.value = ''; draw();
+        const el = document.createElement('div'); el.className = 'lantern-fly' + (opts.up ? ' up' : '');
+        el.innerHTML = `<span class="glow"></span><span class="e">${ico}</span><small>${esc(t.slice(0, 40))}</small>`;
+        document.body.append(el); setTimeout(() => el.remove(), 9000);
+        toast('Điều ước đã được gửi đi ✨');
+      };
+      draw();
+    },
+  };
+
   TOOLS.toolbox = {
     title: 'Công cụ', icon: '🧰', width: 400, global: true,
     render(b) { this._b = b; this.refresh(); },
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace();
-      const all = ['room', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'sleep', 'mixer', 'youtube'];
+      const all = ['room', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
         <p class="muted small">Phím tắt: <kbd>M</kbd> âm thanh · <kbd>Y</kbd> YouTube · <kbd>P</kbd> Pomodoro · <kbd>T</kbd> công cụ · <kbd>H</kbd> ẩn giao diện · <kbd>F</kbd> toàn màn hình · <kbd>1</kbd>–<kbd>0</kbd> đổi không gian</p>`;

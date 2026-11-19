@@ -59,8 +59,8 @@ window.Sound = (function () {
   const chain = (...n) => { for (let i = 0; i < n.length - 1; i++) n[i].connect(n[i + 1]); return n[n.length - 1]; };
   const rand = (a, b) => a + Math.random() * (b - a);
 
-  function blip(out, { freq = 3000, type = 'highpass', dur = 0.02, vol = 0.3, Q = 1 }) {
-    const now = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  function blip(out, { freq = 3000, type = 'highpass', dur = 0.02, vol = 0.3, Q = 1, at = 0 }) {
+    const now = ctx.currentTime + at, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     s.buffer = noiseBuffer('white'); f.type = type; f.frequency.value = freq; f.Q.value = Q;
     g.gain.setValueAtTime(vol, now); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     s.connect(f).connect(g).connect(out); s.start(now, Math.random() * 5, dur + 0.05);
@@ -170,6 +170,42 @@ window.Sound = (function () {
       chain(m, gain(t, 0.12), out);
     } },
     { id: 'brown', name: 'Tiếng ồn nâu', icon: '🟤', build(out, t) { chain(noise(t, 'brown'), gain(t, 0.8), out); } },
+    { id: 'stream', name: 'Suối chảy', icon: '🏞️', build(out, t) {
+      const f = filt(t, 'bandpass', 1800, 0.6), g = gain(t, 0.5);
+      chain(noise(t, 'pink'), f, g, out); lfo(t, 0.7, 500, f.frequency); lfo(t, 0.31, 0.12, g.gain);
+      chain(noise(t, 'brown'), filt(t, 'lowpass', 500), gain(t, 0.35), out);
+      t.every(60, () => Math.random() < 0.3 && tone(out, { freq: rand(500, 1400), to: rand(1500, 2600), dur: rand(0.03, 0.07), vol: rand(0.01, 0.035) }));
+    } },
+    { id: 'chime', name: 'Chuông gió', icon: '🎐', build(out, t) {
+      const notes = [1046.5, 1174.7, 1318.5, 1568, 1760, 2093];
+      t.every(500, () => {
+        if (Math.random() > 0.16) return;
+        const n = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) { const f = notes[Math.floor(Math.random() * notes.length)]; tone(out, { freq: f, dur: rand(2, 3.5), vol: rand(0.03, 0.07), at: i * rand(0.1, 0.35), attack: 0.004 }); tone(out, { freq: f * 2.76, dur: 1.2, vol: 0.01, at: i * 0.2 }); }
+      });
+    } },
+    { id: 'train', name: 'Tàu hoả', icon: '🚂', build(out, t) {
+      const g = gain(t, 0.6); chain(noise(t, 'brown'), filt(t, 'lowpass', 260), g, out); lfo(t, 0.23, 0.12, g.gain);
+      chain(noise(t, 'pink'), filt(t, 'bandpass', 2400, 0.8), gain(t, 0.05), out);
+      const clack = (at) => { blip(out, { freq: rand(280, 380), type: 'bandpass', Q: 1.5, dur: 0.07, vol: rand(0.5, 0.8), at }); blip(out, { freq: 1800, type: 'bandpass', Q: 3, dur: 0.015, vol: 0.12, at }); };
+      t.every(1450, () => { clack(0); clack(0.14); clack(0.62); clack(0.76); });
+    } },
+    { id: 'underwater', name: 'Dưới nước', icon: '🫧', build(out, t) {
+      const g = gain(t, 0.7); chain(noise(t, 'brown'), filt(t, 'lowpass', 320), g, out); lfo(t, 0.08, 0.2, g.gain);
+      t.every(120, () => {
+        if (Math.random() > 0.12) return;
+        const n = 1 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < n; i++) { const f = rand(250, 600); tone(out, { freq: f, to: f * rand(2, 3), dur: rand(0.04, 0.09), vol: rand(0.04, 0.1), at: i * rand(0.05, 0.12) }); }
+      });
+    } },
+    { id: 'frogs', name: 'Ếch nhái', icon: '🐸', build(out, t) {
+      const lp = filt(t, 'lowpass', 1100); lp.connect(out);
+      t.every(300, () => {
+        if (Math.random() > 0.22) return;
+        const f = rand(130, 230), k = 3 + Math.floor(Math.random() * 4), sp = rand(0.035, 0.06);
+        for (let i = 0; i < k; i++) tone(lp, { freq: f, to: f * 0.85, dur: sp * 0.8, vol: rand(0.12, 0.22), type: 'square', at: i * sp, attack: 0.003 });
+      });
+    } },
     { id: 'white', name: 'Tiếng ồn trắng', icon: '⚪', build(out, t) { chain(noise(t, 'white'), filt(t, 'lowpass', 9000), gain(t, 0.28), out); } },
   ];
   const byId = Object.fromEntries(SOUNDS.map((s) => [s.id, s]));

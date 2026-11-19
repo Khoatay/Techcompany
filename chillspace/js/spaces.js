@@ -297,6 +297,174 @@
          <rect x="0" y="661" width="1600" height="6" fill="#34405a"/>
          ${(() => { const r = rnd(71), c = ['#22d3ee', '#a3e635', '#f472b6', '#facc15']; let s = ''; for (let i = 0; i < 40; i++) s += `<circle cx="${40 + r() * 1520}" cy="${690 + r() * 190}" r="3" fill="${c[i % 4]}"${i % 3 === 0 ? ` class="tw" style="animation-delay:${(r() * 3).toFixed(1)}s"` : ''}/>`; return s; })()}`
       ),
+
+    /* ===== 6 không gian mới ===== */
+    zen: (p) =>
+      svg(
+        lg(p + 'sky', [[0, '#f5c3d0'], [0.6, '#fbe2dc'], [1, '#fdf0e4']]) +
+          lg(p + 'mt', [[0, '#a996c0'], [1, '#d6cbe0']]) +
+          lg(p + 'pond', [[0, '#9fd3de'], [1, '#5c9fb3']]) +
+          lg(p + 'wood', [[0, '#a2714a'], [1, '#6e4528']]),
+        `<rect width="1600" height="900" fill="url(#${p}sky)"/>
+         <circle cx="1180" cy="215" r="72" fill="#ec6f6f" opacity=".85"/>
+         <path d="M800 570 L1150 250 L1500 570Z" fill="url(#${p}mt)"/>
+         <path d="M1082 312 L1150 250 L1218 312 L1192 298 L1168 320 L1146 296 L1120 322 L1104 302Z" fill="#fff"/>
+         <path d="M0 585 Q 400 505 800 565 T 1600 545 V900 H0Z" fill="#c4d6b0"/>
+         <rect y="610" width="1600" height="290" fill="#b4cca1"/>
+         <ellipse cx="1060" cy="690" rx="340" ry="58" fill="url(#${p}pond)"/>
+         <g class="shimmer" fill="none" stroke="#fff" opacity=".5"><ellipse cx="1000" cy="690" rx="90" ry="10"/><ellipse cx="1150" cy="700" rx="60" ry="7"/><ellipse cx="900" cy="705" rx="40" ry="5"/></g>
+         <g fill="#8d8f94"><rect x="1395" y="650" width="54" height="50"/><rect x="1410" y="560" width="24" height="92"/><rect x="1385" y="518" width="74" height="44" rx="4"/><polygon points="1365,520 1479,520 1422,486"/></g>
+         <rect x="1402" y="528" width="40" height="24" fill="#ffe7a3"/>
+         <g class="sway">${[1510, 1540, 1572].map((x, i) => `<rect x="${x}" y="${120 + i * 40}" width="14" height="${640 - i * 40}" fill="${i % 2 ? '#7fae68' : '#679a54'}"/>${[0, 1, 2, 3, 4].map((k) => `<rect x="${x - 1}" y="${200 + i * 40 + k * 110}" width="16" height="4" fill="#4f7d3e"/>`).join('')}`).join('')}</g>
+         <g fill="none" stroke="#4a2f2a" stroke-linecap="round">
+           <path d="M200 900 C230 700 170 560 260 430 C300 370 360 340 430 300" stroke-width="38"/>
+           <path d="M255 455 C180 385 120 335 50 300" stroke-width="18"/>
+           <path d="M335 362 C420 330 520 298 610 250" stroke-width="14"/>
+           <path d="M262 430 C300 300 280 200 305 110" stroke-width="12"/>
+         </g>
+         ${(() => { const r = rnd(81), c = ['#ffb7c9', '#ffc8d6', '#ffd9e4', '#f7a1ba', '#ffe4ec'], centers = [[50, 290], [140, 235], [250, 175], [305, 100], [410, 255], [520, 225], [610, 238], [380, 320], [190, 320], [470, 300]]; let s = ''; centers.forEach(([cx, cy]) => { for (let i = 0; i < 18; i++) { const a = r() * 6.28, d = r() * 70; s += `<circle cx="${(cx + Math.cos(a) * d).toFixed(0)}" cy="${(cy + Math.sin(a) * d * 0.7).toFixed(0)}" r="${(16 + r() * 22).toFixed(0)}" fill="${c[Math.floor(r() * c.length)]}" opacity=".92"/>`; } }); return s; })()}
+         <rect y="736" width="1600" height="10" fill="#5a3a22"/>
+         <rect y="744" width="1600" height="156" fill="url(#${p}wood)"/>
+         ${[778, 812, 846, 880].map((y) => `<line x1="0" y1="${y}" x2="1600" y2="${y}" stroke="#5a3820" stroke-width="2" opacity=".6"/>`).join('')}`
+      ),
+
+    train: (p) =>
+      svg(
+        lg(p + 'wall', [[0, '#2c2332'], [1, '#18131c']]) +
+          lg(p + 'night', [[0, '#0b1330'], [1, '#26335f']]) +
+          lg(p + 'seat', [[0, '#80283a'], [1, '#4c1520']]) +
+          lg(p + 'table', [[0, '#8f5d38'], [1, '#5e3b21']]) +
+          lg(p + 'glass', [[0, '#ffffff', 0.08], [1, '#ffffff', 0]], 1, 1) +
+          rg(p + 'lamp', [[0, '#ffc979', 0.6], [1, '#ffc979', 0]]) +
+          `<clipPath id="${p}win"><rect x="260" y="110" width="1080" height="460" rx="40"/></clipPath>`,
+        `<rect width="1600" height="900" fill="url(#${p}wall)"/>
+         <rect x="300" y="58" width="1000" height="12" rx="4" fill="#4a3d4f"/>${[340, 560, 780, 1000, 1220].map((x) => `<rect x="${x}" y="58" width="8" height="40" fill="#4a3d4f"/>`).join('')}
+         <g clip-path="url(#${p}win)">
+           <rect x="260" y="110" width="1080" height="460" fill="url(#${p}night)"/>
+           ${stars(45, 260, 110, 1080, 220, 91, 1.3)}
+           <g class="pass slow">${(() => { let d = 'M0 480'; for (let x = 0; x < 3600; x += 300) d += ` Q ${x + 150} ${x % 600 ? 400 : 430} ${x + 300} 480`; return `<path d="${d} V600 H0Z" fill="#17204a"/>`; })()}</g>
+           <g class="pass">${(() => {
+             const r = rnd(97); let base = '';
+             for (let i = 0; i < 10; i++) { const x = r() * 1200, y = 470 + r() * 50; base += `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(1.5 + r() * 2.5).toFixed(1)}" fill="#ffd27a" opacity="${(0.6 + r() * 0.4).toFixed(2)}"/>`; }
+             base += [0, 400, 800].map((x) => `<rect x="${x}" y="380" width="6" height="190" fill="#060918"/><line x1="${x}" y1="392" x2="${x + 400}" y2="400" stroke="#060918" stroke-width="2"/>`).join('');
+             return [0, 1200, 2400].map((o) => `<g transform="translate(${260 + o} 0)">${base}</g>`).join('') + `<rect x="260" y="525" width="3600" height="50" fill="#0b1026"/>`;
+           })()}</g>
+           <rect x="260" y="110" width="1080" height="460" fill="url(#${p}glass)"/>
+         </g>
+         <rect x="260" y="110" width="1080" height="460" rx="40" fill="none" stroke="#3b2f3f" stroke-width="24"/>
+         <rect x="210" y="86" width="60" height="530" rx="18" fill="#8b3a3a"/><rect x="1330" y="86" width="60" height="530" rx="18" fill="#8b3a3a"/>
+         <circle cx="1120" cy="560" r="270" fill="url(#${p}lamp)"/>
+         <rect x="420" y="600" width="760" height="30" rx="8" fill="url(#${p}table)"/>
+         <rect x="780" y="630" width="40" height="270" fill="#2f1d12"/>
+         <rect x="30" y="330" width="230" height="570" rx="44" fill="url(#${p}seat)"/><rect x="50" y="345" width="190" height="90" rx="30" fill="#93364a"/>
+         <rect x="1340" y="330" width="230" height="570" rx="44" fill="url(#${p}seat)"/><rect x="1360" y="345" width="190" height="90" rx="30" fill="#93364a"/>
+         <rect x="1112" y="550" width="16" height="50" fill="#c9b37a"/><path d="M1080 552 L1160 552 L1142 505 L1098 505Z" fill="#ffdb94"/>`
+      ),
+
+    cabin: (p) =>
+      svg(
+        lg(p + 'wall', [[0, '#6b4329'], [1, '#4a2d1b']]) +
+          lg(p + 'sky', [[0, '#12234a'], [1, '#3b5a8d']]) +
+          lg(p + 'floor', [[0, '#3d2617'], [1, '#24160d']]) +
+          lg(p + 'stone', [[0, '#7b7680'], [1, '#55515b']]) +
+          rg(p + 'fire', [[0, '#ffae4a', 0.75], [0.45, '#ff6a1f', 0.25], [1, '#ff6a1f', 0]]),
+        `<rect width="1600" height="900" fill="url(#${p}wall)"/>
+         ${(() => { let s = ''; for (let y = 30; y < 800; y += 46) s += `<line x1="0" y1="${y}" x2="1600" y2="${y}" stroke="#3a2313" stroke-width="5" opacity=".55"/><line x1="0" y1="${y + 6}" x2="1600" y2="${y + 6}" stroke="#8a5a38" stroke-width="2" opacity=".3"/>`; return s; })()}
+         <rect x="110" y="130" width="560" height="400" fill="url(#${p}sky)"/>
+         ${stars(25, 110, 130, 560, 150, 103, 1.2)}
+         <path d="M110 430 Q 260 380 400 420 T 670 400 V530 H110Z" fill="#dfe8f5"/>
+         ${(() => { const r = rnd(107); let s = ''; for (let i = 0; i < 9; i++) { const x = 130 + i * 62 + r() * 20, h = 70 + r() * 70, b = 445 + r() * 30; s += `<path d="M${x} ${b} L${x + h * 0.3} ${b - h} L${x + h * 0.6} ${b}Z" fill="#1f3d3c"/><path d="M${x + h * 0.15} ${b - h * 0.5} L${x + h * 0.3} ${b - h} L${x + h * 0.45} ${b - h * 0.5}Z" fill="#e9f0fa"/>`; } return s; })()}
+         <path d="M110 530 Q 250 505 390 522 T 670 515 V530 H110Z" fill="#fff"/>
+         ${windowFrame(110, 130, 560, 400, '#2e1b0f', 12)}
+         <rect x="88" y="528" width="604" height="24" rx="4" fill="#5a3720"/>
+         <rect x="1180" y="0" width="200" height="320" fill="#5d5862"/>
+         <rect x="1060" y="330" width="440" height="460" rx="8" fill="url(#${p}stone)"/>
+         ${(() => { const r = rnd(109); let s = ''; for (let y = 345; y < 780; y += 42) for (let x = 1070 + ((y / 42) % 2) * 30; x < 1480; x += 70 + r() * 20) s += `<rect x="${x.toFixed(0)}" y="${y}" width="${Math.min(50 + r() * 15, 1492 - x).toFixed(0)}" height="32" rx="8" fill="#8a858f" opacity="${(0.25 + r() * 0.3).toFixed(2)}"/>`; return s; })()}
+         <rect x="1030" y="306" width="500" height="30" rx="5" fill="#4a2e1a"/>
+         <path d="M1150 790 V610 Q1150 525 1280 525 Q1410 525 1410 610 V790Z" fill="#1a0f0a"/>
+         <circle cx="1280" cy="730" r="340" fill="url(#${p}fire)" class="flicker"/>
+         <rect x="1200" y="752" width="160" height="22" rx="10" fill="#5d3a1e" transform="rotate(8 1280 760)"/><rect x="1200" y="752" width="160" height="22" rx="10" fill="#6d4423" transform="rotate(-8 1280 760)"/>
+         <rect y="790" width="1600" height="110" fill="url(#${p}floor)"/>
+         <ellipse cx="720" cy="852" rx="430" ry="40" fill="#8a2f2f"/><ellipse cx="720" cy="852" rx="380" ry="30" fill="none" stroke="#d9a35b" stroke-width="4" stroke-dasharray="14 10"/>
+         <rect x="545" y="515" width="250" height="150" rx="55" fill="#a0523d"/>
+         <rect x="520" y="620" width="300" height="170" rx="40" fill="#b5634b"/>
+         <rect x="500" y="600" width="70" height="190" rx="30" fill="#a0523d"/><rect x="770" y="600" width="70" height="190" rx="30" fill="#a0523d"/>`
+      ),
+
+    ocean: (p) =>
+      svg(
+        lg(p + 'water', [[0, '#0b6c8f'], [0.5, '#064763'], [1, '#03263a']]) +
+          lg(p + 'sand', [[0, '#d8bb83'], [1, '#a88553']]) +
+          lg(p + 'ray', [[0, '#ffffff', 0.35], [1, '#ffffff', 0]]),
+        `<rect width="1600" height="900" fill="url(#${p}water)"/>
+         <g class="rays" fill="url(#${p}ray)"><polygon points="300,0 430,0 640,900 380,900"/><polygon points="760,0 840,0 980,900 820,900"/><polygon points="1180,0 1300,0 1420,900 1200,900"/></g>
+         <path d="M0 700 Q 200 560 420 640 T 820 620 L820 900 H0Z" fill="#05344b" opacity=".8"/>
+         <path d="M1000 690 Q 1250 560 1600 620 V900 H1000Z" fill="#053149" opacity=".8"/>
+         ${[[300, 60, 0], [520, 44, -12], [220, 52, -24], [400, 36, -31]].map(([y, f, d]) => `<g class="swim" style="animation-delay:${d}s"><text x="0" y="${y}" font-size="${f}">🐟</text></g>`).join('')}
+         <g class="swim" style="animation-duration:60s;animation-delay:-8s"><text x="0" y="470" font-size="70">🐠</text></g>
+         <path d="M0 790 Q 400 745 800 772 T 1600 760 V900 H0Z" fill="url(#${p}sand)"/>
+         ${[[110, 520], [160, 580], [205, 540], [1430, 540], [1480, 600], [1530, 520], [1010, 610]].map(([x, top], i) => `<path class="sway" style="animation-delay:${i * 0.6}s" d="M${x} 800 C ${x - 30} ${(800 + top) / 2 + 60} ${x + 30} ${(800 + top) / 2 - 40} ${x} ${top}" fill="none" stroke="${i % 2 ? '#3aa06a' : '#2e8b57'}" stroke-width="14" stroke-linecap="round"/>`).join('')}
+         ${(() => { const r = rnd(113), c = ['#ff7f9e', '#ff9f43', '#f368e0', '#feca57']; let s = ''; for (let i = 0; i < 26; i++) s += `<circle cx="${(880 + r() * 260).toFixed(0)}" cy="${(760 + r() * 40).toFixed(0)}" r="${(8 + r() * 16).toFixed(0)}" fill="${c[i % 4]}" opacity=".85"/>`; return s; })()}
+         <path d="M1180 790 L1170 720 M1170 720 L1150 690 M1170 720 L1195 685 M1180 760 L1210 730" stroke="#ff7f9e" stroke-width="9" stroke-linecap="round"/>`
+      ),
+
+    village: (p) =>
+      svg(
+        lg(p + 'sky', [[0, '#ffa863'], [0.45, '#ffd39a'], [0.8, '#fff1cc']]) +
+          lg(p + 'field', [[0, '#a9cf62'], [1, '#5b9a37']]) +
+          rg(p + 'sun', [[0, '#fff7d6', 0.9], [0.4, '#ffe39a', 0.45], [1, '#ffd08a', 0]]),
+        `<rect width="1600" height="900" fill="url(#${p}sky)"/>
+         <circle cx="800" cy="470" r="320" fill="url(#${p}sun)"/><circle cx="800" cy="470" r="78" fill="#fff4c8"/>
+         <g class="clouds" opacity=".8">${cloud(500, 170, 0.9, 0.7)}${cloud(1500, 120, 0.7, 0.6)}${cloud(2100, 200, 0.8, 0.7)}</g>
+         <line x1="1215" y1="215" x2="1010" y2="700" stroke="#6d4c41" stroke-width="2" opacity=".55"/>
+         ${(() => { const r = rnd(127); let s = ''; for (let x = -20; x < 1640; x += 26 + r() * 30) s += `<circle cx="${x.toFixed(0)}" cy="${(510 + r() * 14).toFixed(0)}" r="${(18 + r() * 26).toFixed(0)}" fill="${r() > 0.5 ? '#4f7a3a' : '#5c8a43'}"/>`; return s; })()}
+         <rect x="140" y="420" width="270" height="125" fill="#ead6ab"/><rect x="250" y="470" width="50" height="75" fill="#6d4c41"/><rect x="170" y="455" width="45" height="38" fill="#8d6e63"/><rect x="335" y="455" width="45" height="38" fill="#8d6e63"/>
+         <polygon points="110,428 440,428 385,355 165,355" fill="#a0432b"/>${[370, 385, 400, 415].map((y) => `<line x1="${110 + (428 - y) * 0.75}" y1="${y}" x2="${440 - (428 - y) * 0.75}" y2="${y}" stroke="#7d3220" stroke-width="2"/>`).join('')}
+         <rect x="1335" y="360" width="46" height="200" fill="#5d4037"/>
+         ${(() => { const r = rnd(131); let s = ''; for (let i = 0; i < 26; i++) s += `<circle cx="${(1358 + (r() - 0.5) * 300).toFixed(0)}" cy="${(320 + (r() - 0.5) * 150).toFixed(0)}" r="${(40 + r() * 45).toFixed(0)}" fill="${r() > 0.5 ? '#3e6b2f' : '#4a7a37'}"/>`; return s; })()}
+         <rect y="530" width="1600" height="370" fill="url(#${p}field)"/>
+         <polygon points="770,530 830,530 1030,900 570,900" fill="#c9a46a" opacity=".9"/>
+         ${(() => { let s = ''; for (let x = -1200; x <= 2800; x += 140) s += `<line x1="800" y1="530" x2="${x}" y2="900" stroke="#c6e07e" stroke-width="2" opacity=".35"/>`; return s; })()}
+         ${[565, 615, 690, 795].map((y) => `<line x1="0" y1="${y}" x2="1600" y2="${y}" stroke="#d8c27a" stroke-width="${2 + (y - 530) / 60}" opacity=".7"/>`).join('')}
+         <rect x="0" y="618" width="770" height="40" fill="#c9eef0" opacity=".25"/><rect x="830" y="618" width="770" height="40" fill="#c9eef0" opacity=".25"/>`
+      ),
+
+    hoian: (p) =>
+      svg(
+        lg(p + 'sky', [[0, '#0c0f2e'], [0.7, '#2b1d50'], [1, '#4b2b5f']]) +
+          lg(p + 'river', [[0, '#1c2150'], [1, '#090c22']]) +
+          rg(p + 'glow', [[0, '#ffcf7a', 0.7], [1, '#ffb347', 0]]) +
+          `<filter id="${p}blur"><feGaussianBlur stdDeviation="10"/></filter>`,
+        `<rect width="1600" height="900" fill="url(#${p}sky)"/>
+         ${stars(50, 0, 0, 1600, 260, 137, 1.3)}
+         ${(() => {
+           const r = rnd(139), walls = ['#f0b84e', '#e6a33a', '#f3c562', '#d9952f']; let s = '', x = -20;
+           while (x < 1620) {
+             const w = 170 + r() * 90, h = 150 + r() * 70, top = 560 - h;
+             s += `<rect x="${x}" y="${top}" width="${w}" height="${h}" fill="${walls[Math.floor(r() * 4)]}"/>`;
+             s += `<polygon points="${x - 14},${top + 4} ${x + w + 14},${top + 4} ${x + w - 20},${top - 48} ${x + 20},${top - 48}" fill="#5b2a1e"/>`;
+             for (let k = 1; k < 4; k++) s += `<line x1="${x - 14 + k * 8}" y1="${top + 4 - k * 13}" x2="${x + w + 14 - k * 8}" y2="${top + 4 - k * 13}" stroke="#3f1c13" stroke-width="2"/>`;
+             s += `<rect x="${x + w * 0.15}" y="${top + h * 0.3}" width="${w * 0.25}" height="${h * 0.35}" fill="#ffd98a" opacity=".85"/><rect x="${x + w * 0.55}" y="${top + h * 0.45}" width="${w * 0.3}" height="${h * 0.55}" fill="#4a2b1a"/>`;
+             x += w + 6;
+           }
+           return s;
+         })()}
+         <rect y="556" width="1600" height="34" fill="#3b2a2a"/>
+         ${(() => {
+           const cols = ['#e53935', '#ff9800', '#ffd54f', '#ab47bc', '#ec407a', '#ff7043']; let s = '', n = 0;
+           [[0, 300, 800, 330, 60], [800, 330, 1600, 290, 55], [150, 230, 1450, 240, 70]].forEach(([x1, y1, x2, y2, sag]) => {
+             s += `<path d="M${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 + sag * 2} ${x2} ${y2}" fill="none" stroke="#2a1a12" stroke-width="2"/>`;
+             for (let i = 1; i < 12; i++) {
+               const t = i / 12, x = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * ((x1 + x2) / 2) + t * t * x2, y = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * ((y1 + y2) / 2 + sag * 2) + t * t * y2, c = cols[n++ % cols.length];
+               s += `<circle cx="${x.toFixed(0)}" cy="${(y + 24).toFixed(0)}" r="40" fill="url(#${p}glow)" opacity=".55"/><line x1="${x.toFixed(0)}" y1="${y.toFixed(0)}" x2="${x.toFixed(0)}" y2="${(y + 8).toFixed(0)}" stroke="#2a1a12" stroke-width="2"/><ellipse cx="${x.toFixed(0)}" cy="${(y + 26).toFixed(0)}" rx="15" ry="19" fill="${c}"${i % 3 === 0 ? ` class="tw" style="animation-delay:${(i * 0.4) % 3}s"` : ''}/><rect x="${(x - 7).toFixed(0)}" y="${(y + 5).toFixed(0)}" width="14" height="4" fill="#3b2a12"/><rect x="${(x - 7).toFixed(0)}" y="${(y + 44).toFixed(0)}" width="14" height="4" fill="#3b2a12"/>`;
+             }
+           });
+           return s;
+         })()}
+         <rect y="590" width="1600" height="310" fill="url(#${p}river)"/>
+         <g filter="url(#${p}blur)" class="shimmer">${(() => { const r = rnd(149), c = ['#ff9800', '#e53935', '#ffd54f', '#ec407a', '#ab47bc']; let s = ''; for (let i = 0; i < 30; i++) s += `<ellipse cx="${(r() * 1600).toFixed(0)}" cy="${(620 + r() * 120).toFixed(0)}" rx="${(14 + r() * 20).toFixed(0)}" ry="${(30 + r() * 30).toFixed(0)}" fill="${c[i % 5]}" opacity="${(0.25 + r() * 0.3).toFixed(2)}"/>`; return s; })()}</g>
+         ${(() => { const r = rnd(151); let s = ''; for (let i = 0; i < 9; i++) { const x = 120 + r() * 1360, y = 770 + r() * 90; if (x > 560 && x < 720) continue; s += `<g class="bobble" style="animation-delay:${(r() * 3).toFixed(1)}s"><circle cx="${x.toFixed(0)}" cy="${(y - 6).toFixed(0)}" r="26" fill="url(#${p}glow)"/><ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="16" ry="6" fill="#f48fb1"/><circle cx="${x.toFixed(0)}" cy="${(y - 9).toFixed(0)}" r="4" fill="#fff3c4"/></g>`; } return s; })()}`
+      ),
   };
 
   /* ---------------- các không gian ---------------- */
@@ -462,6 +630,108 @@
         { e: '📡', x: 60, y: 79, s: 6.5, label: 'Nhật ký phi hành', tool: 'notes', opts: { placeholder: 'Log: ...' } },
         { e: '🎧', x: 72, y: 79, s: 6.5, label: 'Âm thanh tàu', tool: 'mixer' },
         { e: '🧃', x: 84, y: 79, s: 6, label: 'Nước uống', tool: 'tracker', opts: { kind: 'water' } },
+      ],
+    },
+
+    {
+      id: 'zen', name: 'Vườn Nhật', emoji: '🌸', mood: 'Thiền · Viết · Tĩnh lặng', accent: '#f48fb1', fx: 'petals', ink: '#5b2c3d',
+      quote: 'Như cánh hoa rơi – không vội, mà vẫn tới nơi.',
+      sounds: { stream: 0.4, chime: 0.25, birds: 0.12, wind: 0.12 },
+      yt: { q: 'japanese koto zen music', picks: [YT_LOFI] },
+      journal: 'Một khoảnh khắc bình yên hôm nay của bạn là gì?',
+      objects: [
+        { e: '📻', x: 17, y: 80.5, s: 5.5, label: 'Nhạc Nhật – koto, piano', tool: 'youtube' },
+        { e: '📜', x: 25, y: 80, s: 6.5, label: 'Viết haiku / ghi chú', tool: 'notes', opts: { placeholder: 'Ba dòng thôi: 5 – 7 – 5 âm tiết…' } },
+        { e: '🖌️', x: 33, y: 80.5, s: 6, label: 'Thư pháp – vẽ tự do', tool: 'sketch' },
+        { e: '🍵', x: 41, y: 80.5, s: 6, label: 'Trà xanh – đếm ly', tool: 'tracker', opts: { kind: 'tea' } },
+        { e: '🧘', x: 51, y: 77, s: 9, label: 'Thiền & làm 25 phút', tool: 'pomodoro', opts: { preset: [25, 5] } },
+        { e: '🪷', x: 63, y: 75.5, s: 6, label: 'Nhật ký bình yên', tool: 'journal' },
+        { e: '🐟', x: 75, y: 77, s: 5.5, label: 'Cá koi – lời nhắn', tool: 'cheer' },
+        { e: '🎐', x: 88, y: 13, s: 6, label: 'Chuông gió – âm thanh nền', tool: 'mixer' },
+        { e: '🎋', x: 95, y: 58, s: 10, label: 'Hít thở cùng rừng trúc', tool: 'breathing', opts: { pattern: 'calm' } },
+      ],
+    },
+    {
+      id: 'train', name: 'Tàu đêm', emoji: '🚂', mood: 'Đọc sách · Viết · Mơ màng', accent: '#e57373', fx: 'rain', fxClip: [16.25, 12.2, 67.5, 51.1],
+      quote: 'Tàu cứ chạy, mình cứ đọc. Ga tiếp theo còn xa lắm.',
+      sounds: { train: 0.55, rain: 0.2 },
+      yt: { q: 'night train lofi rain', picks: [YT_SLEEP, YT_LOFI] },
+      journal: 'Nếu chuyến tàu này đưa bạn tới bất cứ đâu, bạn muốn tới đâu?',
+      objects: [
+        { e: '🧳', x: 10, y: 62, s: 8, label: 'Mỗi chặng 30 phút', tool: 'pomodoro', opts: { preset: [30, 5] } },
+        { e: '📖', x: 32, y: 63, s: 6.5, label: 'Sách đọc trên tàu', tool: 'library', opts: { tab: 'read' } },
+        { e: '☕', x: 40, y: 63.5, s: 6, label: 'Cà phê toa ăn', tool: 'tracker', opts: { kind: 'coffee' } },
+        { e: '💻', x: 51, y: 61, s: 9, label: 'Nhật ký hành trình', tool: 'notes', opts: { placeholder: 'Hôm nay mình đi qua…' } },
+        { e: '🎫', x: 60, y: 64, s: 5.5, label: 'Lịch trình hôm nay', tool: 'todo', opts: { title: 'Lịch trình hôm nay', reward: '🚉', done: 'Tới ga! 🚉' } },
+        { e: '🎧', x: 66, y: 63.5, s: 5.5, label: 'Nhạc tàu đêm (YouTube)', tool: 'youtube' },
+        { e: '🌙', x: 74, y: 22, s: 6, label: 'Ngủ một giấc tới ga', tool: 'sleep' },
+        { e: '🐈', x: 90, y: 62, s: 7, label: 'Tiếng tàu & mưa', tool: 'mixer' },
+      ],
+    },
+    {
+      id: 'cabin', name: 'Cabin tuyết', emoji: '❄️', mood: 'Ấm áp · Thư thả', accent: '#ff9f5a', fx: 'snow', fxClip: [6.9, 14.4, 35, 44.4],
+      quote: 'Ngoài trời tuyết rơi. Trong này có lửa, có cacao, có bạn.',
+      sounds: { fire: 0.55, wind: 0.35 },
+      yt: { q: 'cozy winter cabin music', picks: [YT_SLEEP] },
+      journal: 'Điều gì khiến bạn thấy ấm lòng gần đây?',
+      objects: [
+        { e: '🕯️', x: 20, y: 56, s: 6, label: 'Nhật ký bên cửa sổ', tool: 'journal' },
+        { e: '🧶', x: 27, y: 84, s: 6.5, label: 'Việc nhỏ hôm nay', tool: 'todo', opts: { title: 'Việc nhỏ hôm nay', reward: '🧦', done: 'Đan xong thêm một chiếc tất! 🧦' } },
+        { e: '📖', x: 41, y: 69, s: 6.5, label: 'Đọc sách trên ghế bành', tool: 'library', opts: { tab: 'read' } },
+        { e: '🍫', x: 55, y: 84, s: 5.5, label: 'Cacao nóng', tool: 'tracker', opts: { kind: 'cocoa' } },
+        { e: '🐕', x: 65, y: 84, s: 8, label: 'Cún sưởi ấm – lời động viên', tool: 'cheer' },
+        { e: '🕰️', x: 72, y: 29.5, s: 6, label: 'Pomodoro 25/5', tool: 'pomodoro', opts: { preset: [25, 5] } },
+        { e: '🔥', x: 80, y: 78, s: 9, label: 'Ngắm lửa – hít thở', tool: 'breathing', opts: { pattern: 'calm' } },
+        { e: '📻', x: 88, y: 29.5, s: 5.5, label: 'Nhạc mùa đông (YouTube)', tool: 'youtube' },
+      ],
+    },
+    {
+      id: 'ocean', name: 'Đáy biển', emoji: '🐠', mood: 'Tập trung sâu · Êm dịu', accent: '#4dd0e1', fx: 'bubbles',
+      quote: 'Lặn thật sâu vào việc. Trên kia ồn ào, dưới này yên lắm.',
+      sounds: { underwater: 0.6, brown: 0.1 },
+      yt: { q: 'underwater ambient music', picks: [YT_LOFI] },
+      journal: 'Hôm nay bạn đã "lặn sâu" vào việc gì?',
+      objects: [
+        { e: '🪼', x: 14, y: 30, s: 7, label: 'Nhạc dưới nước (YouTube)', tool: 'youtube' },
+        { e: '🐡', x: 31, y: 52, s: 6, label: 'Cá nóc – lời nhắn', tool: 'cheer' },
+        { e: '🐢', x: 80, y: 42, s: 9, label: 'Bơi chậm cùng rùa – hít thở', tool: 'breathing', opts: { pattern: 'box' } },
+        { e: '🐙', x: 18, y: 82, s: 8, label: 'Việc cần làm (8 tay cũng xong!)', tool: 'todo', opts: { title: 'Việc cần làm', reward: '🐚' } },
+        { e: '🐚', x: 40, y: 86, s: 5, label: 'Nhật ký dưới biển', tool: 'journal' },
+        { e: '🪸', x: 61, y: 82, s: 8, label: 'Lặn sâu 50 phút', tool: 'pomodoro', opts: { preset: [50, 10] } },
+        { e: '💎', x: 86, y: 84, s: 6, label: 'Kho báu ý tưởng', tool: 'notes', opts: { placeholder: 'Ý tưởng quý như ngọc…' } },
+      ],
+    },
+    {
+      id: 'village', name: 'Đồng quê', emoji: '🌾', mood: 'Bình yên · Quê nhà', accent: '#f6b73c', fx: 'fireflies', fxClip: [0, 58, 100, 42],
+      quote: 'Chiều quê gió mát, việc gì rồi cũng xong.',
+      sounds: { frogs: 0.35, crickets: 0.2, wind: 0.2, birds: 0.12 },
+      yt: { q: 'nhạc quê hương nhẹ nhàng', picks: [] },
+      journal: 'Kỷ niệm tuổi thơ nào chợt hiện về hôm nay?',
+      objects: [
+        { e: '🎋', x: 5, y: 62, s: 10, label: 'Hít thở cùng gió đồng', tool: 'breathing', opts: { pattern: 'calm' } },
+        { e: '🐃', x: 22, y: 73, s: 11, label: 'Ra đồng vận động', tool: 'stretch' },
+        { e: '🐓', x: 31, y: 60, s: 6, label: 'Gà gáy – 25 phút', tool: 'pomodoro', opts: { preset: [25, 5] } },
+        { e: '🌾', x: 45, y: 80, s: 8, label: 'Việc đồng áng hôm nay', tool: 'todo', opts: { title: 'Việc hôm nay', reward: '🌾', done: 'Thêm một bó lúa! 🌾' } },
+        { e: '🍵', x: 57, y: 84, s: 5.5, label: 'Trà đá – nhắc uống nước', tool: 'tracker', opts: { kind: 'water' } },
+        { e: '🐸', x: 68, y: 84, s: 6, label: 'Ếch nhái – âm thanh nền', tool: 'mixer' },
+        { e: '🪁', x: 76, y: 22, s: 7, label: 'Thả diều – lời nhắn', tool: 'cheer' },
+        { e: '📻', x: 85, y: 66, s: 6, label: 'Nhạc quê hương (YouTube)', tool: 'youtube' },
+      ],
+    },
+    {
+      id: 'hoian', name: 'Phố Hội', emoji: '🏮', mood: 'Lãng mạn · Hoài niệm', accent: '#ffb74d', fx: 'lanterns', fxClip: [0, 0, 100, 62],
+      quote: 'Đèn lồng soi phố, dòng sông chở điều ước đi xa.',
+      sounds: { stream: 0.45, crickets: 0.18, cafe: 0.12, chime: 0.12 },
+      yt: { q: 'nhạc acoustic chill Hội An', picks: [YT_LOFI] },
+      journal: 'Bạn muốn gửi điều gì theo dòng sông tối nay?',
+      objects: [
+        { e: '🏮', x: 13, y: 30, s: 7, label: 'Ngắm đèn – hít thở', tool: 'breathing', opts: { pattern: '478' } },
+        { e: '📜', x: 12, y: 58.5, s: 5.5, label: 'Ghi chú', tool: 'notes' },
+        { e: '🪷', x: 40, y: 83, s: 7, label: 'Thả hoa đăng – gửi điều ước', tool: 'lantern' },
+        { e: '🛶', x: 69, y: 79, s: 11, label: 'Nhạc trên sông (YouTube)', tool: 'youtube' },
+        { e: '🏮', x: 86, y: 30, s: 7, label: 'Đèn sáng 25 phút', tool: 'pomodoro', opts: { preset: [25, 5] } },
+        { e: '☕', x: 88, y: 58.5, s: 5.5, label: 'Cà phê ven sông', tool: 'tracker', opts: { kind: 'coffee' } },
+        { e: '🌕', x: 87.5, y: 12, s: 6, label: 'Trăng rằm – lời nhắn', tool: 'cheer' },
       ],
     },
   ];

@@ -413,3 +413,30 @@ code { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.1); pad
   body.in-room .seats { top: 150px; }
   .win[data-tool="room"] { max-height: 52vh; }
 }
+
+/* hoa đăng */
+.lantern-fly { position: fixed; left: 50%; bottom: 14vh; z-index: 40; pointer-events: none; display: flex; flex-direction: column; align-items: center; animation: drift-lamp 9s ease-in-out forwards; }
+.lantern-fly.up { animation-name: rise-lamp; }
+.lantern-fly .e { position: relative; font-size: 44px; filter: drop-shadow(0 0 14px #ffb347); }
+.lantern-fly .glow { position: absolute; top: -30px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, rgba(255,190,90,.55), transparent 70%); animation: tw 1.4s ease-in-out infinite; }
+.lantern-fly small { margin-top: 4px; max-width: 180px; font-size: 11px; text-align: center; color: rgba(255,240,210,.9); text-shadow: 0 1px 6px #000; }
+@keyframes drift-lamp { 0% { opacity: 0; transform: translate(-50%, 30px) scale(.7); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(30vw, -6vh) scale(.45); } }
+@keyframes rise-lamp { 0% { opacity: 0; transform: translate(-50%, 30px) scale(.8); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-30%, -70vh) scale(.35); } }
+/* cảnh nền sáng: chữ đồng hồ tối màu */
+body[data-ink="1"] .clock { color: var(--ink); text-shadow: 0 2px 0 rgba(255,255,255,.45); }
+body[data-ink="1"] .date, body[data-ink="1"] .quote { color: var(--ink); text-shadow: none; }
+/* hoạt ảnh cảnh mới */
+.sway { animation: sway 5s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom center; }
+@keyframes sway { 50% { transform: rotate(4deg); } }
+.swim { animation: swim 38s linear infinite; }
+.swim.r { animation-name: swim-r; animation-duration: 46s; }
+@keyframes swim { from { transform: translateX(1800px); } to { transform: translateX(-300px); } }
+@keyframes swim-r { from { transform: translateX(-300px); } to { transform: translateX(1800px); } }
+.rays { animation: rays 7s ease-in-out infinite; }
+@keyframes rays { 50% { opacity: .45; transform: translateX(30px); } }
+.pass { animation: pass 7s linear infinite; }
+.pass.slow { animation-duration: 22s; }
+@keyframes pass { from { transform: translateX(0); } to { transform: translateX(-1200px); } }
+.bobble { animation: bob 3s ease-in-out infinite; }
+.kite { animation: kite 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes kite { 50% { transform: translate(14px, -10px) rotate(6deg); } }

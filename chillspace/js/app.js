@@ -80,7 +80,13 @@
   /* ---------- Hiệu ứng hạt ---------- */
   const FX = (window.FX = (() => {
     const cv = $('#fx'), g = cv.getContext('2d');
-    let W = 0, H = 0, type = null, parts = [], bursts = [], raf = 0, lastT = 0;
+    let W = 0, H = 0, type = null, clip = null, parts = [], bursts = [], raf = 0, lastT = 0;
+    let X0 = 0, Y0 = 0, RW = 0, RH = 0; // vùng hiệu ứng (cả màn hình hoặc 1 phần cảnh)
+    function region() {
+      if (!clip) { X0 = 0; Y0 = 0; RW = W; RH = H; return; }
+      const r = $('#stage').getBoundingClientRect();
+      X0 = r.left + (clip[0] / 100) * r.width; Y0 = r.top + (clip[1] / 100) * r.height; RW = (clip[2] / 100) * r.width; RH = (clip[3] / 100) * r.height;
+    }
     const R = Math.random;
     function resize() { const d = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); }
     const make = {
@@ -89,9 +95,14 @@
       sparkle: () => ({ x: W * (0.2 + R() * 0.6), y: H * (0.6 + R() * 0.2), r: 1 + R() * 2.5, a: R() * 6.28, s: 1 + R() * 2 }),
       confetti: () => ({ x: R() * W, y: -R() * H, w: 4 + R() * 6, h: 6 + R() * 8, v: 40 + R() * 70, vx: (R() - 0.5) * 30, rot: R() * 6.28, vr: (R() - 0.5) * 4, c: `hsl(${R() * 360},90%,65%)` }),
       embers: () => ({ x: W * (0.44 + R() * 0.12), y: H * (0.8 + R() * 0.1), r: 0.8 + R() * 2, vx: (R() - 0.5) * 30, vy: -30 - R() * 60, life: 0, max: 2 + R() * 3 }),
+      petals: () => ({ x: X0 + R() * RW * 1.2, y: Y0 - R() * RH, s: 4 + R() * 5, vy: 25 + R() * 35, vx: -15 - R() * 30, a: R() * 6.28, va: 1 + R() * 2, c: R() > 0.5 ? '#ffc4d6' : '#ffe0ea' }),
+      snow: () => ({ x: X0 + R() * RW, y: Y0 + R() * RH, r: 0.8 + R() * 2.4, vy: 18 + R() * 40, a: R() * 6.28 }),
+      bubbles: () => ({ x: X0 + R() * RW, y: Y0 + RH + R() * RH, r: 1.5 + R() * 5, vy: 25 + R() * 50, a: R() * 6.28 }),
+      fireflies: () => ({ x: X0 + R() * RW, y: Y0 + RH * (0.45 + R() * 0.55), vx: (R() - 0.5) * 20, vy: (R() - 0.5) * 12, a: R() * 6.28, s: 0.6 + R() * 1.4 }),
+      lanterns: () => ({ x: X0 + R() * RW, y: Y0 + RH + R() * RH * 0.8, r: 3 + R() * 4, vy: 8 + R() * 14, a: R() * 6.28, h: 20 + R() * 25 }),
     };
-    const count = { rain: 260, dust: 45, sparkle: 50, confetti: 45, embers: 45 };
-    function set(t) { type = t; parts = t ? Array.from({ length: count[t] }, make[t]) : []; if (!raf) raf = requestAnimationFrame(loop); }
+    const count = { rain: 260, dust: 45, sparkle: 50, confetti: 45, embers: 45, petals: 40, snow: 140, bubbles: 45, fireflies: 30, lanterns: 22 };
+    function set(t, c) { type = t; clip = c || null; region(); parts = t ? Array.from({ length: count[t] }, make[t]) : []; if (!raf) raf = requestAnimationFrame(loop); }
     function burst(x, y) {
       for (let i = 0; i < 36; i++) { const a = R() * 6.28, sp = 150 + R() * 300; bursts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 150, rot: R() * 6.28, life: 0, c: `hsl(${R() * 360},90%,62%)` }); }
       if (!raf) raf = requestAnimationFrame(loop);
@@ -101,6 +112,7 @@
       const dt = Math.min(0.05, (t - lastT) / 1000 || 0.016); lastT = t;
       g.clearRect(0, 0, W, H);
       if (!document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (clip) { g.save(); g.beginPath(); g.rect(X0, Y0, RW, RH); g.clip(); }
         for (const p of parts) {
           if (type === 'rain') {
             p.y += p.v * dt; p.x -= p.v * 0.12 * dt;
@@ -122,8 +134,35 @@
             p.life += dt; p.x += (p.vx + Math.sin(p.life * 3) * 15) * dt; p.y += p.vy * dt;
             if (p.life > p.max) Object.assign(p, make.embers());
             const o = 1 - p.life / p.max; g.fillStyle = `rgba(255,${140 + o * 80 | 0},60,${o})`; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.28); g.fill();
+          } else if (type === 'petals') {
+            p.a += p.va * dt; p.y += p.vy * dt; p.x += (p.vx + Math.sin(p.a) * 25) * dt;
+            if (p.y > Y0 + RH + 10 || p.x < X0 - 20) Object.assign(p, make.petals(), { y: Y0 - 10 });
+            g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.scale(1, Math.abs(Math.cos(p.a)) * 0.6 + 0.4); g.fillStyle = p.c; g.globalAlpha = 0.9;
+            g.beginPath(); g.ellipse(0, 0, p.s, p.s * 0.6, 0, 0, 6.28); g.fill(); g.restore();
+          } else if (type === 'snow') {
+            p.a += dt; p.y += p.vy * dt; p.x += Math.sin(p.a + p.r) * 12 * dt;
+            if (p.y > Y0 + RH + 5) { p.y = Y0 - 5; p.x = X0 + R() * RW; }
+            g.fillStyle = `rgba(255,255,255,${0.5 + p.r / 6})`; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.28); g.fill();
+          } else if (type === 'bubbles') {
+            p.a += dt * 2; p.y -= p.vy * dt; p.x += Math.sin(p.a) * 10 * dt;
+            if (p.y < Y0 - 10) Object.assign(p, make.bubbles(), { y: Y0 + RH + 10 });
+            g.strokeStyle = 'rgba(220,245,255,.55)'; g.lineWidth = 1.2; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.28); g.stroke();
+            g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.25, 0, 6.28); g.fill();
+          } else if (type === 'fireflies') {
+            p.a += dt * p.s; p.x += (p.vx + Math.sin(p.a * 1.3) * 10) * dt; p.y += (p.vy + Math.cos(p.a) * 8) * dt;
+            if (p.x < X0 || p.x > X0 + RW || p.y < Y0 || p.y > Y0 + RH) Object.assign(p, make.fireflies());
+            const o = Math.max(0, Math.sin(p.a * 2)); const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, 9);
+            gr.addColorStop(0, `rgba(230,255,140,${o})`); gr.addColorStop(1, 'rgba(230,255,140,0)'); g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, 9, 0, 6.28); g.fill();
+          } else if (type === 'lanterns') {
+            p.a += dt; p.y -= p.vy * dt; p.x += Math.sin(p.a * 0.5) * 6 * dt;
+            if (p.y < Y0 - 20) Object.assign(p, make.lanterns(), { y: Y0 + RH + 20 });
+            const fade = Math.min(1, (p.y - Y0) / (RH * 0.4)), fl = 0.8 + Math.sin(p.a * 6) * 0.2;
+            const gr = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.h); gr.addColorStop(0, `rgba(255,190,90,${0.5 * fade * fl})`); gr.addColorStop(1, 'rgba(255,150,60,0)');
+            g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, p.h, 0, 6.28); g.fill();
+            g.fillStyle = `rgba(255,214,140,${0.95 * fade})`; g.beginPath(); g.roundRect ? g.roundRect(p.x - p.r * 0.8, p.y - p.r, p.r * 1.6, p.r * 2, p.r * 0.4) : g.rect(p.x - p.r * 0.8, p.y - p.r, p.r * 1.6, p.r * 2); g.fill();
           }
         }
+        if (clip) g.restore();
       }
       bursts = bursts.filter((b) => (b.life += dt) < 1.6);
       for (const b of bursts) {
@@ -132,7 +171,7 @@
       }
       if (type || bursts.length) raf = requestAnimationFrame(loop);
     }
-    addEventListener('resize', () => { resize(); if (type) set(type); });
+    addEventListener('resize', () => { resize(); if (type) set(type, clip); });
     resize();
     return { set, burst };
   })());
@@ -148,6 +187,8 @@
     store.set('space', id);
     document.documentElement.style.setProperty('--accent', space.accent);
     document.body.dataset.space = space.id;
+    document.body.dataset.ink = space.ink ? '1' : '';
+    if (space.ink) document.documentElement.style.setProperty('--ink', space.ink);
     const stage = $('#stage');
     stage.classList.add('fade');
     setTimeout(() => {
@@ -155,7 +196,7 @@
       renderObjects();
       stage.classList.remove('fade');
     }, first ? 0 : 280);
-    FX.set(space.fx);
+    FX.set(space.fx, space.fxClip);
     $('#spaceMood').textContent = `${space.emoji} ${space.name} · ${space.mood}`;
     $('#quote').textContent = space.quote;
     $$('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
