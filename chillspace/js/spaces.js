@@ -465,6 +465,90 @@
          <g filter="url(#${p}blur)" class="shimmer">${(() => { const r = rnd(149), c = ['#ff9800', '#e53935', '#ffd54f', '#ec407a', '#ab47bc']; let s = ''; for (let i = 0; i < 30; i++) s += `<ellipse cx="${(r() * 1600).toFixed(0)}" cy="${(620 + r() * 120).toFixed(0)}" rx="${(14 + r() * 20).toFixed(0)}" ry="${(30 + r() * 30).toFixed(0)}" fill="${c[i % 5]}" opacity="${(0.25 + r() * 0.3).toFixed(2)}"/>`; return s; })()}</g>
          ${(() => { const r = rnd(151); let s = ''; for (let i = 0; i < 9; i++) { const x = 120 + r() * 1360, y = 770 + r() * 90; if (x > 560 && x < 720) continue; s += `<g class="bobble" style="animation-delay:${(r() * 3).toFixed(1)}s"><circle cx="${x.toFixed(0)}" cy="${(y - 6).toFixed(0)}" r="26" fill="url(#${p}glow)"/><ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="16" ry="6" fill="#f48fb1"/><circle cx="${x.toFixed(0)}" cy="${(y - 9).toFixed(0)}" r="4" fill="#fff3c4"/></g>`; } return s; })()}`
       ),
+
+    /* ===== Quầy cửa khẩu (không gian riêng) ===== */
+    border: (p) =>
+      svg(
+        lg(p + 'wall', [[0, '#1b2738'], [1, '#2a3b50']]) +
+          lg(p + 'sky', [[0, '#2a2d5c'], [0.55, '#b9647a'], [1, '#f4b26b']]) +
+          lg(p + 'floor', [[0, '#3a4658'], [1, '#232c3a']]) +
+          lg(p + 'counter', [[0, '#3b5068'], [1, '#203046']]) +
+          rg(p + 'glow', [[0, '#9fd8ff', 0.25], [1, '#9fd8ff', 0]]),
+        `<rect width="1600" height="900" fill="url(#${p}wall)"/>
+         <rect x="640" y="90" width="920" height="470" fill="url(#${p}sky)"/>
+         ${stars(25, 640, 90, 920, 120, 171, 1.1)}
+         <circle cx="1250" cy="470" r="46" fill="#ffd49a" opacity=".9"/>
+         <path d="M640 470 L760 450 L820 462 L900 440 L980 458 L1080 446 L1180 462 L1300 448 L1420 460 L1560 450 V560 H640Z" fill="#3b3550" opacity=".8"/>
+         <rect x="640" y="478" width="920" height="82" fill="#2a2e3a"/>
+         <rect x="640" y="505" width="920" height="20" fill="#1a1d26"/>
+         ${(() => { let s = ''; for (let x = 660; x < 1560; x += 60) s += `<rect x="${x}" y="513" width="30" height="3" fill="#f1f1f1" opacity=".7"/>`; for (let x = 650; x < 1560; x += 40) s += `<circle cx="${x}" cy="530" r="2.5" fill="${x % 80 ? '#7dd3fc' : '#fbbf24'}" class="tw" style="animation-delay:${((x / 40) % 6) * 0.3}s"/>`; return s; })()}
+         <rect x="1440" y="330" width="22" height="150" fill="#4a5568"/><rect x="1414" y="300" width="74" height="36" rx="6" fill="#4a5568"/><rect x="1420" y="306" width="62" height="20" fill="#9fd8ff" opacity=".85"/>
+         <g class="takeoff"><g fill="#eef2f8"><ellipse cx="0" cy="0" rx="62" ry="9"/><polygon points="-12,2 22,2 -6,34 -22,34"/><polygon points="-12,-2 22,-2 -6,-30 -20,-30" opacity=".75"/><polygon points="-62,-2 -46,-2 -58,-24 -66,-24"/></g><circle cx="48" cy="-2" r="3" fill="#9fd8ff"/></g>
+         ${[870, 1100, 1330].map((x) => `<rect x="${x - 5}" y="90" width="10" height="470" fill="#0f1724"/>`).join('')}
+         <rect x="640" y="90" width="920" height="470" fill="none" stroke="#0f1724" stroke-width="16"/>
+         <rect x="70" y="120" width="500" height="250" rx="10" fill="#0b0f17" stroke="#33415a" stroke-width="4"/>
+         <g font-family="ui-monospace, 'Courier New', monospace" font-weight="700">
+           <text x="95" y="160" font-size="22" fill="#fbbf24">✈ KHỞI HÀNH · DEPARTURES</text>
+           ${[['SEOUL', '18:40', 'ĐÚNG GIỜ'], ['TOKYO', '19:05', 'ĐÚNG GIỜ'], ['BANGKOK', '19:30', 'LÊN TÀU'], ['SINGAPORE', '20:10', 'ĐÚNG GIỜ'], ['SYDNEY', '21:45', 'ĐÚNG GIỜ']].map(([c, t, st], i) => `<text x="95" y="${200 + i * 34}" font-size="20" fill="#fde68a">${c}</text><text x="330" y="${200 + i * 34}" font-size="20" fill="#fde68a">${t}</text><text x="420" y="${200 + i * 34}" font-size="16" fill="${st === 'LÊN TÀU' ? '#4ade80' : '#93c5fd'}"${st === 'LÊN TÀU' ? ' class="tw"' : ''}>${st}</text>`).join('')}
+         </g>
+         <rect y="640" width="1600" height="260" fill="url(#${p}floor)"/>
+         <circle cx="800" cy="560" r="420" fill="url(#${p}glow)"/>
+         <rect x="250" y="360" width="1100" height="238" fill="#bfe3ff" opacity=".06" stroke="#cfe8ff" stroke-opacity=".25" stroke-width="3"/>
+         <rect x="555" y="360" width="6" height="238" fill="#cfe8ff" opacity=".2"/><rect x="1040" y="360" width="6" height="238" fill="#cfe8ff" opacity=".2"/>
+         <rect x="160" y="596" width="1280" height="26" rx="6" fill="#d3dce8"/>
+         <rect x="180" y="622" width="1240" height="278" fill="url(#${p}counter)"/>
+         <rect x="560" y="690" width="480" height="62" rx="10" fill="#14202f" stroke="#38bdf8" stroke-opacity=".5" stroke-width="2"/>
+         <text x="800" y="730" text-anchor="middle" font-family="'Be Vietnam Pro',sans-serif" font-size="26" font-weight="700" fill="#e0f2fe" letter-spacing="3">NHẬP CẢNH · IMMIGRATION</text>`
+      ),
+
+    /* ===== Bàn trader ===== */
+    trader: (p) =>
+      svg(
+        lg(p + 'wall', [[0, '#0a0e1c'], [1, '#121a2e']]) +
+          lg(p + 'sky', [[0, '#070b1c'], [1, '#1e1b4b']]) +
+          lg(p + 'scr', [[0, '#0b1426'], [1, '#070d1a']]) +
+          rg(p + 'glow', [[0, '#22c55e', 0.18], [1, '#22c55e', 0]]),
+        `<rect width="1600" height="900" fill="url(#${p}wall)"/>
+         <rect x="100" y="60" width="1400" height="360" fill="url(#${p}sky)"/>
+         ${stars(30, 100, 60, 1400, 120, 181, 1)}
+         ${(() => {
+           const r = rnd(191), neon = ['#a78bfa', '#22d3ee', '#f472b6', '#facc15']; let s = '', x = 100;
+           while (x < 1500) {
+             const w = 50 + r() * 80, hh = 90 + r() * 200, top = 420 - hh;
+             s += `<rect x="${x}" y="${top}" width="${Math.min(w, 1500 - x)}" height="${hh}" fill="${r() > 0.5 ? '#0d1326' : '#111a33'}"/>`;
+             if (r() > 0.7) s += `<rect x="${x}" y="${top}" width="${Math.min(w, 1500 - x)}" height="3" fill="${neon[Math.floor(r() * 4)]}" opacity=".8"/>`;
+             for (let wy = top + 12; wy < 410; wy += 16) for (let wx = x + 7; wx < x + w - 8 && wx < 1490; wx += 12) if (r() > 0.7) s += `<rect x="${wx}" y="${wy}" width="5" height="7" fill="${r() > 0.85 ? '#7dd3fc' : '#fcd38a'}" opacity="${(0.4 + r() * 0.5).toFixed(2)}"/>`;
+             x += w + 4;
+           }
+           return s;
+         })()}
+         <rect x="100" y="60" width="1400" height="360" fill="none" stroke="#05070f" stroke-width="16"/>
+         <circle cx="800" cy="480" r="520" fill="url(#${p}glow)"/>
+         ${(() => {
+           const screen = (x, y, w, h, kind, seed) => {
+             const r = rnd(seed); let s = `<rect x="${x - 10}" y="${y - 10}" width="${w + 20}" height="${h + 20}" rx="10" fill="#05070d" stroke="#273349" stroke-width="3"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${p}scr)"/>`;
+             for (let gy = y + h / 4; gy < y + h; gy += h / 4) s += `<line x1="${x}" y1="${gy}" x2="${x + w}" y2="${gy}" stroke="#1e2a44" stroke-width="1"/>`;
+             if (kind === 'candles') {
+               let v = h / 2, cw = 12, pts = [];
+               for (let i = 0, cx = x + 10; cx < x + w - 10; i++, cx += cw + 4) { const o = v; v += (r() - 0.45) * h * 0.12; v = Math.max(h * 0.12, Math.min(h * 0.88, v)); const c = v, hi = Math.min(o, c) - r() * h * 0.06, lo = Math.max(o, c) + r() * h * 0.06, up = c < o; s += `<line x1="${cx + cw / 2}" y1="${y + hi}" x2="${cx + cw / 2}" y2="${y + lo}" stroke="${up ? '#22c55e' : '#ef4444'}" stroke-width="2"/><rect x="${cx}" y="${y + Math.min(o, c)}" width="${cw}" height="${Math.max(2, Math.abs(c - o))}" fill="${up ? '#22c55e' : '#ef4444'}"/>`; pts.push(`${cx + cw / 2},${y + c}`); }
+               s += `<polyline points="${pts.join(' ')}" fill="none" stroke="#facc15" stroke-width="2" opacity=".7"/>`;
+             } else if (kind === 'line') {
+               let v = h * 0.6, pts = [];
+               for (let cx = x; cx <= x + w; cx += 10) { v += (r() - 0.48) * 14; v = Math.max(15, Math.min(h - 15, v)); pts.push(`${cx},${y + v}`); }
+               s += `<polygon points="${x},${y + h} ${pts.join(' ')} ${x + w},${y + h}" fill="#22d3ee" opacity=".12"/><polyline points="${pts.join(' ')}" fill="none" stroke="#22d3ee" stroke-width="2.5"/>`;
+             } else {
+               for (let i = 0; i < 10; i++) { const bw = 20 + r() * (w / 2 - 30), yy = y + 12 + i * ((h - 20) / 10); s += `<rect x="${x + w / 2 - bw}" y="${yy}" width="${bw}" height="${(h - 20) / 10 - 4}" fill="#22c55e" opacity="${(0.25 + r() * 0.5).toFixed(2)}"/><rect x="${x + w / 2}" y="${yy}" width="${20 + r() * (w / 2 - 30)}" height="${(h - 20) / 10 - 4}" fill="#ef4444" opacity="${(0.25 + r() * 0.5).toFixed(2)}"/>`; }
+             }
+             return s;
+           };
+           return screen(255, 395, 340, 205, 'line', 201) + screen(640, 345, 320, 255, 'candles', 203) + screen(1005, 395, 340, 205, 'book', 207);
+         })()}
+         ${[425, 800, 1175].map((x) => `<rect x="${x - 12}" y="600" width="24" height="40" fill="#1b2232"/>`).join('')}
+         <rect x="120" y="640" width="1360" height="26" rx="6" fill="#1f2533"/>
+         <line x1="130" y1="668" x2="1470" y2="668" stroke="#22c55e" stroke-width="3" opacity=".55"/>
+         <rect x="160" y="666" width="22" height="234" fill="#151a26"/><rect x="1418" y="666" width="22" height="234" fill="#151a26"/>
+         <rect x="640" y="622" width="300" height="16" rx="4" fill="#2b3346"/><rect x="975" y="624" width="34" height="14" rx="7" fill="#2b3346"/>`
+      ),
   };
 
   /* ---------------- các không gian ---------------- */
@@ -735,5 +819,46 @@
       ],
     },
   ];
+  window.SPACES.unshift(
+    {
+      id: 'border', name: 'Quầy cửa khẩu', emoji: '🛂', mood: 'Không gian của tôi · Lưu trú', accent: '#38bdf8', fx: null,
+      quote: 'Đúng từng ngày, chuẩn từng con dấu.',
+      sounds: { airport: 0.35, brown: 0.12 },
+      yt: { q: 'lofi music for work', picks: [YT_LOFI] },
+      journal: 'Ca trực hôm nay thế nào?',
+      objects: [
+        { e: '🌏', x: 15.5, y: 46, s: 7, label: 'Giờ các nước', tool: 'clocks' },
+        { e: '⏱️', x: 20, y: 62.5, s: 6, label: 'Pomodoro ca trực', tool: 'pomodoro', opts: { preset: [50, 10] } },
+        { e: '☕', x: 28, y: 63, s: 6, label: 'Cà phê ca trực', tool: 'tracker', opts: { kind: 'coffee' } },
+        { e: '📅', x: 37, y: 62, s: 7, label: 'Lịch âm dương', tool: 'calendar' },
+        { e: '🛂', x: 50, y: 59.5, s: 11, label: 'Tính ngày lưu trú', tool: 'stay' },
+        { e: '📕', x: 61, y: 63, s: 6, label: 'Kiểm tra ngày đã ở', tool: 'stay', opts: { tab: 'check' } },
+        { e: '📌', x: 68, y: 63, s: 5.5, label: 'Danh sách theo dõi hạn', tool: 'stay', opts: { tab: 'list' } },
+        { e: '📝', x: 75, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
+        { e: '🎧', x: 83, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
+      ],
+    },
+    {
+      id: 'trader', name: 'Bàn trader', emoji: '📈', mood: 'Giao dịch · Kỷ luật', accent: '#22c55e', fx: null,
+      quote: 'Kế hoạch giao dịch, giao dịch theo kế hoạch.',
+      sounds: { brown: 0.25, rain: 0.15, typing: 0.08 },
+      yt: { q: 'trading focus music', picks: [YT_SYNTH, YT_LOFI] },
+      journal: 'Hôm nay mình đã giữ kỷ luật thế nào?',
+      objects: [
+        { e: '🌏', x: 26.5, y: 53, s: 6, label: 'Phiên giao dịch & giờ thế giới', tool: 'clocks', opts: { mode: 'trader' } },
+        { e: '📈', x: 50, y: 52, s: 7, label: 'Biểu đồ TradingView', tool: 'chart' },
+        { e: '📰', x: 73.5, y: 53, s: 6, label: 'Tin tức & lịch kinh tế', tool: 'tlinks' },
+        { e: '🐂', x: 9, y: 77, s: 11, label: 'Lời nhắc kỷ luật', tool: 'cheer' },
+        { e: '⏱️', x: 22, y: 68.5, s: 5.5, label: 'Phiên tập trung 50/10', tool: 'pomodoro', opts: { preset: [50, 10] } },
+        { e: '📒', x: 29, y: 68.5, s: 6, label: 'Nhật ký giao dịch', tool: 'tjournal' },
+        { e: '🧮', x: 36, y: 68.5, s: 6, label: 'Tính khối lượng lệnh', tool: 'possize' },
+        { e: '✅', x: 64, y: 68.5, s: 5.5, label: 'Checklist trước khi vào lệnh', tool: 'checklist' },
+        { e: '☕', x: 71, y: 68.5, s: 6, label: 'Cà phê', tool: 'tracker', opts: { kind: 'coffee' } },
+        { e: '📅', x: 78, y: 68.5, s: 5.5, label: 'Lịch', tool: 'calendar' },
+        { e: '🎧', x: 85, y: 68.5, s: 5.5, label: 'Nhạc / YouTube', tool: 'youtube' },
+        { e: '🐻', x: 92, y: 77, s: 10, label: 'Bình tĩnh – hít thở trước khi vào lệnh', tool: 'breathing', opts: { pattern: 'box' } },
+      ],
+    }
+  );
   window.SCENES = SCENES;
 })();

@@ -507,6 +507,8 @@
     camp: ['Điều ước của bạn đã được ngôi sao ghi lại ✨', 'Lửa vẫn cháy, bạn cũng vậy.', 'Tĩnh lặng một chút, câu trả lời sẽ đến.'],
     space: ['Houston nhắn: nhiệm vụ đang đi đúng quỹ đạo 🛰️', 'Mặt đất vẫn dõi theo bạn. Tiếp tục nhé!', 'Không trọng lực, nhưng có trọng tâm.'],
     cafe: ['Ly cà phê này là để dành cho người chăm chỉ ☕', 'Viết dở cũng được, miễn là viết.'],
+    trader: ['Kế hoạch giao dịch, giao dịch theo kế hoạch.', 'Cắt lỗ sớm, để lãi chạy.', 'Không vào lệnh cũng là một vị thế.', 'Thị trường luôn còn đó, vốn thì không – bảo toàn vốn trước.', 'Một lệnh thua không định nghĩa bạn.', 'Thua 2 lệnh liên tiếp? Đứng dậy, đi bộ 10 phút.', 'Đừng gỡ – hãy nghỉ.', 'Kiên nhẫn chờ điểm vào đẹp.'],
+    border: ['Ca trực vui vẻ! Nhớ uống nước nhé 💧', 'Mỗi con dấu là một hành trình bắt đầu ✈️', 'Cẩn thận từng ngày – đúng từng con số.', 'Nghỉ mắt 20 giây, nhìn ra đường băng nào.', 'Hết ca rồi thì về nghỉ ngơi thật tốt nhé.'],
     zen: ['Mỗi hơi thở là một lần bắt đầu lại.', 'Cá koi bơi ngược dòng mới hoá rồng 🐟', 'Chậm một chút, sâu một chút.'],
     train: ['Ga tiếp theo: Hoàn thành! 🚉', 'Không cần biết còn bao xa, cứ tiếp tục đi.', 'Ngồi yên một chỗ mà vẫn đi được rất xa.'],
     cabin: ['Gâu! Bạn làm tốt lắm, nghỉ một chút sưởi ấm nào 🐕', 'Ngoài trời có lạnh, việc vẫn chạy đều.', 'Từng mũi đan nhỏ thành chiếc khăn ấm.'],
@@ -630,7 +632,7 @@
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace();
-      const all = ['room', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
+      const all = ['room', 'stay', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
         <p class="muted small">Phím tắt: <kbd>M</kbd> âm thanh · <kbd>Y</kbd> YouTube · <kbd>P</kbd> Pomodoro · <kbd>T</kbd> công cụ · <kbd>H</kbd> ẩn giao diện · <kbd>F</kbd> toàn màn hình · <kbd>1</kbd>–<kbd>0</kbd> đổi không gian</p>`;

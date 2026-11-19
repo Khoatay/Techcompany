@@ -238,7 +238,8 @@
     const d = new Date(), h = d.getHours();
     $('#clock').textContent = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     const hi = h < 5 ? 'Khuya rồi, nhớ nghỉ ngơi nhé' : h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Buổi trưa vui vẻ' : h < 18 ? 'Chào buổi chiều' : h < 22 ? 'Buổi tối thư thả' : 'Khuya rồi, nhớ nghỉ ngơi nhé';
-    $('#date').textContent = `${hi} · ${d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+    let lun = ''; try { const l = Lunar.fromSolar(d.getDate(), d.getMonth() + 1, d.getFullYear()); lun = ` · ${l.day}/${l.month}${l.leap ? ' nhuận' : ''} âm lịch`; } catch (e) {}
+    $('#date').textContent = `${hi} · ${d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}${lun}`;
   }
   clock(); setInterval(clock, 5000);
 

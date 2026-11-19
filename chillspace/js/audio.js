@@ -206,6 +206,16 @@ window.Sound = (function () {
         for (let i = 0; i < k; i++) tone(lp, { freq: f, to: f * 0.85, dur: sp * 0.8, vol: rand(0.12, 0.22), type: 'square', at: i * sp, attack: 0.003 });
       });
     } },
+    { id: 'airport', name: 'Sảnh sân bay', icon: '✈️', build(out, t) {
+      const f = filt(t, 'bandpass', 650, 0.7), g = gain(t, 0.4);
+      chain(noise(t, 'pink'), f, g, out); lfo(t, 0.17, 0.1, g.gain); lfo(t, 2.3, 140, f.frequency);
+      chain(noise(t, 'brown'), filt(t, 'lowpass', 180), gain(t, 0.25), out);
+      const jet = gain(t, 0.0001); chain(noise(t, 'brown'), filt(t, 'lowpass', 300), jet, out);
+      t.every(1000, () => {
+        if (Math.random() < 0.012) { tone(out, { freq: 659.3, dur: 1.6, vol: 0.06 }); tone(out, { freq: 523.3, dur: 2, vol: 0.06, at: 0.55 }); }
+        if (Math.random() < 0.02) swell(jet, 0.9, 4, 7);
+      });
+    } },
     { id: 'white', name: 'Tiếng ồn trắng', icon: '⚪', build(out, t) { chain(noise(t, 'white'), filt(t, 'lowpass', 9000), gain(t, 0.28), out); } },
   ];
   const byId = Object.fromEntries(SOUNDS.map((s) => [s.id, s]));
