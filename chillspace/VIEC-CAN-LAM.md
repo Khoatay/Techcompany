@@ -14,7 +14,6 @@ Trên máy tính làm sẽ nhanh hơn điện thoại (dễ copy/dán, mở đư
 
 ## Immigration space
 - [x] Quy ước: ngày nhập cảnh là **ngày thứ 1** (đã xác nhận)
-- [ ] Mục 3 trong yêu cầu sửa (bị bỏ trống) – bổ sung
 - [ ] Chuyến bay: đăng ký AeroDataBox trên RapidAPI (gói Basic miễn phí), dán khoá vào ✈️ → ⚙️, kiểm tra với lịch thật ở Cam Ranh
 - [ ] Sau này: chuyển khoá API lên máy chủ Supabase để nhiều người dùng chung, không ai phải tự đăng ký
 
