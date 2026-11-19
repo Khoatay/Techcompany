@@ -310,7 +310,10 @@ canvas.sketch { width: 100%; aspect-ratio: 16/10; border-radius: 12px; touch-act
 body.zen .topbar, body.zen .dock, body.zen .quickbar { opacity: 0; pointer-events: none; }
 body.zen .dock { transform: translate(-50%, 20px); }
 body.zen #windows .win:not(.top) { opacity: .0; pointer-events: none; }
-body.zen .topbar:hover { opacity: 1; pointer-events: auto; }
+.zen-exit { display: none; position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 80; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 15px; opacity: .55; transition: opacity .2s; }
+.zen-exit span { font-size: 13px; font-weight: 600; }
+.zen-exit:hover, .zen-exit:focus-visible { opacity: 1; }
+body.zen .zen-exit { display: flex; }
 
 /* ---------- điện thoại ---------- */
 @media (max-width: 720px) {
@@ -560,3 +563,9 @@ table.quick tr { cursor: pointer; }
 .fl-st { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.08); white-space: nowrap; }
 .fl-st.done { color: #94a3b8; } .fl-st.soon { background: #fbbf24; color: #1c1300; } .fl-st.air { color: #7dd3fc; } .fl-st.late { color: #fbbf24; } .fl-st.cancel { background: rgba(239,68,68,.25); color: #fca5a5; } .fl-st.plan { color: #e2e8f0; }
 .fl-list li.next .fl-st { background: #38bdf8; color: #04243a; }
+
+/* điện thoại xoay ngang: màn hình thấp */
+@media (max-height: 500px) {
+  .hero { top: 58px; } .clock { font-size: 52px; }
+  .hero .date, .hero .quote { display: none; }
+}

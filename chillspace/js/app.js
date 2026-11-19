@@ -222,10 +222,23 @@
 
   /* ---------- Thanh trên ---------- */
   document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { Sound.init(); WM.toggle(b.dataset.open); }));
-  const zen = () => document.body.classList.toggle('zen');
-  $('#zenBtn').onclick = zen;
-  const fs = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); };
+  const zen = (on) => { const v = document.body.classList.toggle('zen', typeof on === 'boolean' ? on : undefined); if (v) toast('Bấm 👁️ góc dưới bên phải (hoặc phím Esc) để hiện lại giao diện', 3500); };
+  $('#zenBtn').onclick = () => zen(true);
+  $('#zenExit').onclick = () => zen(false);
+  // Toàn màn hình: hỗ trợ cả Safari (webkit). Máy không hỗ trợ (iPhone) thì ẩn nút.
+  const D = document, EL = D.documentElement;
+  const fsEl = () => D.fullscreenElement || D.webkitFullscreenElement;
+  const fsCan = !!(EL.requestFullscreen || EL.webkitRequestFullscreen);
+  const fs = () => {
+    try {
+      if (fsEl()) (D.exitFullscreen || D.webkitExitFullscreen).call(D);
+      else { const r = (EL.requestFullscreen || EL.webkitRequestFullscreen).call(EL); if (r && r.catch) r.catch(() => toast('Trình duyệt không cho bật toàn màn hình')); }
+    } catch (e) { toast('Trình duyệt không hỗ trợ toàn màn hình'); }
+  };
+  const fsSync = () => { const on = !!fsEl(); $('#fsBtn').textContent = on ? '🗗' : '⛶'; $('#fsBtn').title = on ? 'Thoát toàn màn hình (F hoặc Esc)' : 'Toàn màn hình (F)'; };
+  if (!fsCan) $('#fsBtn').hidden = true;
   $('#fsBtn').onclick = fs;
+  D.addEventListener('fullscreenchange', fsSync); D.addEventListener('webkitfullscreenchange', fsSync);
   $('#playBtn').onclick = () => { Sound.init(); Sound.setPaused(!Sound.isPaused()); syncPlay(); document.dispatchEvent(new Event('cs:audio')); };
   const syncPlay = () => { $('#playBtn').textContent = Sound.isPaused() ? '🔇' : '🔊'; $('#playBtn').title = Sound.isPaused() ? 'Bật âm thanh nền' : 'Tắt âm thanh nền'; };
   document.addEventListener('cs:audio', syncPlay);
@@ -258,7 +271,7 @@
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
     else if (k === 'f') fs();
-    else if (k === 'escape') { if (document.body.classList.contains('zen')) zen(); else WM.closeTop(); }
+    else if (k === 'escape') { if (document.body.classList.contains('zen')) zen(false); else WM.closeTop(); }
     else if (/^[0-9]$/.test(k)) { const s = SPACES[(+k + 9) % 10]; if (s) setSpace(s.id); }
     else if (k === ' ' && document.body.classList.contains('zen')) { e.preventDefault(); Pomo.running ? Pomo.pause() : Pomo.start(); }
   });
