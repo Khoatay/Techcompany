@@ -632,7 +632,7 @@
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace();
-      const all = ['room', 'stay', 'flights', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
+      const all = ['room', 'stay', 'flights', 'alarm', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'youtube'];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
         <button class="btn" data-reload style="width:100%">🔄 Tải lại app (lấy bản mới nhất)</button>

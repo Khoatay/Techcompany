@@ -822,6 +822,7 @@
       yt: { q: 'lofi music for work', picks: [YT_LOFI] },
       journal: 'Ca trực hôm nay thế nào?',
       objects: [
+        { e: '🕛', x: 12, y: 62.5, s: 6, label: 'Báo thức 00:00 đổi ngày con dấu', tool: 'alarm' },
         { e: '⏱️', x: 20, y: 62.5, s: 6, label: 'Pomodoro ca trực', tool: 'pomodoro', opts: { preset: [50, 10] } },
         { e: '☕', x: 28, y: 63, s: 6, label: 'Cà phê ca trực', tool: 'tracker', opts: { kind: 'coffee' } },
         { e: '📅', x: 37, y: 62, s: 7, label: 'Lịch âm dương', tool: 'calendar' },

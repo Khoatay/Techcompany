@@ -57,6 +57,10 @@ Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](su
 
 Bảng treo trên tường luôn hiện ngày hết hạn tính từ **hôm nay (giờ Việt Nam)**: 21 · **30** · **45** · 90 · 180 ngày. Hai mốc 30 và 45 được tô nổi bật. Ngày nhập cảnh tính là ngày thứ 1, qua 0 giờ bảng tự sang ngày mới. Bấm vào bảng để mở cửa sổ, bấm vào một dòng để copy.
 
+## 🕛 Báo thức 00:00 – đổi ngày con dấu (Immigration space)
+
+Đúng 00:00 giờ Việt Nam, app đổ chuông và hiện bảng **ĐỔI NGÀY CON DẤU** kèm ngày mới, bấm **Đã đổi ngày** để tắt. Có nhắc trước 5 phút lúc 23:55. Bật/tắt nhanh bằng nút **⏰ 00:00** trên bảng hạn lưu trú, hoặc vào 🕛 trên bàn để chỉnh thêm (giữ màn hình sáng, thử chuông). Chuông chỉ kêu khi app đang mở.
+
 ## ✈️ Chuyến quốc tế đến (Immigration space)
 
 Bấm ✈️ ngoài cửa kính để xem chuyến quốc tế đến **Cam Ranh** (đổi được sang Nội Bài, Tân Sơn Nhất, Đà Nẵng, Phú Quốc…), lấy trong khung từ 3 giờ trước đến 9 giờ tới. Chuyến nội địa và chuyến hàng đã được lọc bỏ.

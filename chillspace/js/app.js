@@ -220,7 +220,7 @@
     const st = Boards.state(id); if (st === 'closed') return '';
     return `<div class="board b-${id} st-${st}${mobile ? ' m' : ''}" data-bid="${id}">
       <div class="bh" data-bh><span class="bt">${B.icon} ${B.title}<small>${B.sub()}</small></span>
-        <span class="bc"><button data-bc="min" title="${st === 'min' ? 'Mở ra' : 'Thu nhỏ'}">${st === 'min' ? '▾' : '–'}</button>${mobile ? '' : `<button data-bc="max" title="${st === 'max' ? 'Thu về cỡ thường' : 'Phóng to'}">${st === 'max' ? '❐' : '▢'}</button>`}<button data-bc="close" title="Tắt bảng">✕</button></span></div>
+        <span class="bc">${B.extra ? B.extra() : ''}<button data-bc="min" title="${st === 'min' ? 'Mở ra' : 'Thu nhỏ'}">${st === 'min' ? '▾' : '–'}</button>${mobile ? '' : `<button data-bc="max" title="${st === 'max' ? 'Thu về cỡ thường' : 'Phóng to'}">${st === 'max' ? '❐' : '▢'}</button>`}<button data-bc="close" title="Tắt bảng">✕</button></span></div>
       ${st === 'min' ? '' : `<div class="bb" data-tool="${B.tool}">${B.body(st)}</div>`}</div>`;
   }
   function renderBoards() {
@@ -281,12 +281,16 @@
   });
 
   /* ---------- Đồng hồ ---------- */
+  // Đồng hồ luôn chạy theo giờ Việt Nam (khớp với bảng hạn lưu trú và báo thức 00:00)
+  const VN_FMT = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', weekday: 'short' });
+  const VN_DOW = { Mon: 'Thứ Hai', Tue: 'Thứ Ba', Wed: 'Thứ Tư', Thu: 'Thứ Năm', Fri: 'Thứ Sáu', Sat: 'Thứ Bảy', Sun: 'Chủ Nhật' };
   function clock() {
-    const d = new Date(), h = d.getHours();
-    $('#clock').textContent = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const o = Object.fromEntries(VN_FMT.formatToParts(new Date()).map((p) => [p.type, p.value]));
+    const h = +o.hour % 24, y = +o.year, mo = +o.month, dd = +o.day;
+    $('#clock').textContent = `${String(h).padStart(2, '0')}:${o.minute}`;
     const hi = h < 5 ? 'Khuya rồi, nhớ nghỉ ngơi nhé' : h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Buổi trưa vui vẻ' : h < 18 ? 'Chào buổi chiều' : h < 22 ? 'Buổi tối thư thả' : 'Khuya rồi, nhớ nghỉ ngơi nhé';
-    let lun = ''; try { const l = Lunar.fromSolar(d.getDate(), d.getMonth() + 1, d.getFullYear()); lun = ` · ${l.day}/${l.month}${l.leap ? ' nhuận' : ''} âm lịch`; } catch (e) {}
-    $('#date').textContent = `${hi} · ${d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}${lun}`;
+    let lun = ''; try { const l = Lunar.fromSolar(dd, mo, y); lun = ` · ${l.day}/${l.month}${l.leap ? ' nhuận' : ''} âm lịch`; } catch (e) {}
+    $('#date').textContent = `${hi} · ${VN_DOW[o.weekday]}, ${dd} tháng ${mo}${lun}`;
   }
   clock(); setInterval(clock, 5000);
 
