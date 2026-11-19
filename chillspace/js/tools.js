@@ -27,25 +27,44 @@
   const Pomo = {
     focus: store.get('pomo.focus', 25), brk: store.get('pomo.break', 5),
     mode: 'focus', running: false, endAt: 0, remain: 0, subs: new Set(),
+    remote: null, // khi ở Phòng chung: hàm gửi trạng thái lên máy chủ
+    onFocusDone: null, // khi ở Phòng chung: ghi phút tập trung cho bảng xếp hạng
     total() { return (this.mode === 'focus' ? this.focus : this.brk) * 60000; },
     emit() { this.subs.forEach((f) => f()); },
     fresh() { return !this.running && this.mode === 'focus' && this.remain === this.total(); },
+    state() { return { mode: this.mode, running: this.running, focus: this.focus, brk: this.brk, remain: Math.round(this.remain), endAt: this.endAt }; },
+    push() { if (this.remote) this.remote(this.state()); },
+    // nhận trạng thái từ phòng (không gửi ngược lại)
+    applyState(st) {
+      if (!st || typeof st !== 'object') return;
+      this.focus = Math.max(1, Math.min(240, st.focus | 0 || 25)); this.brk = Math.max(1, Math.min(120, st.brk | 0 || 5));
+      this.mode = st.mode === 'break' ? 'break' : 'focus'; this.running = !!st.running; this.endAt = +st.endAt || 0;
+      if (this.running) {
+        let guard = 0; // phòng đã chạy lâu: tua tới chu kỳ hiện tại, không kêu chuông
+        while (this.endAt <= Date.now() && guard++ < 500) { this.mode = this.mode === 'focus' ? 'break' : 'focus'; this.endAt += this.total(); }
+        this.remain = Math.max(0, this.endAt - Date.now());
+      } else this.remain = Math.max(0, Math.min(this.total(), +st.remain || this.total()));
+      this.emit();
+    },
     setPreset(f, b) {
       if (this.running) return toast('Đang chạy – hãy tạm dừng trước khi đổi thời lượng');
       this.focus = Math.max(1, Math.min(240, f | 0)); this.brk = Math.max(1, Math.min(120, b | 0));
       store.set('pomo.focus', this.focus); store.set('pomo.break', this.brk);
-      this.mode = 'focus'; this.remain = this.total(); this.emit();
+      this.mode = 'focus'; this.remain = this.total(); this.emit(); this.push();
     },
     start() {
       if (this.running) return;
       try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}
-      this.endAt = Date.now() + this.remain; this.running = true; this.emit();
+      this.endAt = Date.now() + this.remain; this.running = true; this.emit(); this.push();
     },
-    pause() { if (!this.running) return; this.remain = Math.max(0, this.endAt - Date.now()); this.running = false; this.emit(); },
-    reset() { this.running = false; this.mode = 'focus'; this.remain = this.total(); this.emit(); },
+    pause() { if (!this.running) return; this.remain = Math.max(0, this.endAt - Date.now()); this.running = false; this.emit(); this.push(); },
+    reset() { this.running = false; this.mode = 'focus'; this.remain = this.total(); this.emit(); this.push(); },
     complete(skipped) {
       if (this.mode === 'focus') {
-        if (!skipped) { const d = store.get('pomo.days', {}); const t = d[today()] || { n: 0, min: 0 }; t.n++; t.min += this.focus; d[today()] = t; store.set('pomo.days', d); }
+        if (!skipped) {
+          const d = store.get('pomo.days', {}); const t = d[today()] || { n: 0, min: 0 }; t.n++; t.min += this.focus; d[today()] = t; store.set('pomo.days', d);
+          if (this.onFocusDone) this.onFocusDone(this.focus);
+        }
         this.mode = 'break'; this.remain = this.total();
         if (!skipped) notify(`Xong một phiên tập trung! Nghỉ ${this.brk} phút nhé ☕`);
       } else {
@@ -53,8 +72,10 @@
         if (!skipped) notify('Hết giờ nghỉ. Quay lại tập trung nào 💪');
       }
       if (!skipped) Sound.chime();
-      if (this.running) this.endAt = Date.now() + this.remain;
+      // hết giờ tự nhiên: nối tiếp từ mốc cũ để mọi máy trong phòng khớp nhau
+      if (this.running) this.endAt = skipped ? Date.now() + this.remain : this.endAt + this.remain;
       this.emit();
+      if (skipped) this.push();
     },
     tick() {
       if (!this.running) return;
@@ -579,7 +600,7 @@
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace();
-      const all = ['pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'sleep', 'mixer', 'youtube'];
+      const all = ['room', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'sleep', 'mixer', 'youtube'];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
         <p class="muted small">Phím tắt: <kbd>M</kbd> âm thanh · <kbd>Y</kbd> YouTube · <kbd>P</kbd> Pomodoro · <kbd>T</kbd> công cụ · <kbd>H</kbd> ẩn giao diện · <kbd>F</kbd> toàn màn hình · <kbd>1</kbd>–<kbd>0</kbd> đổi không gian</p>`;
@@ -588,6 +609,6 @@
     },
   };
 
-  window.CS = { store, esc, toast, mmss, Pomo, Sleep, YTP };
+  window.CS = { store, esc, toast, mmss, uid, debounce, Pomo, Sleep, YTP };
   window.TOOLS = TOOLS;
 })();

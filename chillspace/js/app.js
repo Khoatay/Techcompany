@@ -36,8 +36,11 @@
         const width = Math.min(def.width || 340, innerWidth - 24);
         el.style.width = width + 'px';
         const k = n++ % 6;
-        el.style.left = Math.max(12, Math.min(innerWidth - width - 12, innerWidth / 2 - width / 2 + (k - 2.5) * 34)) + 'px';
-        el.style.top = Math.max(70, Math.min(innerHeight - 320, 96 + k * 26)) + 'px';
+        if (def.place === 'right') { el.style.left = Math.max(12, innerWidth - width - 16) + 'px'; el.style.top = '70px'; }
+        else {
+          el.style.left = Math.max(12, Math.min(innerWidth - width - 12, innerWidth / 2 - width / 2 + (k - 2.5) * 34)) + 'px';
+          el.style.top = Math.max(70, Math.min(innerHeight - 320, 96 + k * 26)) + 'px';
+        }
         root.append(el);
         w = wins[key] = { el, def, key };
         el.querySelector('.win-x').onclick = () => close(key);
@@ -139,7 +142,7 @@
     $('#objects').innerHTML = space.objects.map((o, i) => `<button class="obj" style="left:${o.x}%;top:${o.y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`).join('');
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
-  function setSpace(id, first) {
+  function setSpace(id, first, remote) {
     const next = SPACES.find((s) => s.id === id); if (!next) return;
     const changed = next !== space; space = next;
     store.set('space', id);
@@ -160,7 +163,9 @@
     document.dispatchEvent(new Event('cs:audio'));
     WM.onSpace();
     document.title = `${space.emoji} ${space.name} · ChillSpace`;
+    if (!first) document.dispatchEvent(new CustomEvent('cs:space', { detail: { id, remote: !!remote } }));
   }
+  window.setSpace = (id, o = {}) => setSpace(id, false, o.remote);
   const $$ = (s) => [...document.querySelectorAll(s)];
 
   $('#dock').innerHTML = SPACES.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.name)}</small></button>`).join('');
@@ -201,7 +206,7 @@
     if (e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (!$('#welcome').hidden) return;
     const k = e.key.toLowerCase();
-    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox' };
+    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room' };
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
     else if (k === 'f') fs();
@@ -217,6 +222,7 @@
     const b = e.target.closest('[data-id]'); if (!b) return;
     Sound.init(); welcome.classList.add('out'); setTimeout(() => (welcome.hidden = true), 400);
     setSpace(b.dataset.id);
+    window.Room && Room.boot();
     if (!store.get('seenTips')) { store.set('seenTips', 1); setTimeout(() => toast('Mẹo: bấm vào các đồ vật trong cảnh để mở công cụ ✨', 5000), 900); }
   };
 

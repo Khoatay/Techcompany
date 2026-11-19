@@ -26,6 +26,7 @@
     <div class="top-actions">
       <button class="pomo-badge" id="pomoBadge" hidden></button>
       <button id="playBtn" title="Tắt/bật âm thanh nền">🔊</button>
+      <button data-open="room" title="Phòng chung – làm việc cùng bạn bè (R)" class="room-btn">👥<span>Phòng chung</span><i class="badge" id="roomBadge" hidden></i></button>
       <button data-open="mixer" title="Âm thanh nền (M)">🎧<span>Âm thanh</span></button>
       <button data-open="youtube" title="YouTube (Y)">▶️<span>YouTube</span></button>
       <button data-open="pomodoro" title="Pomodoro (P)">⏱️<span>Pomodoro</span></button>
@@ -41,6 +42,7 @@
     <p class="quote" id="quote"></p>
   </section>
 
+  <div class="seats" id="seats"></div>
   <div class="quickbar" id="quickbar"></div>
   <nav class="dock" id="dock" aria-label="Chọn không gian"></nav>
   <div id="windows"></div>
@@ -56,9 +58,11 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/spaces.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/tools.js"></script>
+  <script src="js/room.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

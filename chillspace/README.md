@@ -33,6 +33,18 @@ cd chillspace && python3 -m http.server 8000      # hoặc: npx serve .
 
 Thêm hoặc sửa không gian: chỉnh mảng `SPACES` trong `js/spaces.js` (vị trí đồ vật tính theo % khung cảnh 16:9), vẽ cảnh trong `SCENES`.
 
+## 👥 Phòng chung – làm việc cùng nhau online
+
+Tạo phòng, gửi mã hoặc link cho bạn bè, rồi cả nhóm cùng "ngồi" trong một không gian. Không gọi thoại, không camera:
+- **Avatar ngồi trong cảnh**: dùng ảnh thật hoặc emoji. Vòng sáng cam là đang tập trung, xanh là đang nghỉ
+- **Sticker việc đang làm** (📚 học bài, ⌨️ gõ phím, ☕ uống cafe, 🎨 vẽ, 🍜 ăn uống…) và dòng "📌 đang làm…"
+- **Pomodoro chung**: một người bấm là cả phòng cùng chạy. Vào trễ thì đồng hồ tự khớp
+- **Chat**, **thả emoji bay lên** từ avatar, nút **"✅ Xong việc"** bắn pháo giấy cho cả phòng
+- **Bảng xếp hạng** giờ tập trung trong tuần
+- Chủ phòng đổi không gian thì cả phòng đổi theo
+
+Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](supabase/HUONG-DAN.md). Chưa cài thì app vẫn chạy bình thường, chỉ tắt tính năng này.
+
 ## Công cụ có sẵn
 
 Pomodoro (vòng tròn đếm giờ, thông báo, thống kê theo ngày) · Việc cần làm (pháo giấy khi xong) · Ghi chú (tự lưu, tải .txt) ·
@@ -40,7 +52,7 @@ Bút vẽ (màu, tẩy, hoàn tác, tải PNG) · Flashcard (lật thẻ, lặp 
 Nhật ký + cảm xúc · Hít thở (5-5, hộp 4-4-4-4, 4-7-8) · Giãn cơ 7 động tác · Đếm cà phê/nước/trà · Lời động viên ·
 Hẹn giờ tắt nhạc · Bộ trộn 16 âm thanh nền · Trình phát YouTube.
 
-Phím tắt: `M` âm thanh · `Y` YouTube · `P` Pomodoro · `T` công cụ · `H` ẩn giao diện · `F` toàn màn hình · `1`–`0` đổi không gian · `Esc` đóng cửa sổ.
+Phím tắt: `R` phòng chung · `M` âm thanh · `Y` YouTube · `P` Pomodoro · `T` công cụ · `H` ẩn giao diện · `F` toàn màn hình · `1`–`0` đổi không gian · `Esc` đóng cửa sổ.
 
 Dữ liệu (ghi chú, việc, nhật ký…) lưu trong trình duyệt (localStorage), không gửi đi đâu cả.
 
@@ -78,5 +90,8 @@ js/spaces.js          10 không gian + cảnh SVG
 js/audio.js           16 âm thanh nền tổng hợp bằng Web Audio
 js/tools.js           các công cụ, Pomodoro, YouTube
 js/app.js             quản lý cửa sổ, hiệu ứng hạt, chuyển cảnh, phím tắt
+js/room.js            Phòng chung (kết nối Supabase)
+js/config.js          mã kết nối Supabase
+supabase/             file cài đặt máy chủ + hướng dẫn
 sw.js, manifest       cài đặt như app (PWA)
 ```
