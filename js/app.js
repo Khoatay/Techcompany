@@ -1,0 +1,226 @@
+/* ChillSpace — khung ứng dụng */
+(function () {
+  const { store, esc, toast, mmss, Pomo } = CS;
+  const $ = (s) => document.querySelector(s);
+  let space = SPACES.find((s) => s.id === store.get('space', 'study')) || SPACES[0];
+  window.currentSpace = () => space;
+
+  /* ---------- Quản lý cửa sổ ---------- */
+  const WM = (window.WM = (() => {
+    const root = $('#windows'), wins = {};
+    let z = 30, n = 0;
+    const mobile = () => matchMedia('(max-width: 720px)').matches;
+    function focus(w) { w.el.style.zIndex = ++z; Object.values(wins).forEach((x) => x.el.classList.toggle('top', x === w)); }
+    function drag(w) {
+      const head = w.el.querySelector('.win-head');
+      head.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button') || mobile()) return;
+        const r = w.el.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+        head.setPointerCapture(e.pointerId);
+        const mv = (ev) => {
+          w.el.style.left = Math.max(-r.width + 80, Math.min(innerWidth - 80, ev.clientX - dx)) + 'px';
+          w.el.style.top = Math.max(56, Math.min(innerHeight - 50, ev.clientY - dy)) + 'px';
+        };
+        const up = () => { head.removeEventListener('pointermove', mv); head.removeEventListener('pointerup', up); };
+        head.addEventListener('pointermove', mv); head.addEventListener('pointerup', up);
+      });
+    }
+    function open(tool, opts = {}) {
+      const def = TOOLS[tool]; if (!def) return;
+      const key = def.key ? def.key(opts) : tool;
+      let w = wins[key];
+      if (!w) {
+        const el = document.createElement('section');
+        el.className = 'win';
+        el.innerHTML = `<header class="win-head"><span class="win-ico"></span><span class="win-title"></span><button class="win-x" aria-label="Đóng">✕</button></header><div class="win-body"></div>`;
+        const width = Math.min(def.width || 340, innerWidth - 24);
+        el.style.width = width + 'px';
+        const k = n++ % 6;
+        el.style.left = Math.max(12, Math.min(innerWidth - width - 12, innerWidth / 2 - width / 2 + (k - 2.5) * 34)) + 'px';
+        el.style.top = Math.max(70, Math.min(innerHeight - 320, 96 + k * 26)) + 'px';
+        root.append(el);
+        w = wins[key] = { el, def, key };
+        el.querySelector('.win-x').onclick = () => close(key);
+        el.addEventListener('pointerdown', () => focus(w));
+        drag(w);
+      } else if (def.keepAlive && w.rendered) {
+        w.el.hidden = false; focus(w); def.refresh && def.refresh(); return w;
+      }
+      w.el.hidden = false;
+      w.cleanup && w.cleanup();
+      const setTitle = (t, ic) => { w.el.querySelector('.win-title').textContent = t; if (ic) w.el.querySelector('.win-ico').textContent = ic; };
+      setTitle(opts.title || def.title, opts.icon || def.icon);
+      w.cleanup = def.render(w.el.querySelector('.win-body'), { space, opts, setTitle }) || null;
+      w.rendered = true; w.global = def.global;
+      w.el.classList.remove('pop'); void w.el.offsetWidth; w.el.classList.add('pop');
+      focus(w);
+      return w;
+    }
+    function close(key) {
+      const w = wins[key]; if (!w) return;
+      if (w.def.keepAlive) { w.el.hidden = true; return; }
+      w.cleanup && w.cleanup(); w.el.remove(); delete wins[key];
+    }
+    function toggle(tool) {
+      const w = wins[tool];
+      if (w && !w.el.hidden && w.el.classList.contains('top')) close(tool); else open(tool);
+    }
+    function onSpace() {
+      Object.values(wins).forEach((w) => { if (!w.global) close(w.key); else if (w.def.refresh) w.def.refresh(); });
+    }
+    function closeTop() { const w = Object.values(wins).filter((x) => !x.el.hidden).sort((a, b) => +b.el.style.zIndex - +a.el.style.zIndex)[0]; if (w) close(w.key); }
+    return { open, close, toggle, onSpace, closeTop };
+  })());
+
+  window.openObject = (o) => WM.open(o.tool, { ...(o.opts || {}), title: (o.opts && o.opts.title) || o.label, icon: o.e });
+
+  /* ---------- Hiệu ứng hạt ---------- */
+  const FX = (window.FX = (() => {
+    const cv = $('#fx'), g = cv.getContext('2d');
+    let W = 0, H = 0, type = null, parts = [], bursts = [], raf = 0, lastT = 0;
+    const R = Math.random;
+    function resize() { const d = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); }
+    const make = {
+      rain: () => ({ x: R() * W * 1.2 - W * 0.1, y: R() * H, l: 10 + R() * 18, v: 600 + R() * 500 }),
+      dust: () => ({ x: R() * W, y: R() * H, r: 0.6 + R() * 1.8, vx: (R() - 0.5) * 8, vy: -2 - R() * 6, a: R() * 6.28 }),
+      sparkle: () => ({ x: W * (0.2 + R() * 0.6), y: H * (0.6 + R() * 0.2), r: 1 + R() * 2.5, a: R() * 6.28, s: 1 + R() * 2 }),
+      confetti: () => ({ x: R() * W, y: -R() * H, w: 4 + R() * 6, h: 6 + R() * 8, v: 40 + R() * 70, vx: (R() - 0.5) * 30, rot: R() * 6.28, vr: (R() - 0.5) * 4, c: `hsl(${R() * 360},90%,65%)` }),
+      embers: () => ({ x: W * (0.44 + R() * 0.12), y: H * (0.8 + R() * 0.1), r: 0.8 + R() * 2, vx: (R() - 0.5) * 30, vy: -30 - R() * 60, life: 0, max: 2 + R() * 3 }),
+    };
+    const count = { rain: 260, dust: 45, sparkle: 50, confetti: 45, embers: 45 };
+    function set(t) { type = t; parts = t ? Array.from({ length: count[t] }, make[t]) : []; if (!raf) raf = requestAnimationFrame(loop); }
+    function burst(x, y) {
+      for (let i = 0; i < 36; i++) { const a = R() * 6.28, sp = 150 + R() * 300; bursts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 150, rot: R() * 6.28, life: 0, c: `hsl(${R() * 360},90%,62%)` }); }
+      if (!raf) raf = requestAnimationFrame(loop);
+    }
+    function loop(t) {
+      raf = 0;
+      const dt = Math.min(0.05, (t - lastT) / 1000 || 0.016); lastT = t;
+      g.clearRect(0, 0, W, H);
+      if (!document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        for (const p of parts) {
+          if (type === 'rain') {
+            p.y += p.v * dt; p.x -= p.v * 0.12 * dt;
+            if (p.y > H) { p.y = -20; p.x = R() * W * 1.2; }
+            g.strokeStyle = 'rgba(190,210,255,.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.l * 0.12, p.y + p.l); g.stroke();
+          } else if (type === 'dust') {
+            p.a += dt; p.x += (p.vx + Math.sin(p.a) * 4) * dt; p.y += p.vy * dt;
+            if (p.y < -5) { p.y = H + 5; p.x = R() * W; }
+            g.fillStyle = `rgba(255,236,200,${0.25 + Math.sin(p.a * 0.7) * 0.15})`; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.28); g.fill();
+          } else if (type === 'sparkle') {
+            p.a += dt * p.s; const o = Math.max(0, Math.sin(p.a)); if (p.a > 6.28) Object.assign(p, make.sparkle(), { a: 0 });
+            g.fillStyle = `rgba(255,240,210,${o * 0.9})`; g.beginPath(); g.moveTo(p.x, p.y - p.r * 3); g.lineTo(p.x + p.r * 0.6, p.y); g.lineTo(p.x, p.y + p.r * 3); g.lineTo(p.x - p.r * 0.6, p.y); g.fill();
+            g.beginPath(); g.moveTo(p.x - p.r * 3, p.y); g.lineTo(p.x, p.y + p.r * 0.6); g.lineTo(p.x + p.r * 3, p.y); g.lineTo(p.x, p.y - p.r * 0.6); g.fill();
+          } else if (type === 'confetti') {
+            p.y += p.v * dt; p.x += p.vx * dt; p.rot += p.vr * dt;
+            if (p.y > H + 10) Object.assign(p, make.confetti(), { y: -10 });
+            g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.c; g.globalAlpha = 0.75; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.rot * 2))); g.restore();
+          } else if (type === 'embers') {
+            p.life += dt; p.x += (p.vx + Math.sin(p.life * 3) * 15) * dt; p.y += p.vy * dt;
+            if (p.life > p.max) Object.assign(p, make.embers());
+            const o = 1 - p.life / p.max; g.fillStyle = `rgba(255,${140 + o * 80 | 0},60,${o})`; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.28); g.fill();
+          }
+        }
+      }
+      bursts = bursts.filter((b) => (b.life += dt) < 1.6);
+      for (const b of bursts) {
+        b.vy += 600 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += 8 * dt;
+        g.save(); g.translate(b.x, b.y); g.rotate(b.rot); g.globalAlpha = 1 - b.life / 1.6; g.fillStyle = b.c; g.fillRect(-4, -3, 8, 6); g.restore();
+      }
+      if (type || bursts.length) raf = requestAnimationFrame(loop);
+    }
+    addEventListener('resize', () => { resize(); if (type) set(type); });
+    resize();
+    return { set, burst };
+  })());
+
+  /* ---------- Không gian ---------- */
+  function renderObjects() {
+    $('#objects').innerHTML = space.objects.map((o, i) => `<button class="obj" style="left:${o.x}%;top:${o.y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`).join('');
+    $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
+  }
+  function setSpace(id, first) {
+    const next = SPACES.find((s) => s.id === id); if (!next) return;
+    const changed = next !== space; space = next;
+    store.set('space', id);
+    document.documentElement.style.setProperty('--accent', space.accent);
+    document.body.dataset.space = space.id;
+    const stage = $('#stage');
+    stage.classList.add('fade');
+    setTimeout(() => {
+      $('#scenery').innerHTML = SCENES[space.id](space.id + '-');
+      renderObjects();
+      stage.classList.remove('fade');
+    }, first ? 0 : 280);
+    FX.set(space.fx);
+    $('#spaceMood').textContent = `${space.emoji} ${space.name} · ${space.mood}`;
+    $('#quote').textContent = space.quote;
+    $$('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
+    if (store.get('autoSound', true) && (changed || first)) Sound.setAll(space.sounds);
+    document.dispatchEvent(new Event('cs:audio'));
+    WM.onSpace();
+    document.title = `${space.emoji} ${space.name} · ChillSpace`;
+  }
+  const $$ = (s) => [...document.querySelectorAll(s)];
+
+  $('#dock').innerHTML = SPACES.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.name)}</small></button>`).join('');
+  $('#dock').onclick = (e) => { const b = e.target.closest('button'); if (b) { Sound.init(); setSpace(b.dataset.id); } };
+  const objClick = (e) => { const b = e.target.closest('[data-i]'); if (b) { Sound.init(); openObject(space.objects[+b.dataset.i]); } };
+  $('#objects').onclick = objClick; $('#quickbar').onclick = objClick;
+
+  /* ---------- Thanh trên ---------- */
+  document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { Sound.init(); WM.toggle(b.dataset.open); }));
+  const zen = () => document.body.classList.toggle('zen');
+  $('#zenBtn').onclick = zen;
+  const fs = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); };
+  $('#fsBtn').onclick = fs;
+  $('#playBtn').onclick = () => { Sound.init(); Sound.setPaused(!Sound.isPaused()); syncPlay(); document.dispatchEvent(new Event('cs:audio')); };
+  const syncPlay = () => { $('#playBtn').textContent = Sound.isPaused() ? '🔇' : '🔊'; $('#playBtn').title = Sound.isPaused() ? 'Bật âm thanh nền' : 'Tắt âm thanh nền'; };
+  document.addEventListener('cs:audio', syncPlay);
+
+  const badge = $('#pomoBadge');
+  badge.onclick = () => WM.open('pomodoro');
+  Pomo.subs.add(() => {
+    const show = Pomo.running || !Pomo.fresh();
+    badge.hidden = !show;
+    badge.textContent = `${Pomo.mode === 'focus' ? '🍅' : '☕'} ${mmss(Pomo.remain)}${Pomo.running ? '' : ' ⏸'}`;
+    document.title = Pomo.running ? `${mmss(Pomo.remain)} ${Pomo.mode === 'focus' ? 'tập trung' : 'nghỉ'} · ChillSpace` : `${space.emoji} ${space.name} · ChillSpace`;
+  });
+
+  /* ---------- Đồng hồ ---------- */
+  function clock() {
+    const d = new Date(), h = d.getHours();
+    $('#clock').textContent = `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const hi = h < 5 ? 'Khuya rồi, nhớ nghỉ ngơi nhé' : h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Buổi trưa vui vẻ' : h < 18 ? 'Chào buổi chiều' : h < 22 ? 'Buổi tối thư thả' : 'Khuya rồi, nhớ nghỉ ngơi nhé';
+    $('#date').textContent = `${hi} · ${d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+  }
+  clock(); setInterval(clock, 5000);
+
+  /* ---------- Phím tắt ---------- */
+  addEventListener('keydown', (e) => {
+    if (e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!$('#welcome').hidden) return;
+    const k = e.key.toLowerCase();
+    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox' };
+    if (map[k]) { Sound.init(); WM.toggle(map[k]); }
+    else if (k === 'h') zen();
+    else if (k === 'f') fs();
+    else if (k === 'escape') { if (document.body.classList.contains('zen')) zen(); else WM.closeTop(); }
+    else if (/^[0-9]$/.test(k)) { const s = SPACES[(+k + 9) % 10]; if (s) setSpace(s.id); }
+    else if (k === ' ' && document.body.classList.contains('zen')) { e.preventDefault(); Pomo.running ? Pomo.pause() : Pomo.start(); }
+  });
+
+  /* ---------- Màn chào ---------- */
+  const welcome = $('#welcome');
+  welcome.querySelector('.cards').innerHTML = SPACES.map((s) => `<button class="wcard${s.id === space.id ? ' last' : ''}" data-id="${s.id}" style="--a:${s.accent}"><span class="e">${s.emoji}</span><b>${esc(s.name)}</b><small>${esc(s.mood)}</small></button>`).join('');
+  welcome.onclick = (e) => {
+    const b = e.target.closest('[data-id]'); if (!b) return;
+    Sound.init(); welcome.classList.add('out'); setTimeout(() => (welcome.hidden = true), 400);
+    setSpace(b.dataset.id);
+    if (!store.get('seenTips')) { store.set('seenTips', 1); setTimeout(() => toast('Mẹo: bấm vào các đồ vật trong cảnh để mở công cụ ✨', 5000), 900); }
+  };
+
+  setSpace(space.id, true);
+  syncPlay();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
