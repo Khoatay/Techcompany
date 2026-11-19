@@ -179,9 +179,7 @@
   /* ---------- Không gian ---------- */
   function renderObjects() {
     $('#objects').innerHTML = space.objects.map((o, i) => `<button class="obj" style="left:${o.x}%;top:${o.y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`).join('');
-    const board = space.board && window.StayBoard ? StayBoard.html() : '';
-    if (board) $('#objects').insertAdjacentHTML('beforeend', `<div class="stay-board" data-board>${board}</div>`);
-    $('#mboard').innerHTML = board ? `<div class="stay-board m" data-board>${board}</div>` : '';
+    renderBoards();
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
   function setSpace(id, first, remote) {
@@ -216,9 +214,39 @@
   $('#dock').onclick = (e) => { const b = e.target.closest('button'); if (b) { Sound.init(); setSpace(b.dataset.id); } };
   const objClick = (e) => { const b = e.target.closest('[data-i]'); if (b) { Sound.init(); openObject(space.objects[+b.dataset.i]); } };
   $('#objects').onclick = objClick; $('#quickbar').onclick = objClick;
-  document.addEventListener('click', (e) => { if (e.target.closest('[data-board]')) WM.open('stay'); });
+  /* ---------- Bảng treo tường: thu nhỏ / phóng to / tắt ---------- */
+  function boardHtml(id, mobile) {
+    const B = window.Boards && Boards[id]; if (!B) return '';
+    const st = Boards.state(id); if (st === 'closed') return '';
+    return `<div class="board b-${id} st-${st}${mobile ? ' m' : ''}" data-bid="${id}">
+      <div class="bh" data-bh><span class="bt">${B.icon} ${B.title}<small>${B.sub()}</small></span>
+        <span class="bc"><button data-bc="min" title="${st === 'min' ? 'Mở ra' : 'Thu nhỏ'}">${st === 'min' ? '▾' : '–'}</button>${mobile ? '' : `<button data-bc="max" title="${st === 'max' ? 'Thu về cỡ thường' : 'Phóng to'}">${st === 'max' ? '❐' : '▢'}</button>`}<button data-bc="close" title="Tắt bảng">✕</button></span></div>
+      ${st === 'min' ? '' : `<div class="bb" data-tool="${B.tool}">${B.body(st)}</div>`}</div>`;
+  }
+  function renderBoards() {
+    document.querySelectorAll('#objects .board').forEach((e) => e.remove());
+    const ids = space.boards || [];
+    $('#objects').insertAdjacentHTML('beforeend', ids.map((id) => boardHtml(id, false)).join(''));
+    $('#mboard').innerHTML = ids.map((id) => boardHtml(id, true)).join('');
+    document.body.classList.toggle('board-max', ids.some((id) => Boards.state(id) === 'max'));
+    if (ids.includes('flights') && Boards.state('flights') !== 'closed' && window.Flights) setTimeout(() => Flights.load(false), 0);
+  }
+  document.addEventListener('click', (e) => {
+    const bd = e.target.closest('.board'); if (!bd) return;
+    const id = bd.dataset.bid, st = Boards.state(id), c = e.target.closest('[data-bc]');
+    if (c) {
+      const a = c.dataset.bc;
+      if (a === 'close') { Boards.setState(id, 'closed'); toast(`Đã tắt bảng. Mở lại bằng ${Boards[id].icon} trên bàn`, 4000); }
+      else Boards.setState(id, st === a ? 'normal' : a);
+      return;
+    }
+    if (st === 'min') return Boards.setState(id, 'normal');
+    if (e.target.closest('.bb')) WM.open(Boards[id].tool);
+  });
+  document.addEventListener('cs:boards', renderBoards);
+  document.addEventListener('cs:flights', () => { if ((space.boards || []).includes('flights')) renderBoards(); });
   let boardDay = ''; // qua 0 giờ (giờ VN) thì tính lại bảng hạn lưu trú
-  setInterval(() => { if (!space.board || !window.ProDate) return; const d = ProDate.todayISO(); if (d !== boardDay) { boardDay = d; document.querySelectorAll('[data-board]').forEach((el) => (el.innerHTML = StayBoard.html())); } }, 30000);
+  setInterval(() => { if (!space.boards || !window.ProDate) return; const d = ProDate.todayISO(); if (d !== boardDay) { boardDay = d; renderBoards(); } }, 30000);
 
   /* ---------- Thanh trên ---------- */
   document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { Sound.init(); WM.toggle(b.dataset.open); }));

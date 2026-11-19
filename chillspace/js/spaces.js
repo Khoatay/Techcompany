@@ -816,7 +816,7 @@
   ];
   window.SPACES.unshift(
     {
-      id: 'border', name: 'Immigration space', short: 'Immigration', emoji: '🛂', mood: 'Không gian của tôi', accent: '#38bdf8', fx: null, board: true,
+      id: 'border', name: 'Immigration space', short: 'Immigration', emoji: '🛂', mood: 'Không gian của tôi', accent: '#38bdf8', fx: null, boards: ['stay', 'flights'],
       quote: 'Đúng từng ngày, chuẩn từng con dấu.',
       sounds: { airport: 0.35, brown: 0.12 },
       yt: { q: 'lofi music for work', picks: [YT_LOFI] },
@@ -829,7 +829,7 @@
         { e: '📝', x: 61, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
         { e: '🎧', x: 69, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
         { e: '🌏', x: 77, y: 62.5, s: 6.5, label: 'Giờ các nước', tool: 'clocks' },
-        { e: '✈️', x: 74, y: 40, s: 7, label: 'Chuyến quốc tế đến', tool: 'flights' },
+        { e: '✈️', x: 86, y: 51, s: 6, label: 'Chuyến quốc tế đến', tool: 'flights' },
       ],
     },
     {
