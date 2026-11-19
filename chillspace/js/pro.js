@@ -69,7 +69,8 @@ const Lunar = (() => {
   /* ---------- ngày tháng (tính theo lịch, không lệch múi giờ) ---------- */
   const DOW = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const pad = (n) => String(n).padStart(2, '0');
-  const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  // "hôm nay" luôn theo giờ Việt Nam, dù máy đang để múi giờ nào
+  const todayISO = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const toNum = (iso) => { const [y, m, d] = iso.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
   const fromNum = (n) => { const d = new Date(n * 864e5); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; };
   const addDays = (iso, k) => fromNum(toNum(iso) + k);
@@ -91,123 +92,27 @@ const Lunar = (() => {
     return solar[k] || null;
   }
 
-  /* ================= TÍNH NGÀY LƯU TRÚ ================= */
-  const DEFAULT_RULES = [
-    { id: 'bi', name: 'Miễn TT song phương', days: [21, 30, 90], c: '#38bdf8' },
-    { id: 'uni', name: 'Miễn TT đơn phương', days: [45], c: '#a78bfa' },
-    { id: 'abtc', name: 'Thẻ ABTC', days: [90], c: '#34d399' },
-    { id: 'gmtt', name: 'Giấy miễn thị thực', days: [180], c: '#fbbf24' },
-  ];
-  const STD_DAYS = [21, 30, 45, 90, 180];
-  const rules = () => store.get('stay.rules', DEFAULT_RULES);
-  const countFirst = () => store.get('stay.day1', true); // ngày nhập cảnh = ngày thứ 1
-  const expiryOf = (entry, n) => addDays(entry, countFirst() ? n - 1 : n);
-  const records = () => store.get('stay.records', []);
-  function statusOf(exp) {
-    const left = diffDays(todayISO(), exp);
-    if (left < 0) return { cls: 'over', txt: `Quá hạn ${-left} ngày` };
-    if (left === 0) return { cls: 'last', txt: 'Hôm nay là ngày cuối' };
-    if (left <= 3) return { cls: 'soon', txt: `Còn ${left} ngày` };
-    return { cls: 'ok', txt: `Còn ${left} ngày` };
-  }
-  window.StayTool = { records, expiryOf, statusOf };
+  /* ================= HẠN LƯU TRÚ (đơn giản) ================= */
+  const STAY_DAYS = [21, 30, 45, 90, 180];
+  const HOT = { 30: 'amber', 45: 'green' }; // 2 mốc dùng nhiều nhất: nổi bật
+  const expiry = (n) => addDays(todayISO(), n - 1); // ngày nhập cảnh = ngày thứ 1
+  const stayRows = () => STAY_DAYS.map((n) => { const e = expiry(n); return `<li class="sr ${HOT[n] || ''}" data-n="${n}"><span class="sn">${n}<small>ngày</small></span><span class="sd">${vn(e)}<small>${dow(e)}</small></span></li>`; }).join('');
+  window.StayBoard = { html: () => `<div class="sb-head">HẠN LƯU TRÚ<small>nhập cảnh hôm nay ${vn(todayISO())}</small></div><ul class="sb">${stayRows()}</ul>`, expiry };
 
   TOOLS.stay = {
-    title: 'Tính ngày lưu trú', icon: '🛂', width: 440, global: true,
-    render(b, { opts }) {
-      let tab = opts.tab || 'calc';
-      const st = { entry: isISO(opts.entry) ? opts.entry : todayISO(), rule: store.get('stay.lastRule', 'uni'), days: store.get('stay.lastDays', 45) };
-      const chk = { entry: todayISO(), days: 45, a: todayISO(), b: todayISO() };
-      b.innerHTML = `<div class="tabs"><button data-t="calc">🧮 Tính hạn</button><button data-t="check">🔎 Kiểm tra</button><button data-t="list">📌 Theo dõi</button><button data-t="rules">⚙️ Quy tắc</button></div><div data-body></div>`;
-      const body = $(b, '[data-body]');
-      const daysPick = (sel, cur) => `<div class="chips daypick">${STD_DAYS.map((d) => `<button class="chip${d === cur ? ' on' : ''}" data-d="${d}">${d} ngày</button>`).join('')}<input type="number" class="num" min="1" max="3650" data-custom placeholder="Khác" value="${STD_DAYS.includes(cur) ? '' : cur}"></div>`;
-      const card = (entry, n) => {
-        const exp = expiryOf(entry, n), s = statusOf(exp), h = holiday(exp), wk = [0, 6].includes(new Date(toNum(exp) * 864e5).getUTCDay());
-        return `<div class="stay-card ${s.cls}">
-          <small>Được lưu trú đến hết ngày</small>
-          <div class="stay-date">${vn(exp)}</div>
-          <div class="stay-sub">${dow(exp)} · ${lunarTxt(exp)}${h ? ` · <b>${esc(h[0])}</b>` : ''}</div>
-          <div class="stay-line">Ngày ${countFirst() ? 1 : 0}: <b>${vn(entry)}</b> → Ngày ${n}: <b>${vn(exp)}</b></div>
-          <div class="stay-status">${s.txt} (tính từ hôm nay ${vn(todayISO())})</div>
-          ${wk || (h && h[1]) ? `<div class="stay-warn">⚠️ Ngày hết hạn rơi vào ${h && h[1] ? 'ngày lễ' : 'cuối tuần'}</div>` : ''}
-        </div>`;
-      };
+    title: 'Hạn lưu trú', icon: '🛂', width: 360, global: true,
+    render(b) {
       const draw = () => {
-        $$(b, '[data-t]').forEach((x) => x.classList.toggle('on', x.dataset.t === tab));
-        const R = rules();
-        if (tab === 'calc') {
-          const rule = R.find((r) => r.id === st.rule);
-          body.innerHTML = `<label class="field">Ngày nhập cảnh <span class="row"><input type="date" data-entry value="${st.entry}" class="grow"><button class="btn ghost" data-today>Hôm nay</button></span><span class="date-vn">${dow(st.entry)}, ${vn(st.entry)}${st.entry === todayISO() ? ' (hôm nay)' : ''}</span></label>
-            <div class="small muted">Diện miễn thị thực</div>
-            <div class="chips">${R.map((r) => `<button class="chip rule${r.id === st.rule ? ' on' : ''}" data-r="${esc(r.id)}" style="--rc:${esc(r.c || '#888')}">${esc(r.name)} <b>${r.days.join('/')}</b></button>`).join('')}</div>
-            <div class="small muted">Số ngày được lưu trú${rule ? ` · ${esc(rule.name)}: ${rule.days.join(', ')} ngày` : ''}</div>
-            ${daysPick('calc', st.days)}
-            ${card(st.entry, st.days)}
-            <div class="row"><button class="btn" data-copy>📋 Copy kết quả</button><span class="grow"></span><button class="btn primary" data-save>📌 Lưu để theo dõi</button></div>
-            <h4>Bảng nhanh từ ngày ${vn(st.entry)}</h4>
-            <table class="quick"><tbody>${STD_DAYS.map((d) => { const e = expiryOf(st.entry, d), h = holiday(e); return `<tr class="${d === st.days ? 'on' : ''}" data-d="${d}"><td><b>${d}</b> ngày</td><td><b>${vn(e)}</b></td><td>${dow(e)}${h ? ` · ${esc(h[0])}` : ''}</td></tr>`; }).join('')}</tbody></table>`;
-          $(body, '[data-entry]').onchange = (e) => { if (isISO(e.target.value)) { st.entry = e.target.value; draw(); } };
-          $(body, '[data-today]').onclick = () => { st.entry = todayISO(); draw(); };
-          $$(body, '[data-r]').forEach((x) => (x.onclick = () => { st.rule = x.dataset.r; const r = R.find((y) => y.id === st.rule); if (r && !r.days.includes(st.days)) st.days = r.days[0]; store.set('stay.lastRule', st.rule); store.set('stay.lastDays', st.days); draw(); }));
-          $$(body, '[data-d]').forEach((x) => (x.onclick = () => { st.days = +x.dataset.d; store.set('stay.lastDays', st.days); draw(); }));
-          $(body, '[data-custom]').onchange = (e) => { const n = Math.round(+e.target.value); if (n >= 1 && n <= 3650) { st.days = n; draw(); } };
-          $(body, '[data-copy]').onclick = async () => {
-            const exp = expiryOf(st.entry, st.days), r = R.find((y) => y.id === st.rule);
-            const t = `${r ? r.name + ' – ' : ''}${st.days} ngày: nhập cảnh ${vn(st.entry)} → lưu trú đến hết ${dow(exp)} ${vn(exp)}`;
-            try { await navigator.clipboard.writeText(t); toast('Đã copy: ' + t, 4500); } catch (e) { prompt('Copy dòng này:', t); }
-          };
-          $(body, '[data-save]').onclick = () => {
-            const label = prompt('Ghi chú để dễ nhận ra (vd: Đoàn khách Hàn – quầy 3). Không cần ghi số hộ chiếu:', '');
-            if (label == null) return;
-            const list = records(); list.push({ id: uid(), label: label.trim().slice(0, 80), entry: st.entry, days: st.days, rule: st.rule, at: Date.now() });
-            store.set('stay.records', list); toast('Đã lưu vào mục Theo dõi 📌'); document.dispatchEvent(new Event('cs:stay'));
-          };
-        } else if (tab === 'check') {
-          const n = diffDays(chk.entry, todayISO()) + (countFirst() ? 1 : 0), exp = expiryOf(chk.entry, chk.days), s = statusOf(exp);
-          const between = diffDays(chk.a, chk.b);
-          body.innerHTML = `<p class="small muted">Khách đã nhập cảnh từ trước: hôm nay là ngày thứ mấy, còn hay quá hạn bao nhiêu ngày?</p>
-            <label class="field">Ngày nhập cảnh <input type="date" data-ce value="${chk.entry}"><span class="date-vn">${dow(chk.entry)}, ${vn(chk.entry)}</span></label>
-            ${daysPick('check', chk.days)}
-            <div class="stay-card ${s.cls}"><small>Hôm nay ${vn(todayISO())} là</small><div class="stay-date">${n >= (countFirst() ? 1 : 0) ? `Ngày thứ ${n}` : `Chưa tới ngày nhập cảnh`}</div>
-              <div class="stay-sub">trên tổng ${chk.days} ngày · hạn đến hết ${dow(exp)} ${vn(exp)}</div>
-              <div class="prog big"><i style="width:${Math.max(0, Math.min(100, (n / chk.days) * 100))}%"></i></div>
-              <div class="stay-status">${s.txt}</div></div>
-            <h4>Đếm số ngày giữa 2 ngày</h4>
-            <div class="row"><input type="date" data-a value="${chk.a}" class="grow"><span>→</span><input type="date" data-b value="${chk.b}" class="grow"></div><div class="date-vn">${vn(chk.a)} → ${vn(chk.b)}</div>
-            <p class="small">Cách nhau <b>${between}</b> ngày · nếu tính cả 2 đầu là <b>${Math.abs(between) + 1}</b> ngày.</p>`;
-          $(body, '[data-ce]').onchange = (e) => { if (isISO(e.target.value)) { chk.entry = e.target.value; draw(); } };
-          $$(body, '[data-d]').forEach((x) => (x.onclick = () => { chk.days = +x.dataset.d; draw(); }));
-          $(body, '[data-custom]').onchange = (e) => { const k = Math.round(+e.target.value); if (k >= 1) { chk.days = k; draw(); } };
-          $(body, '[data-a]').onchange = (e) => { if (isISO(e.target.value)) { chk.a = e.target.value; draw(); } };
-          $(body, '[data-b]').onchange = (e) => { if (isISO(e.target.value)) { chk.b = e.target.value; draw(); } };
-        } else if (tab === 'list') {
-          const list = records().map((r) => ({ ...r, exp: expiryOf(r.entry, r.days) })).sort((a, c) => (a.exp < c.exp ? -1 : 1));
-          body.innerHTML = `<ul class="stay-list">${list.map((r) => { const s = statusOf(r.exp), ru = R.find((x) => x.id === r.rule); return `<li class="${s.cls}" data-id="${r.id}"><div class="grow"><b>${esc(r.label || 'Không tên')}</b><small>${ru ? esc(ru.name) + ' · ' : ''}${r.days} ngày · ${vn(r.entry)} → <b>${vn(r.exp)}</b></small></div><span class="badge-st">${s.txt}</span><button class="x" title="Xoá">✕</button></li>`; }).join('') || '<li class="empty">Chưa lưu trường hợp nào. Ở tab "Tính hạn" bấm 📌 Lưu để theo dõi.</li>'}</ul>
-            <p class="muted small">Dữ liệu chỉ lưu trên máy này. Ngày hết hạn được đánh dấu trên 📅 Lịch.</p>`;
-          $(body, '.stay-list').onclick = (e) => {
-            const li = e.target.closest('li[data-id]'); if (!li) return;
-            if (e.target.classList.contains('x')) { if (!confirm('Xoá mục này?')) return; store.set('stay.records', records().filter((x) => x.id !== li.dataset.id)); document.dispatchEvent(new Event('cs:stay')); return draw(); }
-            const r = records().find((x) => x.id === li.dataset.id); if (r) { st.entry = r.entry; st.days = r.days; st.rule = r.rule; tab = 'calc'; draw(); }
-          };
-        } else {
-          body.innerHTML = `<label class="row"><input type="checkbox" data-day1 ${countFirst() ? 'checked' : ''}> <span>Tính <b>ngày nhập cảnh là ngày thứ 1</b><br><small class="muted">Bật: nhập 01/01 + 45 ngày → hết hạn 14/02. Tắt: → 15/02.</small></span></label>
-            <h4>Diện & số ngày (sửa theo quy định hiện hành)</h4>
-            <ul class="rule-list">${R.map((r, i) => `<li data-i="${i}"><input class="grow" data-n value="${esc(r.name)}" maxlength="40"><input data-v value="${r.days.join(', ')}" placeholder="vd: 21, 30" style="width:110px"><button class="x" title="Xoá">✕</button></li>`).join('')}</ul>
-            <div class="row"><button class="btn ghost" data-add>＋ Thêm diện</button><span class="grow"></span><button class="btn ghost" data-reset>↺ Mặc định</button><button class="btn primary" data-save>Lưu</button></div>
-            <p class="muted small">Ví dụ thêm: "Thị thực điện tử (e-visa)", "Thẻ tạm trú"… Số ngày có thể ghi nhiều, cách nhau bởi dấu phẩy.</p>`;
-          $(body, '[data-day1]').onchange = (e) => { store.set('stay.day1', e.target.checked); toast(e.target.checked ? 'Ngày nhập cảnh tính là ngày 1' : 'Ngày nhập cảnh tính là ngày 0'); document.dispatchEvent(new Event('cs:stay')); };
-          const collect = () => $$(body, '.rule-list li').map((li, i) => ({ id: (R[+li.dataset.i] && R[+li.dataset.i].id) || 'r' + uid(), name: $(li, '[data-n]').value.trim() || 'Diện mới', days: $(li, '[data-v]').value.split(/[,;\s]+/).map(Number).filter((n) => n >= 1 && n <= 3650), c: (R[+li.dataset.i] && R[+li.dataset.i].c) || ['#f472b6', '#fb923c', '#4ade80', '#60a5fa'][i % 4] })).filter((r) => r.days.length);
-          $(body, '[data-save]').onclick = () => { store.set('stay.rules', collect()); toast('Đã lưu quy tắc ✅'); draw(); };
-          $(body, '[data-add]').onclick = () => { const cur = collect(); cur.push({ id: 'r' + uid(), name: 'Diện mới', days: [30], c: '#f472b6' }); store.set('stay.rules', cur); draw(); };
-          $(body, '[data-reset]').onclick = () => { if (confirm('Đưa quy tắc về mặc định?')) { store.set('stay.rules', DEFAULT_RULES); draw(); } };
-          $$(body, '.rule-list .x').forEach((x) => (x.onclick = () => { const i = +x.closest('li').dataset.i; store.set('stay.rules', R.filter((_, k) => k !== i)); draw(); }));
-        }
+        b.innerHTML = `<p class="small">Nhập cảnh hôm nay: <b>${dow(todayISO())}, ${vn(todayISO())}</b> <span class="muted">(giờ Việt Nam)</span></p>
+          <ul class="sb big">${stayRows()}</ul>
+          <p class="muted small">Bấm vào một dòng để copy. Ngày nhập cảnh tính là ngày thứ 1. Qua 0 giờ (giờ VN) bảng tự đổi sang ngày mới.</p>`;
+        $$(b, '.sr').forEach((li) => (li.onclick = async () => {
+          const t = `${li.dataset.n} ngày: ${vn(expiry(+li.dataset.n))}`;
+          try { await navigator.clipboard.writeText(t); toast('Đã copy: ' + t); } catch (e) { prompt('Copy:', t); }
+        }));
       };
-      $$(b, '[data-t]').forEach((x) => (x.onclick = () => { tab = x.dataset.t; draw(); }));
-      draw();
-      const midnight = setInterval(() => { if (b._day !== todayISO()) { b._day = todayISO(); draw(); } }, 60000); b._day = todayISO();
-      const onStay = () => draw(); document.addEventListener('cs:stay', onStay);
-      return () => { clearInterval(midnight); document.removeEventListener('cs:stay', onStay); };
+      draw(); const t = setInterval(draw, 30000);
+      return () => clearInterval(t);
     },
   };
 
@@ -220,12 +125,11 @@ const Lunar = (() => {
       const draw = () => {
         const first = `${vy}-${pad(vm)}-01`, startDow = (new Date(toNum(first) * 864e5).getUTCDay() + 6) % 7;
         const dim = new Date(Date.UTC(vy, vm, 0)).getUTCDate(), today = todayISO();
-        const exp = {}; records().forEach((r) => { const e = expiryOf(r.entry, r.days); (exp[e] = exp[e] || []).push(r); });
         let cells = '';
         for (let i = 0; i < startDow; i++) cells += '<span class="cd empty"></span>';
         for (let d = 1; d <= dim; d++) {
           const iso = `${vy}-${pad(vm)}-${pad(d)}`, l = lunarOf(iso), h = holiday(iso), wd = (startDow + d - 1) % 7;
-          cells += `<button class="cd${iso === today ? ' today' : ''}${iso === sel ? ' sel' : ''}${h && h[1] ? ' off' : ''}${wd === 6 ? ' sun' : ''}" data-iso="${iso}"><b>${d}</b><small>${l.day === 1 ? `${l.day}/${l.month}` : l.day}</small>${exp[iso] ? '<i class="dot"></i>' : ''}${h ? '<i class="hd"></i>' : ''}</button>`;
+          cells += `<button class="cd${iso === today ? ' today' : ''}${iso === sel ? ' sel' : ''}${h && h[1] ? ' off' : ''}${wd === 6 ? ' sun' : ''}" data-iso="${iso}"><b>${d}</b><small>${l.day === 1 ? `${l.day}/${l.month}` : l.day}</small>${h ? '<i class="hd"></i>' : ''}</button>`;
         }
         const l = lunarOf(sel), h = holiday(sel), diff = diffDays(today, sel);
         b.innerHTML = `<div class="cal-head"><button class="btn ghost" data-m="-1">‹</button><b>Tháng ${vm}, ${vy}</b><button class="btn ghost" data-m="1">›</button><span class="grow"></span><button class="btn ghost" data-now>Hôm nay</button></div>
@@ -234,16 +138,14 @@ const Lunar = (() => {
             <div>🌙 Âm lịch: ngày ${l.day} tháng ${l.month}${l.leap ? ' (nhuận)' : ''} năm ${Lunar.canChi(l.year)}</div>
             ${h ? `<div>🎌 ${esc(h[0])}${h[1] ? ' – ngày nghỉ' : ''}</div>` : ''}
             <div class="muted small">${diff === 0 ? 'Hôm nay' : diff > 0 ? `${diff} ngày nữa` : `${-diff} ngày trước`}</div>
-            ${(exp[sel] || []).map((r) => `<div class="exp-row">🛂 Hết hạn lưu trú: <b>${esc(r.label || 'Không tên')}</b> (${r.days} ngày từ ${vn(r.entry)})</div>`).join('')}
-            <button class="btn primary" data-stay>🛂 Tính lưu trú từ ngày này</button></div>`;
+            </div>`;
         $$(b, '[data-m]').forEach((x) => (x.onclick = () => { vm += +x.dataset.m; if (vm < 1) { vm = 12; vy--; } if (vm > 12) { vm = 1; vy++; } draw(); }));
         $(b, '[data-now]').onclick = () => { [vy, vm] = parts(todayISO()); sel = todayISO(); draw(); };
         $$(b, '[data-iso]').forEach((x) => (x.onclick = () => { sel = x.dataset.iso; draw(); }));
-        $(b, '[data-stay]').onclick = () => WM.open('stay', { entry: sel });
       };
       draw();
-      const onStay = () => draw(); document.addEventListener('cs:stay', onStay);
-      return () => document.removeEventListener('cs:stay', onStay);
+      const t = setInterval(() => { if (b._d !== todayISO()) { b._d = todayISO(); draw(); } }, 60000); b._d = todayISO();
+      return () => clearInterval(t);
     },
   };
 

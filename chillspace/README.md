@@ -20,7 +20,7 @@ cd chillspace && python3 -m http.server 8000      # hoặc: npx serve .
 
 | Không gian | Tâm trạng | Âm thanh nền | Đồ vật → công cụ |
 |---|---|---|---|
-| 🛂 **Quầy cửa khẩu** (không gian riêng) | Làm việc · lưu trú | sảnh sân bay | 🛂 **tính ngày lưu trú** · 📕 kiểm tra ngày đã ở · 📌 theo dõi hạn · 📅 lịch âm dương · 🌏 giờ các nước |
+| 🛂 **Immigration space** (không gian riêng) | Làm việc · lưu trú | sảnh sân bay | 📋 **bảng hạn lưu trú** 21/30/45/90/180 ngày · 📅 lịch âm dương · 🌏 giờ các nước |
 | 📈 **Bàn trader** | Giao dịch, kỷ luật | ồn nâu, mưa, gõ phím | 📈 biểu đồ TradingView · 🌏 phiên Á/Âu/Mỹ · 🧮 khối lượng lệnh · ✅ checklist · 📒 nhật ký lệnh · 📰 lịch kinh tế · 🐻 hít thở |
 | 📚 Bàn học | Học tập | đồng hồ tích tắc, mưa nhẹ | 💻 ghi chú · 📖 sách · 🎧 sách nói · 🗂️ flashcard · ☕ đếm cà phê · ✏️ bút vẽ · 📝 bài tập · ⏰ Pomodoro 25/5 |
 | 💼 Bàn làm việc | Deep work | tiếng ồn nâu, gõ phím | 📋 việc hôm nay · ⏱️ phiên 50/10 · 📒 ghi chú · 🪴 giãn cơ / nghỉ mắt |
@@ -53,13 +53,9 @@ Tạo phòng, gửi mã hoặc link cho bạn bè, rồi cả nhóm cùng "ngồ
 
 Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](supabase/HUONG-DAN.md). Chưa cài thì app vẫn chạy bình thường, chỉ tắt tính năng này.
 
-## 🛂 Tính ngày lưu trú
+## 🛂 Immigration space – hạn lưu trú
 
-- Ngày nhập cảnh mặc định là **hôm nay**, đổi được. Chọn diện (song phương, đơn phương, ABTC, giấy miễn thị thực) và số ngày (21, 30, 45, 90, 180 hoặc tự nhập)
-- Hiện **ngày cuối được lưu trú**, thứ mấy, ngày âm, **còn bao nhiêu ngày**, cảnh báo khi rơi vào cuối tuần hoặc ngày lễ. Có **bảng nhanh** 21/30/45/90/180 ngày
-- **Kiểm tra**: khách nhập cảnh từ trước thì hôm nay là ngày thứ mấy, còn hay quá hạn bao nhiêu ngày. Có công cụ đếm số ngày giữa 2 ngày
-- **Theo dõi**: lưu các trường hợp cần nhớ (chỉ ghi chú, không cần số hộ chiếu), sắp theo hạn, tô vàng khi còn ≤ 3 ngày, tô đỏ khi quá hạn. Ngày hết hạn hiện trên 📅 Lịch
-- **Quy tắc**: sửa hoặc thêm diện và số ngày theo quy định hiện hành. Tuỳ chọn **ngày nhập cảnh tính là ngày thứ 1** (mặc định bật: 01/01 + 45 ngày → 14/02)
+Bảng treo trên tường luôn hiện ngày hết hạn tính từ **hôm nay (giờ Việt Nam)**: 21 · **30** · **45** · 90 · 180 ngày. Hai mốc 30 và 45 được tô nổi bật. Ngày nhập cảnh tính là ngày thứ 1, qua 0 giờ bảng tự sang ngày mới. Bấm vào bảng để mở cửa sổ, bấm vào một dòng để copy.
 
 ## Công cụ có sẵn
 

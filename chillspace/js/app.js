@@ -179,6 +179,9 @@
   /* ---------- Không gian ---------- */
   function renderObjects() {
     $('#objects').innerHTML = space.objects.map((o, i) => `<button class="obj" style="left:${o.x}%;top:${o.y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`).join('');
+    const board = space.board && window.StayBoard ? StayBoard.html() : '';
+    if (board) $('#objects').insertAdjacentHTML('beforeend', `<div class="stay-board" data-board>${board}</div>`);
+    $('#mboard').innerHTML = board ? `<div class="stay-board m" data-board>${board}</div>` : '';
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
   function setSpace(id, first, remote) {
@@ -209,10 +212,13 @@
   window.setSpace = (id, o = {}) => setSpace(id, false, o.remote);
   const $$ = (s) => [...document.querySelectorAll(s)];
 
-  $('#dock').innerHTML = SPACES.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.name)}</small></button>`).join('');
+  $('#dock').innerHTML = SPACES.map((s, i) => `<button data-id="${s.id}" title="${esc(s.name)} — ${esc(s.mood)} (${(i + 1) % 10})"><span>${s.emoji}</span><small>${esc(s.short || s.name)}</small></button>`).join('');
   $('#dock').onclick = (e) => { const b = e.target.closest('button'); if (b) { Sound.init(); setSpace(b.dataset.id); } };
   const objClick = (e) => { const b = e.target.closest('[data-i]'); if (b) { Sound.init(); openObject(space.objects[+b.dataset.i]); } };
   $('#objects').onclick = objClick; $('#quickbar').onclick = objClick;
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-board]')) WM.open('stay'); });
+  let boardDay = ''; // qua 0 giờ (giờ VN) thì tính lại bảng hạn lưu trú
+  setInterval(() => { if (!space.board || !window.ProDate) return; const d = ProDate.todayISO(); if (d !== boardDay) { boardDay = d; document.querySelectorAll('[data-board]').forEach((el) => (el.innerHTML = StayBoard.html())); } }, 30000);
 
   /* ---------- Thanh trên ---------- */
   document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { Sound.init(); WM.toggle(b.dataset.open); }));

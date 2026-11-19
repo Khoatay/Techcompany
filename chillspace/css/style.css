@@ -522,3 +522,23 @@ table.quick tr { cursor: pointer; }
 @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr 1fr; } .stay-date { font-size: 28px; } }
 
 .date-vn { font-size: 13px; font-weight: 600; color: #7dd3fc; }
+
+/* bảng hạn lưu trú */
+.stay-board { position: absolute; left: 7.5%; top: 12%; width: 29%; z-index: 2; padding: calc(var(--u) * 1.6); border-radius: calc(var(--u) * 1.4); background: rgba(6, 10, 20, .9); border: 2px solid #334155; box-shadow: 0 20px 50px -20px rgba(0,0,0,.8); cursor: pointer; font-size: calc(var(--u) * 2.1); color: #e2e8f0; text-align: left; }
+.stay-board:hover { border-color: #38bdf8; }
+.sb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: .55em; font-weight: 800; letter-spacing: .08em; }
+.sb-head small { font-size: .72em; font-weight: 500; letter-spacing: 0; color: #94a3b8; }
+.sb { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35em; }
+.sr { display: flex; align-items: center; justify-content: space-between; padding: .3em .7em; border-radius: .45em; background: rgba(255,255,255,.07); color: #e2e8f0; }
+.sn { font-weight: 800; font-size: 1.35em; } .sn small { margin-left: .3em; font-size: .55em; font-weight: 500; color: #94a3b8; }
+.sd { font-weight: 800; font-size: 1.35em; font-variant-numeric: tabular-nums; text-align: right; line-height: 1.15; } .sd small { display: block; font-size: .5em; font-weight: 500; color: #94a3b8; }
+.sr.amber { background: #fbbf24; color: #1c1300; font-size: 1.22em; box-shadow: 0 0 0 2px #fde68a inset; }
+.sr.green { background: #34d399; color: #022c22; font-size: 1.22em; box-shadow: 0 0 0 2px #a7f3d0 inset; }
+.sr.amber small { color: #5c4400; } .sr.green small { color: #065f46; }
+.sb.big { font-size: 16px; gap: 6px; } .sb.big .sr { cursor: pointer; padding: 8px 14px; }
+#mboard { display: none; }
+@media (max-width: 720px) {
+  #mboard { display: block; position: fixed; left: 12px; right: 12px; top: 196px; z-index: 6; }
+  .stay-board.m { position: static; width: auto; font-size: 13px; padding: 12px; border-radius: 14px; }
+  body[data-space="border"] .hero .quote { display: none; }
+}

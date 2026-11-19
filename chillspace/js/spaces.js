@@ -486,11 +486,6 @@
          <g class="takeoff"><g fill="#eef2f8"><ellipse cx="0" cy="0" rx="62" ry="9"/><polygon points="-12,2 22,2 -6,34 -22,34"/><polygon points="-12,-2 22,-2 -6,-30 -20,-30" opacity=".75"/><polygon points="-62,-2 -46,-2 -58,-24 -66,-24"/></g><circle cx="48" cy="-2" r="3" fill="#9fd8ff"/></g>
          ${[870, 1100, 1330].map((x) => `<rect x="${x - 5}" y="90" width="10" height="470" fill="#0f1724"/>`).join('')}
          <rect x="640" y="90" width="920" height="470" fill="none" stroke="#0f1724" stroke-width="16"/>
-         <rect x="70" y="120" width="500" height="250" rx="10" fill="#0b0f17" stroke="#33415a" stroke-width="4"/>
-         <g font-family="ui-monospace, 'Courier New', monospace" font-weight="700">
-           <text x="95" y="160" font-size="22" fill="#fbbf24">✈ KHỞI HÀNH · DEPARTURES</text>
-           ${[['SEOUL', '18:40', 'ĐÚNG GIỜ'], ['TOKYO', '19:05', 'ĐÚNG GIỜ'], ['BANGKOK', '19:30', 'LÊN TÀU'], ['SINGAPORE', '20:10', 'ĐÚNG GIỜ'], ['SYDNEY', '21:45', 'ĐÚNG GIỜ']].map(([c, t, st], i) => `<text x="95" y="${200 + i * 34}" font-size="20" fill="#fde68a">${c}</text><text x="330" y="${200 + i * 34}" font-size="20" fill="#fde68a">${t}</text><text x="420" y="${200 + i * 34}" font-size="16" fill="${st === 'LÊN TÀU' ? '#4ade80' : '#93c5fd'}"${st === 'LÊN TÀU' ? ' class="tw"' : ''}>${st}</text>`).join('')}
-         </g>
          <rect y="640" width="1600" height="260" fill="url(#${p}floor)"/>
          <circle cx="800" cy="560" r="420" fill="url(#${p}glow)"/>
          <rect x="250" y="360" width="1100" height="238" fill="#bfe3ff" opacity=".06" stroke="#cfe8ff" stroke-opacity=".25" stroke-width="3"/>
@@ -821,21 +816,19 @@
   ];
   window.SPACES.unshift(
     {
-      id: 'border', name: 'Quầy cửa khẩu', emoji: '🛂', mood: 'Không gian của tôi · Lưu trú', accent: '#38bdf8', fx: null,
+      id: 'border', name: 'Immigration space', short: 'Immigration', emoji: '🛂', mood: 'Không gian của tôi', accent: '#38bdf8', fx: null, board: true,
       quote: 'Đúng từng ngày, chuẩn từng con dấu.',
       sounds: { airport: 0.35, brown: 0.12 },
       yt: { q: 'lofi music for work', picks: [YT_LOFI] },
       journal: 'Ca trực hôm nay thế nào?',
       objects: [
-        { e: '🌏', x: 15.5, y: 46, s: 7, label: 'Giờ các nước', tool: 'clocks' },
         { e: '⏱️', x: 20, y: 62.5, s: 6, label: 'Pomodoro ca trực', tool: 'pomodoro', opts: { preset: [50, 10] } },
         { e: '☕', x: 28, y: 63, s: 6, label: 'Cà phê ca trực', tool: 'tracker', opts: { kind: 'coffee' } },
         { e: '📅', x: 37, y: 62, s: 7, label: 'Lịch âm dương', tool: 'calendar' },
-        { e: '🛂', x: 50, y: 59.5, s: 11, label: 'Tính ngày lưu trú', tool: 'stay' },
-        { e: '📕', x: 61, y: 63, s: 6, label: 'Kiểm tra ngày đã ở', tool: 'stay', opts: { tab: 'check' } },
-        { e: '📌', x: 68, y: 63, s: 5.5, label: 'Danh sách theo dõi hạn', tool: 'stay', opts: { tab: 'list' } },
-        { e: '📝', x: 75, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
-        { e: '🎧', x: 83, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
+        { e: '🛂', x: 50, y: 59.5, s: 11, label: 'Hạn lưu trú', tool: 'stay' },
+        { e: '📝', x: 61, y: 63, s: 6, label: 'Ghi chú ca trực', tool: 'notes', opts: { placeholder: 'Bàn giao ca, lưu ý, quy định mới…' } },
+        { e: '🎧', x: 69, y: 63, s: 6, label: 'Nhạc / YouTube', tool: 'youtube' },
+        { e: '🌏', x: 77, y: 62.5, s: 6.5, label: 'Giờ các nước', tool: 'clocks' },
       ],
     },
     {

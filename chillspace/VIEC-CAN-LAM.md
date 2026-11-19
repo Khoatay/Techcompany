@@ -12,8 +12,9 @@ Trên máy tính làm sẽ nhanh hơn điện thoại (dễ copy/dán, mở đư
    - Kiểm tra: avatar hiện ở cả 2 bên, chat, thả emoji, đổi sticker, bấm Pomodoro chung, nút "Xong việc", bảng xếp hạng
 5. Thử thêm trên iPhone: vào bằng link mời, chụp ảnh làm avatar.
 
-## Cần xác nhận cho máy tính lưu trú
-- [ ] Quy ước tính ngày: ngày nhập cảnh là **ngày thứ 1** (01/01 + 45 ngày → 14/02)? Nếu không, tắt ở ⚙️ Quy tắc
-- [ ] Số ngày mặc định của từng diện: song phương 21/30/90 · đơn phương 45 · ABTC 90 · giấy miễn thị thực 180. Sửa ở ⚙️ Quy tắc nếu khác
+## Immigration space
+- [ ] Xác nhận quy ước: ngày nhập cảnh là **ngày thứ 1** (19/11 + 45 ngày → 02/01)
+- [ ] Mục 3 trong yêu cầu sửa (bị bỏ trống) – bổ sung
+- [ ] Danh sách chuyến bay: chọn sân bay + chiều đến/đi, quyết định nguồn dữ liệu
 
 Link app: https://khoatay.github.io/Techcompany/chillspace/
