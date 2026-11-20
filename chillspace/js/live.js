@@ -11,7 +11,7 @@ uniform vec2 uRes, uImg;
 uniform float uT;
 uniform vec4 uBox;   // vùng lửa trên ảnh (% x0, y0, x1, y1 tính từ góc trên trái)
 uniform vec4 uSnow, uSnow2;
-uniform vec3 uFx;    // x = tàn lửa bay (0..1), y = sao lấp lánh (0..1), z = độ lan ánh lửa (0 = mặc định)  // tối đa 2 vùng nhìn ra ngoài trời có tuyết rơi (cùng cách tính); 0 = không có
+uniform vec4 uFx;    // x = tàn lửa bay (0..1), y = sao lấp lánh (0..1), z = độ lan ánh lửa (0 = mặc định), w = sao băng (0..1)  // tối đa 2 vùng nhìn ra ngoài trời có tuyết rơi (cùng cách tính); 0 = không có
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
@@ -62,6 +62,25 @@ void main(){
     vec2 cell = floor(im * vec2(320., 180.));
     float tw = .55 + .9 * noise(vec2(uT * (1.5 + hash(cell) * 3.), hash(cell + 2.) * 50.));
     col = mix(col, col * tw, star * uFx.y);
+  }
+  // sao băng: thi thoảng vạch một đường sáng qua nền trời (không đè lên núi / cây tối)
+  if (uFx.w > 0.) {
+    for (int j = 0; j < 2; j++) {
+      float P = 7. + float(j) * 4.3, k = floor((uT + float(j) * 3.1) / P), lt = mod(uT + float(j) * 3.1, P);
+      float h = hash(vec2(k, 13.7 + float(j))), h2 = hash(vec2(k, 2.9 + float(j)));
+      if (h < .4 || lt > 1.1) continue;                      // không phải lần nào cũng có
+      vec2 st = vec2(.28 + h2 * .42, .04 + h * .14);
+      vec2 dir = normalize(vec2(h2 > .5 ? -1. : 1., .55 + h * .3));
+      float prog = lt / 1.1, len = .16;
+      vec2 head = st + dir * prog * .32, tail = head - dir * len * min(1., prog * 3.);
+      vec2 pa = (im - tail) * vec2(asp, 1.), ba = (head - tail) * vec2(asp, 1.);
+      float t = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.);
+      float dist = length(pa - ba * t);
+      float sky = smoothstep(.05, .11, dot(texture2D(uSharp, vec2(im.x, 1. - im.y)).rgb, vec3(.3, .59, .11))) * smoothstep(.45, .3, im.y);
+      float a = smoothstep(.0022, 0., dist) * t * t * sin(prog * 3.1416) * sky;
+      col += vec3(.9, .95, 1.) * a * 1.6 * uFx.w;
+      col += vec3(.7, .8, 1.) * exp(-dist * dist / .00002) * t * sin(prog * 3.1416) * sky * .25 * uFx.w; // quầng mờ
+    }
   }
   // tuyết rơi ngoài trời (chỉ trong khung cửa)
   float inside = 0., edge = 0.;
@@ -183,7 +202,7 @@ void main(){
       gl.uniform2f(gl.getUniformLocation(pr, 'uImg'), img.naturalWidth, img.naturalHeight);
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
       const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
-      const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) gl.uniform3f(uFx, ...(fx || [0, 0, 0]));
+      const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) { const f = fx || []; gl.uniform4f(uFx, f[0] || 0, f[1] || 0, f[2] || 0, f[3] || 0); }
       const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });
       host.append(cv);
       const fit = () => {
