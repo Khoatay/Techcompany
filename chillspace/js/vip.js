@@ -33,6 +33,9 @@ window.Vip = (function () {
     conf = Object.fromEntries((data || []).map((r) => [String(r.key || '').trim(), String(r.value || '').trim().replace(/^["']|["']$/g, '')]));
     // link lịch bay: khoá sheet_url, hoặc bất kỳ dòng nào có link Google Sheet (lỡ đặt tên khoá khác khi thêm tay trên Supabase)
     if (!/docs\.google\.com\/spreadsheets\/d\//.test(conf.sheet_url || '')) { const v = Object.values(conf).find((x) => /docs\.google\.com\/spreadsheets\/d\//.test(x)); if (v) conf.sheet_url = v; }
+    // chủ app đã có link trên máy mình mà máy chủ chưa có → tự đưa lên để mọi người có quyền dùng chung
+    const local = store.get('fl.sheet', '');
+    if (!conf.sheet_url && st.admin && /docs\.google\.com\/spreadsheets\/d\//.test(local)) { try { await api.setConfig('sheet_url', local); } catch (e) {} }
     if (conf.sheet_url && conf.sheet_url !== store.get('fl.sheet', '')) {
       store.set('fl.sheet', conf.sheet_url);
       if (window.Flights) { Flights.cache = null; if (window.FlightsOut) FlightsOut.cache = null; Flights.load(true); }
