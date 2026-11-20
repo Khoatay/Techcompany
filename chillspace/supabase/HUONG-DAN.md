@@ -40,3 +40,9 @@ window.CS_CONFIG = {
 - Bật **CAPTCHA** (Authentication → Attack Protection) để chặn bot tạo tài khoản ảo.
 - Thêm đăng nhập Google/Apple để người dùng giữ tài khoản khi đổi máy.
 - Theo dõi dung lượng ở **Reports**. Vượt gói miễn phí thì gói Pro khoảng 25 USD/tháng.
+
+## Khoá Immigration space (mã mời)
+1. Supabase → **SQL Editor** → **New query** → dán toàn bộ file `supabase/vip.sql` → **Run**.
+2. Mở app trên máy của bạn → vào **Immigration** → bấm **👑 Tôi là chủ app — nhận quyền quản lý** (chỉ làm 1 lần, ai bấm trước là chủ).
+3. Bấm nút **👑** góc trên bên trái để: tạo mã mời, xem / thu hồi người có quyền, sửa link Google Sheet lịch bay.
+4. Máy khác của bạn (điện thoại…): tạo mã có tick **Cho quyền quản lý**, rồi nhập mã trên máy đó.

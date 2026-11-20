@@ -526,7 +526,7 @@ const Lunar = (() => {
             ${Boards.state(boardId) === 'closed' ? `<button class="btn ghost" data-pin>📌 Hiện lại bảng chuyến ${dep ? 'đi' : 'đến'} trên tường</button>` : ''}
             ${showSet ? `<div class="fl-set">
                 <p class="small"><b>Nguồn dữ liệu chuyến bay</b></p>
-                <label class="field">Link Google Sheet lịch bay (chính xác, miễn phí – khuyên dùng)<input data-sheet placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(F.sheet())}" autocomplete="off"></label>
+                ${window.Vip && Vip.member() && !Vip.admin() && Vip.conf().sheet_url ? '<p class="muted small">📄 Lịch bay lấy từ Google Sheet chủ app đã cài sẵn.</p>' : `<label class="field">Link Google Sheet lịch bay (chính xác, miễn phí – khuyên dùng)<input data-sheet placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(F.sheet())}" autocomplete="off"></label>`}
                 <details${!F.sheet() && key ? ' open' : ''}><summary class="small">Hoặc dùng AeroDataBox (dữ liệu có thể thiếu chuyến)</summary>
                   <ol class="small"><li>Vào <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox/pricing" target="_blank" rel="noopener">rapidapi.com → AeroDataBox ↗</a>, đăng nhập bằng Google</li><li>Chọn gói <b>Basic (miễn phí)</b> → Subscribe</li><li>Copy <b>X-RapidAPI-Key</b> rồi dán vào đây</li></ol>
                   <input type="password" data-key placeholder="Dán X-RapidAPI-Key" value="${esc(key)}" autocomplete="off">
@@ -561,8 +561,9 @@ const Lunar = (() => {
           b.querySelectorAll('[data-f]').forEach((x) => (x.onclick = () => { filter = x.dataset.f; draw(); }));
           const rd = q('.fl-raw'); if (rd) rd.ontoggle = () => (showRaw = rd.open);
           if (showSet) q('[data-save]').onclick = () => {
-            const sh = q('[data-sheet]').value.trim();
+            const sh = q('[data-sheet]') ? q('[data-sheet]').value.trim() : F.sheet();
             if (sh && !sheetId(sh)) return toast('Link Google Sheet không hợp lệ');
+            if (window.Vip && Vip.admin() && sh !== (Vip.conf().sheet_url || '')) Vip.setConfig('sheet_url', sh).catch((x) => toast('Chưa lưu được lên máy chủ: ' + x.message));
             store.set('fl.sheet', sh); store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value);
             FL.cache = FLD.cache = null; showSet = !F.configured(); filter = 'all'; F.load(true); draw();
           };
@@ -605,6 +606,7 @@ const Lunar = (() => {
       this._day = d;
       if (!prev || prev === d) return;
       const sp = window.currentSpace && currentSpace();
+      if (window.Vip && !Vip.member()) return; // chưa có quyền vào Immigration thì không kêu
       if (this.on() && sp && (sp.id === 'border' || sp.parent === 'border')) this.ring(); // cả Nhập cảnh và Xuất cảnh
     },
   });

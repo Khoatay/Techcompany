@@ -480,5 +480,7 @@
     } catch (e) { toast(errMsg(e)); }
   }
 
-  window.Room = { boot, configured, get room() { return room; }, lockSpace: (id) => !!room && !(isOwner() && sameFamily(room.space, id)), audioLocked: () => !!room && !canAudio(), isOwner };
+  // dùng chung kết nối cho phần khác (vd. quyền Immigration). create=false: chỉ dùng khi máy đã có tài khoản, không tạo mới
+  async function client(create) { if (!(await init())) return null; if (!user) { if (!create) return null; await ensureUser(); } return sb; }
+  window.Room = { boot, configured, client, uid: () => user && user.id, myName: () => (profile && profile.name) || '', get room() { return room; }, lockSpace: (id) => !!room && !(isOwner() && sameFamily(room.space, id)), audioLocked: () => !!room && !canAudio(), isOwner };
 })();
