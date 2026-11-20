@@ -18,6 +18,7 @@ Trên máy tính làm sẽ nhanh hơn điện thoại (dễ copy/dán, mở đư
 - [ ] Sau này: chuyển khoá API lên máy chủ Supabase để nhiều người dùng chung, không ai phải tự đăng ký
 
 ## Khi đóng gói thành app (PC / Android)
+- Ưu tiên: app PC (Windows) và app Android trước; chưa cần lo Safari / iPhone
 - [ ] Ô **"Ứng dụng của tôi"** trong từng không gian: tự thêm app/web (MT5, TradingView, Notion, Google Sheet…),
       mở ngay trong ChillSpace (app không bị chặn nhúng như web) hoặc mở app đã cài trên máy
 
