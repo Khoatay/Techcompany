@@ -617,7 +617,7 @@ body.board-max .hero { opacity: 0; pointer-events: none; }
 .dir-switch button.on { background: #38bdf8; color: #04243a; }
 .alarm-corner { display: none; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); font-size: 13px; color: var(--muted); align-items: center; gap: 4px; }
 .alarm-corner.on { border-color: #f97316; color: #fff; } .alarm-corner.on b { color: #fdba74; }
-body[data-space="border"] .alarm-corner { display: inline-flex; }
+body[data-space="border"] .alarm-corner, body[data-space="borderout"] .alarm-corner { display: inline-flex; }
 body.zen .corner-bar { opacity: .5; }
 @media (max-width: 720px) {
   .corner-bar { left: 12px; right: 12px; top: 156px; justify-content: center; }
@@ -637,3 +637,8 @@ body.zen .corner-bar { opacity: .5; }
 .dt.last { background: rgba(251,191,36,.2); color: #fcd34d; }
 .dr.next .dt { background: rgba(4,36,58,.18); color: #04243a; }
 .fl-dep { display: block; font-size: 12px; margin-top: 2px; color: #cbd5e1; } .fl-dep b { color: #6ee7b7; } .fl-dep b + b, .fl-dep b:last-child { color: #fcd34d; }
+
+/* ghi chú chuyến đi bị trễ */
+.dnote { grid-column: 1 / -1; margin-top: .15em; padding: .2em .55em; border-radius: .35em; font-size: .78em; font-weight: 700; background: rgba(251,191,36,.18); color: #fcd34d; }
+.dr.next .dnote { background: rgba(4,36,58,.2); color: #7c2d12; }
+.fl-late { display: block; margin-top: 3px; font-size: 12px; font-weight: 700; color: #fcd34d; }

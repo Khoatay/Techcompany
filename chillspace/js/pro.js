@@ -341,6 +341,8 @@ const Lunar = (() => {
   // Dữ liệu chuyến bay dùng chung cho bảng trên tường và cửa sổ chi tiết.
   // Arrival = chuyến đến (nhập cảnh) · Departure = chuyến đi (xuất cảnh)
   const OPEN_BEFORE = 3 * 3600e3, LAST_BEFORE = 40 * 60000; // mở quầy trước 3 giờ · hết khách trước 40 phút
+  // Ghi chú trễ: 'Trễ 1 giờ 20 phút · dự kiến đi 00:20' (chỉ khi trễ từ 5 phút)
+  const lateNote = (f) => { if (!f.est || !f.sched || f.est - f.sched < 5 * 60000) return ''; const m = Math.round((f.est - f.sched) / 60000), h = Math.floor(m / 60); return `Trễ ${h ? h + ' giờ ' : ''}${m % 60 ? (m % 60) + ' phút' : ''}`.trim() + ` · dự kiến đi ${hhmm(new Date(f.est))}`; };
   const DEP_STATUS = { ...FL_STATUS, Expected: ['Dự kiến', 'plan'], CheckIn: ['Đang làm thủ tục', 'soon'], Boarding: ['Đang lên máy bay', 'soon'], GateClosed: ['Đã đóng cửa', 'air'], Departed: ['Đã cất cánh', 'done'], EnRoute: ['Đã cất cánh', 'done'] };
   function makeFL(dir) {
     const dep = dir === 'Departure', ck = dep ? 'fl.cacheD' : 'fl.cache';
@@ -408,8 +410,8 @@ const Lunar = (() => {
               const st = F.status[f.status] || F.status.Unknown, past = F.isPast(f);
               const isNext = !nextMarked && !past && st[1] !== 'cancel' && (nextMarked = true);
               const late = f.est && f.sched && f.est - f.sched > 10 * 60000;
-              const extra = dep && f.sched ? `<span class="fl-dep">Mở quầy <b>${hhmm(new Date(f.sched - OPEN_BEFORE))}</b> · Hết khách <b>${hhmm(new Date(f.sched - LAST_BEFORE))}</b></span>` : '';
-              return `<li class="${past ? 'past' : ''}${isNext ? ' next' : ''}"><span class="fl-time">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${f.est && f.sched && Math.abs(f.est - f.sched) > 5 * 60000 ? `<small class="${late ? 'late' : ''}">→ ${hhmm(new Date(f.est))}</small>` : ''}</span>
+              const extra = dep && f.sched ? `<span class="fl-dep">Mở quầy <b>${hhmm(new Date(f.sched - OPEN_BEFORE))}</b> · Hết khách <b>${hhmm(new Date(f.sched - LAST_BEFORE))}</b></span>${lateNote(f) ? `<span class="fl-late">⚠️ ${lateNote(f)}</span>` : ''}` : '';
+              return `<li class="${past ? 'past' : ''}${isNext ? ' next' : ''}"><span class="fl-time">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${!dep && f.est && f.sched && Math.abs(f.est - f.sched) > 5 * 60000 ? `<small class="${late ? 'late' : ''}">→ ${hhmm(new Date(f.est))}</small>` : ''}</span>
                 <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${dep ? '→ ' : ''}${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span>${extra}<small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${!dep && f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}${dep && f.gate ? ' · Cửa ' + esc(f.gate) : ''}</small></span>
                 <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : st[0]}</span></li>`;
             }).join('') || (F.loading ? '<li class="empty">Đang tải…</li>' : key && !F.err ? `<li class="empty">Không có chuyến quốc tế ${dep ? 'đi' : 'đến'} trong khung giờ này.</li>` : '')}</ul>
@@ -452,14 +454,14 @@ const Lunar = (() => {
       el.querySelector('.alarm-ok').onclick = () => this.stop(); // kêu đến khi có người bấm
     },
     stop() { this.ringing = false; clearInterval(this._beep); const el = document.getElementById('alarmOverlay'); if (el) el.remove(); },
-    // Chỉ kêu khi app ĐANG MỞ lúc qua 00:00 (giờ VN) và đang ở Immigration space.
+    // Chỉ kêu khi app ĐANG MỞ lúc qua 00:00 (giờ VN) và đang ở Immigration space (Nhập hoặc Xuất cảnh).
     // Mở app sau 00:00 thì không kêu.
     tick() {
       const d = todayISO(), prev = this._day;
       this._day = d;
       if (!prev || prev === d) return;
       const sp = window.currentSpace && currentSpace();
-      if (this.on() && sp && sp.id === 'border') this.ring();
+      if (this.on() && sp && (sp.id === 'border' || sp.parent === 'border')) this.ring(); // cả Nhập cảnh và Xuất cảnh
     },
   });
   Alarm.tick(); // ghi nhận ngày lúc mở app
@@ -500,7 +502,7 @@ const Lunar = (() => {
         if (!up.length) return `<p class="fb-empty">${FLD.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đi trong 11 giờ tới.'}</p>`;
         const n = st === 'max' ? 10 : 6;
         return `<div class="dh"><span>Giờ đi</span><span>Chuyến bay</span><span>Mở quầy</span><span>Hết khách</span></div>
-          <ul class="fb">${up.slice(0, n).map((f, i) => { const late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="dr${i === 0 ? ' next' : ''}"><span class="ft">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${late ? `<small>→ ${hhmm(new Date(f.est))}</small>` : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>→ ${flag(f.cc)} ${esc(f.from)}</small></span><span class="dt">${f.sched ? hhmm(new Date(f.sched - OPEN_BEFORE)) : '--:--'}</span><span class="dt last">${f.sched ? hhmm(new Date(f.sched - LAST_BEFORE)) : '--:--'}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+          <ul class="fb">${up.slice(0, n).map((f, i) => { const ln = lateNote(f); return `<li class="dr${i === 0 ? ' next' : ''}${ln ? ' has-late' : ''}"><span class="ft">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}</span><span class="fm"><b>${esc(f.no)}</b><small>→ ${flag(f.cc)} ${esc(f.from)}</small></span><span class="dt">${f.sched ? hhmm(new Date(f.sched - OPEN_BEFORE)) : '--:--'}</span><span class="dt last">${f.sched ? hhmm(new Date(f.sched - LAST_BEFORE)) : '--:--'}</span>${ln ? `<span class="dnote">⚠️ ${ln}</span>` : ''}</li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
       },
     },
   });
