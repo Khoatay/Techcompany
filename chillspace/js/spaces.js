@@ -992,6 +992,7 @@
       pp: { '🕯️': [90, 30], '🧶': [60, 72], '📖': [72, 62], '🍫': [46, 78], '🐕': [82, 76], '🕰️': [24, 26], '🔥': [24, 57], '📻': [10, 58] },
     },
     ocean: {
+      live: 'sea', liveBox: [0, 60, 100, 100], liveFx: [1, 1, 1, 1],
       raw: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8dW5kZXJ3YXRlciUyMGNvcmFsJTIwcmVlZiUyMHN1bmxpZ2h0fGVufDF8MHx8fDE3OTUxNTUzMzd8MA&ixlib=rb-4.1.0',
       by: "Hiroko Yoshii", byUrl: 'https://unsplash.com/@hiro0718',
       pp: { '🪼': [80, 20], '🐡': [60, 40], '🐢': [30, 40], '🐙': [16, 74], '🐚': [40, 76], '🪸': [62, 74], '💎': [84, 72] },

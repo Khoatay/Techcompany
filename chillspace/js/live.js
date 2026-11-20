@@ -1,9 +1,76 @@
 /* ChillSpace — "ảnh sống": hiệu ứng chuyển động nhẹ vẽ trực tiếp lên ảnh nền (WebGL).
-   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin).
+   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển).
    Tự dừng khi đổi không gian / ẩn app; máy không có WebGL thì giữ ảnh tĩnh. */
 window.Live = (function () {
   const VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
   const SHADERS = {
+    sea: `precision highp float;
+varying vec2 v;
+uniform sampler2D uSharp;
+uniform vec2 uRes, uImg;
+uniform float uT;
+uniform vec4 uBox;   // vùng rạn san hô (% x0, y0, x1, y1 từ góc trên trái) — nhận vân sáng gợn
+uniform vec4 uFx;    // x = tia nắng, y = vân sáng trên rạn, z = bọt khí, w = hạt trôi lơ lửng
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
+vec2 cover(vec2 uv){ float rs = uRes.x / uRes.y, ri = uImg.x / uImg.y; vec2 s = rs > ri ? vec2(1., ri / rs) : vec2(rs / ri, 1.); return (uv - .5) * s + .5; }
+// vân sáng dưới nước (caustics): lưới sáng uốn lượn
+float caustic(vec2 p, float t){
+  float c = 0.;
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i);
+    vec2 q = p * (1.6 + fi * .7) + vec2(t * (.25 + fi * .07), -t * (.18 + fi * .05));
+    q += vec2(noise(q * .8 + t * .3), noise(q * .8 - t * .27)) * 1.6;
+    c += pow(1. - abs(sin(q.x * 3.1) * sin(q.y * 2.7)), 6.) * (.6 - fi * .15);
+  }
+  return c;
+}
+void main(){
+  vec2 iuv = cover(v);
+  vec2 im = vec2(iuv.x, 1. - iuv.y);
+  float asp = uRes.x / uRes.y;
+  vec3 col = texture2D(uSharp, iuv).rgb;
+  float lum = dot(col, vec3(.3, .59, .11));
+  // 1) tia nắng từ mặt nước góc trên trái, đung đưa chậm
+  vec2 sun = vec2(.06, -.12);
+  vec2 d = (im - sun) * vec2(asp, 1.);
+  float ang = atan(d.x, d.y), dist = length(d);
+  float rays = 0.;
+  rays += pow(noise(vec2(ang * 9. + sin(uT * .25) * .6, uT * .15)), 3.) * 1.2;
+  rays += pow(noise(vec2(ang * 17. - uT * .05, uT * .22 + 4.)), 4.) * .9;
+  rays *= smoothstep(1.6, .1, dist) * smoothstep(.0, .25, dist);
+  col += vec3(.75, .95, 1.) * rays * .22 * uFx.x;
+  // 2) vân sáng gợn trên rạn san hô (chỉ chỗ sáng của san hô nhận sáng)
+  vec4 b = uBox / 100.;
+  float reef = smoothstep(b.y - .04, b.y + .06, im.y);
+  float cs = caustic(im * vec2(asp, 1.) * 7., uT);
+  col *= 1. + reef * cs * .28 * uFx.y * smoothstep(.12, .45, lum);
+  // 3) bọt khí nhỏ bay lên từ rạn, lắc lư
+  for (int i = 0; i < 14; i++) {
+    float fi = float(i), h = hash(vec2(fi, 1.3)), h2 = hash(vec2(fi, 8.1));
+    float ph = fract(uT * (.05 + h2 * .05) + h);
+    vec2 pp = vec2(.08 + h * .84 + sin(uT * (1.5 + h2) + fi) * .006, b.y + .1 - ph * (b.y + .15));
+    vec2 dd = (im - pp) * vec2(asp, 1.);
+    float r = .0035 + h2 * .004;
+    float l = length(dd);
+    float ring = smoothstep(r, r * .7, l) - smoothstep(r * .7, r * .35, l) * .7;   // viền bọt sáng, giữa trong
+    float hi = smoothstep(r * .35, 0., length(dd - vec2(-r * .35, r * .35)));      // đốm sáng nhỏ
+    float a = smoothstep(0., .1, ph) * smoothstep(1., .85, ph);
+    col += vec3(.85, .97, 1.) * (ring * .45 + hi * .6) * a * uFx.z;
+  }
+  // 4) hạt li ti trôi lơ lửng trong nước
+  for (int L = 0; L < 2; L++) {
+    float sc = 90. + float(L) * 60.;
+    vec2 p = im * vec2(sc * asp, sc) + vec2(uT * (.6 + float(L) * .4), -uT * (.3 + float(L) * .2));
+    vec2 id = floor(p), f = fract(p) - .5;
+    vec2 r = vec2(hash(id + float(L)), hash(id + float(L) + 5.));
+    float on = step(.93, r.x) * (1. - reef * .8);
+    float tw = .5 + .5 * sin(uT * (1. + r.y * 2.) + r.x * 30.);
+    col += vec3(.8, .95, 1.) * smoothstep(.12, .02, length(f - (r - .5) * .6)) * on * tw * .35 * uFx.w;
+  }
+  gl_FragColor = vec4(col, 1.);
+}`,
     fire: `precision highp float;
 varying vec2 v;
 uniform sampler2D uSharp;
