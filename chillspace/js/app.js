@@ -372,7 +372,7 @@
     if (e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (!$('#welcome').hidden) return;
     const k = e.key.toLowerCase();
-    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room' };
+    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos' };
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
     else if (k === 'f') fs();
@@ -408,13 +408,7 @@
 /* ---------- Hiệu ứng giao diện: cảnh nghiêng theo chuột, thanh dưới phóng to, nút đang mở, thanh trượt tô màu ---------- */
 (function () {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, fine = matchMedia('(pointer: fine)').matches;
-  const stage = document.getElementById('stage');
   if (!reduce && fine) {
-    let raf = 0, tx = 0, ty = 0;
-    addEventListener('mousemove', (e) => {
-      tx = (e.clientX / innerWidth - 0.5) * -14; ty = (e.clientY / innerHeight - 0.5) * -10;
-      if (!raf) raf = requestAnimationFrame(() => { raf = 0; stage.style.setProperty('--px', tx.toFixed(1) + 'px'); stage.style.setProperty('--py', ty.toFixed(1) + 'px'); });
-    });
     const dock = document.getElementById('dock');
     dock.addEventListener('mousemove', (e) => {
       dock.querySelectorAll('button').forEach((b) => { const r = b.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); b.style.setProperty('--mag', (1 + 0.42 * Math.max(0, 1 - d / 130)).toFixed(3)); });

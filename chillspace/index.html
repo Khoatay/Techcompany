@@ -17,8 +17,9 @@
 </head>
 <body>
   <div id="scene">
-    <div class="stage" id="stage"><div class="scenery" id="scenery"></div><div class="objects" id="objects"></div></div>
+    <div class="stage" id="stage"><div class="scenery" id="scenery"></div><div class="atm-bg" id="atmBg"><div class="atm-tints"></div><div class="atm-sun"></div><div class="atm-flash"></div></div><div class="objects" id="objects"></div></div>
     <canvas id="fx"></canvas>
+    <canvas id="atmFx"></canvas>
     <div class="vignette"></div>
   </div>
 
@@ -29,6 +30,7 @@
       <button id="playBtn" title="Tắt/bật âm thanh nền">🔊</button>
       <button data-open="room" title="Phòng chung – làm việc cùng bạn bè (R)" class="room-btn">👥<span>Phòng chung</span><i class="badge" id="roomBadge" hidden></i></button>
       <button data-open="mixer" title="Âm thanh nền (M)">🎧<span>Âm thanh</span></button>
+      <button data-open="atmos" title="Hiệu ứng: nắng, mưa, sáng tối, tiếng chợ… (E)">✨<span>Hiệu ứng</span></button>
       <button data-open="youtube" title="YouTube (Y)">▶️<span>YouTube</span></button>
       <button data-open="pomodoro" title="Pomodoro (P)">⏱️<span>Pomodoro</span></button>
       <button data-open="toolbox" title="Tất cả công cụ (T)">🧰<span>Công cụ</span></button>
@@ -71,6 +73,7 @@
   <script src="js/audio.js"></script>
   <script src="js/tools.js"></script>
   <script src="js/pro.js"></script>
+  <script src="js/atmos.js"></script>
   <script src="js/room.js"></script>
   <script src="js/app.js"></script>
 </body>
