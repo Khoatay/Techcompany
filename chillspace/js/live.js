@@ -1,9 +1,47 @@
 /* ChillSpace — "ảnh sống": hiệu ứng chuyển động nhẹ vẽ trực tiếp lên ảnh nền (WebGL).
-   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa).
+   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin).
    Tự dừng khi đổi không gian / ẩn app; máy không có WebGL thì giữ ảnh tĩnh. */
 window.Live = (function () {
   const VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
   const SHADERS = {
+    fire: `precision highp float;
+varying vec2 v;
+uniform sampler2D uSharp;
+uniform vec2 uRes, uImg;
+uniform float uT;
+uniform vec4 uBox;   // vùng lửa trên ảnh (% x0, y0, x1, y1 tính từ góc trên trái)
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
+float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * noise(p); p *= 2.03; a *= .5; } return s; }
+vec2 cover(vec2 uv){ float rs = uRes.x / uRes.y, ri = uImg.x / uImg.y; vec2 s = rs > ri ? vec2(1., ri / rs) : vec2(rs / ri, 1.); return (uv - .5) * s + .5; }
+vec3 tex(vec2 im){ return texture2D(uSharp, vec2(im.x, 1. - im.y)).rgb; }
+void main(){
+  vec2 iuv = cover(v);
+  vec2 im = vec2(iuv.x, 1. - iuv.y);                       // toạ độ ảnh, gốc trên trái
+  vec4 b = uBox / 100.;
+  vec2 bc = (b.xy + b.zw) * .5, bs = (b.zw - b.xy) * .5;
+  vec2 rel = (im - bc) / bs;
+  float m = smoothstep(1., .55, abs(rel.x)) * smoothstep(1.05, .45, abs(rel.y));
+  // nhịp lửa: 2 tầng nhiễu chậm + nhanh
+  float fl = .55 * noise(vec2(uT * 2.3, 1.7)) + .3 * noise(vec2(uT * 6.1, 4.2)) + .15 * noise(vec2(uT * 13., 9.));
+  // ngọn lửa liếm lên: lấy mẫu lệch xuống dưới theo nhiễu chạy lên
+  vec2 np = vec2(im.x * 70., im.y * 34. + uT * 2.6);
+  float n1 = fbm(np), n2 = fbm(np * 1.3 + 11.);
+  vec2 off = vec2((n1 - .5) * .007, abs(n2 - .45) * .016) * m;
+  vec3 base = tex(im + off);
+  float lum = dot(base, vec3(.3, .59, .11));
+  float hot = m * smoothstep(.35, .85, lum);               // chỉ phần lửa sáng mới bập bùng
+  vec3 col = base * (1. + hot * (fl - .45) * .7);
+  col += vec3(1., .55, .18) * hot * pow(n1, 3.) * .25;     // lưỡi lửa sáng chạy lên
+  // ánh lửa hắt ra phòng: sáng tối theo nhịp lửa, mạnh gần lò
+  float asp = uRes.x / uRes.y;
+  float d = length((im - bc) * vec2(asp, 1.));
+  float glow = exp(-d * 2.6) * (fl - .45);
+  col *= 1. + glow * .22;
+  col += vec3(1., .5, .15) * max(glow, 0.) * .05;
+  gl_FragColor = vec4(col, 1.);
+}`,
     rain: `precision highp float;
 varying vec2 v;
 uniform sampler2D uSharp, uBlur;
@@ -69,7 +107,7 @@ void main(){
   gl_FragColor = vec4(col * mix(.78, 1., vig), 1.);
 }`,
   };
-  function mount(host, img, kind) {
+  function mount(host, img, kind, box) {
     const FS = SHADERS[kind]; if (!FS) return false;
     const cv = document.createElement('canvas');
     cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
@@ -83,8 +121,10 @@ void main(){
     };
     try {
       // bản kính mờ hơi nước: làm nhoè ảnh
+      const needBlur = FS.indexOf('uBlur') >= 0;
       const b = document.createElement('canvas'); b.width = Math.round(img.naturalWidth / 2); b.height = Math.round(img.naturalHeight / 2);
-      const bx = b.getContext('2d'); bx.filter = 'blur(5px) brightness(.95)'; bx.drawImage(img, -10, -10, b.width + 20, b.height + 20);
+      if (!needBlur) { b.width = b.height = 2; }
+      const bx = b.getContext('2d'); if (needBlur) bx.filter = 'blur(5px) brightness(.95)'; if (needBlur) bx.drawImage(img, -10, -10, b.width + 20, b.height + 20);
       const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
       const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
       const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
@@ -93,6 +133,7 @@ void main(){
       gl.uniform1i(gl.getUniformLocation(pr, 'uSharp'), 0); gl.uniform1i(gl.getUniformLocation(pr, 'uBlur'), 1);
       gl.uniform2f(gl.getUniformLocation(pr, 'uImg'), img.naturalWidth, img.naturalHeight);
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
+      const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
       host.append(cv);
       const fit = () => {
         const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5), k = Math.min(d, 2200 / Math.max(1, r.width));

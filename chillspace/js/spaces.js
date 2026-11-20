@@ -985,9 +985,10 @@
       pp: { '🧳': [12, 72], '📖': [24, 76], '☕': [37, 78], '💻': [50, 78], '🎫': [63, 78], '🎧': [76, 76], '🌙': [64, 56], '🐈': [88, 72] },
     },
     cabin: {
+      live: 'fire', liveBox: [18, 66, 32, 84],
       raw: 'https://images.unsplash.com/photo-1697299261617-91f3902bfeea?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8Y296eSUyMGNhYmluJTIwZmlyZXBsYWNlJTIwd2ludGVyfGVufDF8MHx8fDE3OTUxNTUzMjd8MA&ixlib=rb-4.1.0',
       by: "Clay Banks", byUrl: 'https://unsplash.com/@claybanks',
-      pp: { '🕯️': [90, 30], '🧶': [60, 72], '📖': [72, 62], '🍫': [46, 78], '🐕': [82, 76], '🕰️': [24, 26], '🔥': [22, 72], '📻': [10, 58] },
+      pp: { '🕯️': [90, 30], '🧶': [60, 72], '📖': [72, 62], '🍫': [46, 78], '🐕': [82, 76], '🕰️': [24, 26], '🔥': [24, 57], '📻': [10, 58] },
     },
     ocean: {
       raw: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8dW5kZXJ3YXRlciUyMGNvcmFsJTIwcmVlZiUyMHN1bmxpZ2h0fGVufDF8MHx8fDE3OTUxNTUzMzd8MA&ixlib=rb-4.1.0',
