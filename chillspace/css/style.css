@@ -656,3 +656,18 @@ body.zen .corner-bar { opacity: .5; }
 .fr.next .fp small { color: #0c4a6e; }
 
 .invite { padding: 10px 12px; border-radius: 12px; background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.45); font-size: 13.5px; }
+
+/* Phòng chung: avatar kéo thả, cửa sổ thu gọn, phân quyền âm thanh */
+#seats { position: fixed; inset: 0; top: 0 !important; left: 0; transform: none; width: auto !important; display: block; pointer-events: none; z-index: 8; }
+#seats .seat { position: absolute; width: 100px; margin-left: -50px; margin-top: -42px; }
+#seats .seat.me { cursor: grab; touch-action: none; }
+#seats .seat.dragging { cursor: grabbing; animation: none; z-index: 2; } #seats .seat.dragging .av { transform: scale(1.12); }
+.win.collapsed { width: auto !important; min-width: 260px; } .win.collapsed .win-body { display: none; } .win.collapsed .win-head { border-bottom: 0; cursor: pointer; }
+.win.collapsed .win-x { display: none; }
+.perm { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); }
+.perm small { color: var(--muted); }
+.people .chip { flex: none; font-size: 11.5px; padding: 4px 9px; }
+.lock-note { padding: 8px 10px; border-radius: 10px; background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.35); font-size: 12.5px; }
+.mixer.locked .mix { opacity: .45; }
+.yt-locked .yt-list li { cursor: not-allowed; opacity: .55; }
+@media (max-width: 720px) { .win.collapsed { left: auto !important; right: 8px; min-width: 0; } }

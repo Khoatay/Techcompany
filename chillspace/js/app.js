@@ -14,10 +14,12 @@
     function drag(w) {
       const head = w.el.querySelector('.win-head');
       head.addEventListener('pointerdown', (e) => {
+        w._dragged = false;
         if (e.target.closest('button') || mobile()) return;
         const r = w.el.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
         head.setPointerCapture(e.pointerId);
         const mv = (ev) => {
+          if (Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 4) w._dragged = true;
           w.el.style.left = Math.max(-r.width + 80, Math.min(innerWidth - 80, ev.clientX - dx)) + 'px';
           w.el.style.top = Math.max(56, Math.min(innerHeight - 50, ev.clientY - dy)) + 'px';
         };
@@ -32,7 +34,7 @@
       if (!w) {
         const el = document.createElement('section');
         el.className = 'win';
-        el.innerHTML = `<header class="win-head"><span class="win-ico"></span><span class="win-title"></span><button class="win-x" aria-label="Đóng">✕</button></header><div class="win-body"></div>`;
+        el.innerHTML = `<header class="win-head"><span class="win-ico"></span><span class="win-title"></span><button class="win-x" aria-label="${def.collapse ? 'Thu gọn' : 'Đóng'}" title="${def.collapse ? 'Thu gọn (bấm thanh tiêu đề để mở lại)' : 'Đóng'}">${def.collapse ? '–' : '✕'}</button></header><div class="win-body"></div>`;
         const width = Math.min(def.width || 340, innerWidth - 24);
         el.style.width = width + 'px';
         const k = n++ % 6;
@@ -45,7 +47,10 @@
         w = wins[key] = { el, def, key };
         el.querySelector('.win-x').onclick = () => close(key);
         el.addEventListener('pointerdown', () => focus(w));
+        el.querySelector('.win-head').addEventListener('click', (e) => { if (!e.target.closest('button') && el.classList.contains('collapsed') && !w._dragged) open(tool, opts); });
         drag(w);
+      } else if (w.el.classList.contains('collapsed')) {
+        w.el.classList.remove('collapsed'); focus(w); document.dispatchEvent(new CustomEvent('cs:win', { detail: { key, collapsed: false } })); return w;
       } else if (def.keepAlive && w.rendered) {
         w.el.hidden = false; focus(w); def.refresh && def.refresh(); return w;
       }
@@ -61,12 +66,13 @@
     }
     function close(key) {
       const w = wins[key]; if (!w) return;
+      if (w.def.collapse) { w.el.classList.add('collapsed'); document.dispatchEvent(new CustomEvent('cs:win', { detail: { key, collapsed: true } })); return; } // chỉ thu gọn, không tắt
       if (w.def.keepAlive) { w.el.hidden = true; return; }
       w.cleanup && w.cleanup(); w.el.remove(); delete wins[key];
     }
     function toggle(tool) {
       const w = wins[tool];
-      if (w && !w.el.hidden && w.el.classList.contains('top')) close(tool); else open(tool);
+      if (w && !w.el.hidden && !w.el.classList.contains('collapsed') && w.el.classList.contains('top')) close(tool); else open(tool);
     }
     function onSpace() {
       Object.values(wins).forEach((w) => { if (!w.global) close(w.key); else if (w.def.refresh) w.def.refresh(); });
@@ -183,6 +189,8 @@
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
   function setSpace(id, first, remote) {
+    // Trong Phòng chung: chỉ chủ phòng đổi được không gian
+    if (!first && !remote && window.Room && Room.lockSpace && Room.lockSpace() && id !== space.id) { toast('🔒 Bạn đang ở Phòng chung – chỉ chủ phòng đổi được không gian'); return; }
     const next = SPACES.find((s) => s.id === id); if (!next) return;
     const changed = next !== space; space = next;
     store.set('space', id);
@@ -204,7 +212,7 @@
     const fam = space.id === 'border' || space.parent === 'border';
     $('#cornerBar').hidden = !fam;
     $$('#dirSwitch [data-dir]').forEach((b) => b.classList.toggle('on', b.dataset.dir === space.id));
-    if (store.get('autoSound', true) && (changed || first)) Sound.setAll(space.sounds);
+    if (store.get('autoSound', true) && (changed || first) && !(remote && window.Room && Room.room)) Sound.setAll(space.sounds); // trong phòng: âm thanh theo phòng
     document.dispatchEvent(new Event('cs:audio'));
     WM.onSpace();
     document.title = `${space.emoji} ${space.name} · ChillSpace`;

@@ -103,11 +103,46 @@
     if (error) throw new Error(error.message);
     await enter(data);
   }
+  const isOwner = () => !!(room && user && room.owner === user.id);
+  const perms = () => (room && room.perms) || { audio: 'owner', users: [] };
+  const canAudio = (id) => { id = id || (user && user.id); if (!room || !id) return false; const p = perms(); return room.owner === id || p.audio === 'all' || (p.users || []).includes(id); };
+  async function setPerms(p) {
+    const { error } = await sb.rpc('set_room_perms', { p_code: room.code, p_perms: p });
+    if (error) return toast(error.message);
+    room = { ...room, perms: p }; emit(); document.dispatchEvent(new Event('cs:audio'));
+  }
+
+  /* ---------- Âm thanh chung của phòng (âm thanh nền + YouTube) ---------- */
+  let lastAudio = '', ytNow = null, ytPlaying = null, audioOff = false;
+  function applyAudio(a) {
+    if (!a || !Object.keys(a).length) return;
+    const j = JSON.stringify(a); if (j === lastAudio) return; lastAudio = j;
+    if (a.vols) { Sound.init(); Sound.setAllQuiet(a.vols); }
+    if (a.yt && a.yt.item && (!ytNow || ytNow.key !== a.yt.key)) { ytNow = a.yt; CS.YTP.remotePlay(a.yt.item); }
+    if (typeof a.playing === 'boolean' && a.playing !== ytPlaying) { ytPlaying = a.playing; if (ytNow) CS.YTP.remoteSetPlaying(a.playing); }
+    document.dispatchEvent(new Event('cs:audio'));
+  }
+  const pushAudio = debounce(() => {
+    if (!room || !canAudio()) return;
+    const a = { vols: Sound.getAll(), yt: ytNow, playing: ytPlaying };
+    lastAudio = JSON.stringify(a);
+    if (audioOff) return;
+    sb.rpc('set_room_audio', { p_code: room.code, p_audio: a }).then(({ error }) => {
+      if (!error) return;
+      if (/set_room_audio|schema cache|does not exist|PGRST202/i.test(error.message + (error.code || ''))) { audioOff = true; toast('⚠️ Máy chủ chưa cập nhật tính năng âm thanh chung – chạy lại file setup.sql trên Supabase', 8000); }
+      else toast(error.message);
+    });
+  }, 500);
+  Sound.onChange = () => { if (room && canAudio()) pushAudio(); };
+  CS.YTP.onUser = (item) => { if (room && canAudio()) { ytNow = { item, key: Date.now() }; ytPlaying = true; pushAudio(); } };
+  CS.YTP.onState = (st) => { if (room && canAudio() && ytNow && (st === 1 || st === 2)) { ytPlaying = st === 1; pushAudio(); } };
+
   const statusOf = () => (Pomo.running ? Pomo.mode : 'idle');
   function myState() {
     return {
       id: user.id, name: (profile && profile.name) || 'Bạn mới', emoji: (profile && profile.avatar_emoji) || '🙂',
       url: (profile && profile.avatar_url) || null, status: statusOf(), act: store.get('room.act', '📚'), task: store.get('room.task', ''), since: Date.now(),
+      pos: room ? store.get('room.pos.' + room.code, null) : null,
     };
   }
   const track = debounce(() => { if (channel) channel.track(myState()); }, 250);
@@ -120,6 +155,9 @@
     store.set('room.code', r.code);
     if (r.space !== currentSpace().id) window.setSpace(r.space, { remote: true });
     Pomo.applyState(r.pomo);
+    lastAudio = ''; ytNow = (r.audio && r.audio.yt) || null; ytPlaying = null;
+    if (r.audio && Object.keys(r.audio).length) { const a = r.audio; ytNow = null; applyAudio(a); } // nghe cùng âm thanh của phòng
+    else if (r.owner === user.id) pushAudio(); // phòng mới: âm thanh của chủ phòng là âm thanh của phòng
     Pomo.remote = debounce((st) => sb.rpc('set_room_pomo', { p_code: room.code, p_pomo: st }).then(({ error }) => error && toast('Không đồng bộ được Pomodoro: ' + error.message)), 150);
     Pomo.onFocusDone = (min) => sb.from('focus_log').insert({ minutes: min, room: room && room.code }).then(() => {});
     const { data: msgs } = await sb.from('messages').select('*').eq('room', r.code).order('created_at', { ascending: false }).limit(60);
@@ -144,8 +182,10 @@
         emit();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${r.code}` }, ({ new: nr }) => {
-        const spaceChanged = nr.space !== room.space;
+        const spaceChanged = nr.space !== room.space, permChanged = JSON.stringify(nr.perms) !== JSON.stringify(room.perms);
         room = nr;
+        if (nr.audio) applyAudio(nr.audio);
+        if (permChanged) { document.dispatchEvent(new Event('cs:audio')); toast(canAudio() ? '🎧 Bạn được chủ phòng cho điều khiển âm thanh' : '🔒 Âm thanh do chủ phòng điều khiển'); }
         if (spaceChanged && nr.space !== currentSpace().id) { window.setSpace(nr.space, { remote: true }); toast('Chủ phòng đã chuyển không gian ✨'); }
         Pomo.applyState(nr.pomo); emit();
       })
@@ -186,16 +226,40 @@
     const url = p && (p.url || p.avatar_url);
     return okUrl(url) ? `<span class="${cls}"><img src="${esc(url)}" alt="" loading="lazy"></span>` : `<span class="${cls}">${esc((p && (p.emoji || p.avatar_emoji)) || '🙂')}</span>`;
   };
+  let dragging = false;
+  function seatXY(m, i, n) {
+    const st = document.getElementById('stage').getBoundingClientRect(), p = m.pos;
+    let x, y;
+    if (p && isFinite(p.x) && isFinite(p.y)) { x = st.left + (p.x / 100) * st.width; y = st.top + (p.y / 100) * st.height; }
+    else { const gap = Math.min(110, (innerWidth - 80) / Math.max(n, 1)); x = innerWidth / 2 + (i - (n - 1) / 2) * gap; y = innerWidth <= 720 ? 175 : innerHeight * 0.44; }
+    return [Math.max(44, Math.min(innerWidth - 44, x)), Math.max(70, Math.min(innerHeight - 120, y))];
+  }
   function renderSeats() {
     const el = document.getElementById('seats');
     if (!room) { el.innerHTML = ''; return; }
+    if (dragging) return;
     const label = { focus: 'đang tập trung', break: 'đang nghỉ', idle: 'đang ngồi chill' };
-    el.innerHTML = members.map((m, i) => `<div class="seat st-${esc(m.status)}${m.id === user.id ? ' me' : ''}" data-u="${esc(m.id)}" style="animation-delay:${(i * 0.37) % 3}s">
+    el.innerHTML = members.map((m, i) => { const [x, y] = seatXY(m, i, members.length), me = m.id === user.id; return `<div class="seat st-${esc(m.status)}${me ? ' me' : ''}" data-u="${esc(m.id)}" style="left:${x}px;top:${y}px;animation-delay:${(i * 0.37) % 3}s">
         ${avatarHtml(m)}<span class="act" title="${esc(m.act)}">${esc(m.act || '')}</span>
-        <span class="nm">${esc(m.name)}${m.id === user.id ? ' (bạn)' : ''}</span>
-        <span class="tip"><b>${esc(m.name)}</b> ${label[m.status] || ''}${m.task ? `<br>📌 ${esc(m.task)}` : ''}</span>
-      </div>`).join('');
+        <span class="nm">${esc(m.name)}${me ? ' (bạn)' : ''}${m.id === room.owner ? ' 👑' : ''}</span>
+        <span class="tip"><b>${esc(m.name)}</b> ${label[m.status] || ''}${m.task ? `<br>📌 ${esc(m.task)}` : ''}${me ? '<br><i>Kéo để đổi chỗ ngồi</i>' : ''}</span>
+      </div>`; }).join('');
+    const mine = el.querySelector('.seat.me'); if (mine) mine.onpointerdown = dragSeat;
   }
+  function dragSeat(e) {
+    const seat = e.currentTarget, ox = e.clientX - parseFloat(seat.style.left), oy = e.clientY - parseFloat(seat.style.top);
+    dragging = true; seat.setPointerCapture(e.pointerId); seat.classList.add('dragging'); e.preventDefault();
+    seat.onpointermove = (ev) => { seat.style.left = Math.max(44, Math.min(innerWidth - 44, ev.clientX - ox)) + 'px'; seat.style.top = Math.max(70, Math.min(innerHeight - 120, ev.clientY - oy)) + 'px'; };
+    seat.onpointerup = seat.onpointercancel = () => {
+      seat.onpointermove = seat.onpointerup = seat.onpointercancel = null; seat.classList.remove('dragging'); dragging = false;
+      const st = document.getElementById('stage').getBoundingClientRect();
+      const pos = { x: Math.round(((parseFloat(seat.style.left) - st.left) / st.width) * 1000) / 10, y: Math.round(((parseFloat(seat.style.top) - st.top) / st.height) * 1000) / 10 };
+      store.set('room.pos.' + room.code, pos);
+      const me = members.find((m) => m.id === user.id); if (me) me.pos = pos;
+      track();
+    };
+  }
+  addEventListener('resize', () => renderSeats());
   function floatReact({ e, u }) {
     if (typeof e !== 'string' || e.length > 16) return;
     const seat = document.querySelector(`#seats [data-u="${CSS.escape(String(u))}"]`);
@@ -210,11 +274,12 @@
   }
 
   /* ---------- cửa sổ Phòng chung ---------- */
-  const isOpen = () => { const w = document.querySelector('.win[data-tool="room"]'); return w && !w.hidden; };
+  const isOpen = () => { const w = document.querySelector('.win[data-tool="room"]'); return !!(w && !w.hidden && !w.classList.contains('collapsed')); };
+  document.addEventListener('cs:win', (e) => { if (e.detail.key === 'room' && !e.detail.collapsed) { unread = 0; updateBadge(); } });
   const errMsg = (e) => (e && e.message) || String(e);
 
   TOOLS.room = {
-    title: 'Phòng chung', icon: '👥', width: 400, global: true, place: 'right',
+    title: 'Phòng chung', icon: '👥', width: 400, global: true, place: 'right', collapse: true,
     render(b) {
       b.closest('.win').dataset.tool = 'room';
       const draw = () => { if (b._lock) return; try { paint(b); } catch (e) { b.innerHTML = `<p class="empty">Lỗi: ${esc(errMsg(e))}</p>`; } };
@@ -326,9 +391,13 @@
       v.querySelector('[data-done]').onclick = () => { const t = store.get('room.task', ''); send('done', t ? `Xong: ${t}` : 'Vừa xong một việc!'); };
     } else if (view === 'people') {
       const label = { focus: '🍅 tập trung', break: '☕ nghỉ', idle: '😌 chill' };
-      v.innerHTML = `<ul class="people">${members.map((m) => `<li>${avatarHtml(m)}<span class="grow"><b>${esc(m.name)}${m.id === user.id ? ' (bạn)' : ''}${m.id === room.owner ? ' 👑' : ''}</b><small>${esc(m.act || '')} ${label[m.status] || ''}${m.task ? ' · ' + esc(m.task) : ''}</small></span></li>`).join('')}</ul>
+      const P = perms(), own = isOwner();
+      v.innerHTML = `<div class="perm"><b>🎧 Nhạc & âm thanh của phòng</b>${own ? `<div class="chips"><button class="chip${P.audio !== 'all' ? ' on' : ''}" data-pa="owner">Chủ phòng + người được chọn</button><button class="chip${P.audio === 'all' ? ' on' : ''}" data-pa="all">Tất cả thành viên</button></div>` : `<small>${canAudio() ? '✅ Bạn được điều khiển âm thanh của phòng' : '🔒 Do chủ phòng điều khiển – mọi người nghe chung'}</small>`}</div>
+        <ul class="people">${members.map((m) => `<li>${avatarHtml(m)}<span class="grow"><b>${esc(m.name)}${m.id === user.id ? ' (bạn)' : ''}${m.id === room.owner ? ' 👑' : ''}${m.id !== room.owner && canAudio(m.id) ? ' 🎧' : ''}</b><small>${esc(m.act || '')} ${label[m.status] || ''}${m.task ? ' · ' + esc(m.task) : ''}</small></span>${own && m.id !== room.owner ? (P.audio === 'all' ? '<span class="muted small">🎧 được</span>' : `<button class="chip${(P.users || []).includes(m.id) ? ' on' : ''}" data-pu="${esc(m.id)}">${(P.users || []).includes(m.id) ? '🎧 Đang cho phép' : '🎧 Cho phép'}</button>`) : ''}</li>`).join('')}</ul>
         <button class="btn ghost" data-edit>✏️ Sửa hồ sơ của tôi</button>`;
       v.querySelector('[data-edit]').onclick = () => paintProfile(b, true);
+      v.querySelectorAll('[data-pa]').forEach((x) => (x.onclick = () => setPerms({ ...P, audio: x.dataset.pa })));
+      v.querySelectorAll('[data-pu]').forEach((x) => (x.onclick = () => { const id = x.dataset.pu, us = new Set(P.users || []); us.has(id) ? us.delete(id) : us.add(id); setPerms({ ...P, users: [...us] }); }));
     } else {
       v.innerHTML = '<p class="empty">Đang tải…</p>';
       sb.rpc('leaderboard', { p_code: room.code }).then(({ data, error }) => {
@@ -354,7 +423,8 @@
     try { await navigator.clipboard.writeText(`${text}\n${url}`); toast('Đã copy link mời – dán gửi bạn bè nhé 📋'); } catch (e) { prompt('Copy link này gửi bạn bè:', url); }
   }
 
-  function updateBadge() { const el = document.getElementById('roomBadge'); if (el) { el.textContent = unread > 9 ? '9+' : unread; el.hidden = !unread; } }
+  function updateBadge() { const t = document.querySelector('.win[data-tool="room"] .win-title'); if (t) t.textContent = `Phòng chung${room ? ` · ${members.length} người` : ''}${unread ? ` · 💬 ${unread} tin mới` : ''}`;
+    const el = document.getElementById('roomBadge'); if (el) { el.textContent = unread > 9 ? '9+' : unread; el.hidden = !unread; } }
   subs.add(updateBadge);
   Pomo.subs.add(debounce(() => { if (room && isOpen()) { const t = document.querySelector('.room-pomo .t'); if (t) t.textContent = CS.mmss(Pomo.remain); } }, 0));
   let lastPomoKey = '';
@@ -380,5 +450,5 @@
     } catch (e) { toast(errMsg(e)); }
   }
 
-  window.Room = { boot, configured, get room() { return room; } };
+  window.Room = { boot, configured, get room() { return room; }, lockSpace: () => !!room && !isOwner(), audioLocked: () => !!room && !canAudio(), isOwner };
 })();

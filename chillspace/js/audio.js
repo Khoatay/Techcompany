@@ -1,6 +1,6 @@
 /* ChillSpace — âm thanh nền tự tổng hợp bằng Web Audio API (không cần file, không lo bản quyền) */
 window.Sound = (function () {
-  let ctx = null, master = null, masterVol = 0.8, paused = false;
+  let ctx = null, master = null, masterVol = 0.8, paused = false, quiet = false;
   const buffers = {}, running = {}, vols = {};
 
   function ensure() {
@@ -222,6 +222,7 @@ window.Sound = (function () {
 
   function setVol(id, v) {
     vols[id] = v;
+    if (!quiet && window.Sound && Sound.onChange) Sound.onChange(); // Phòng chung: đồng bộ âm thanh cho cả phòng
     if (!ctx || !byId[id]) return;
     let r = running[id];
     const now = ctx.currentTime;
@@ -252,6 +253,9 @@ window.Sound = (function () {
     setVol,
     getVol: (id) => vols[id] || 0,
     setAll(map) { SOUNDS.forEach((s) => setVol(s.id, map[s.id] || 0)); },
+    setAllQuiet(map) { quiet = true; try { SOUNDS.forEach((s) => setVol(s.id, map[s.id] || 0)); } finally { quiet = false; } },
+    getAll() { const o = {}; Object.keys(vols).forEach((k) => vols[k] > 0.001 && (o[k] = Math.round(vols[k] * 100) / 100)); return o; },
+    onChange: null,
     setMaster(v) { masterVol = v; applyMaster(0.05); },
     getMaster: () => masterVol,
     isPaused: () => paused,

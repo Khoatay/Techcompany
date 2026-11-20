@@ -131,9 +131,10 @@
         return v || list ? { v: v || null, list: list || null } : null;
       } catch (e) { return null; }
     },
-    async play(item, mount) {
+    async play(item, mount, remote) {
       try { await this.api(); } catch (e) { return toast(e.message); }
       this.current = item;
+      if (!remote && this.onUser) this.onUser(item); // Phòng chung: người có quyền mở nhạc → cả phòng nghe
       if (!this.player) {
         mount.innerHTML = '<div></div>';
         const vars = { autoplay: 1, playsinline: 1, rel: 0 };
@@ -142,6 +143,7 @@
           width: '100%', height: '100%', videoId: item.v || undefined, playerVars: vars,
           events: {
             onReady: (e) => { e.target.setVolume(this.vol); e.target.playVideo(); },
+            onStateChange: (e) => { this.state = e.data; if (this.onState && Date.now() > (this._mute || 0)) this.onState(e.data); },
             onError: (e) => toast(`Không phát được video này (mã ${e.data}). Có thể chủ kênh chặn phát nhúng – thử link khác nhé.`, 6000),
           },
         });
@@ -149,6 +151,9 @@
       else this.player.loadVideoById(item.v);
     },
     pause() { try { this.player && this.player.pauseVideo(); } catch (e) {} },
+    // nhận lệnh từ phòng (không gửi ngược lại)
+    remotePlay(item) { this._mute = Date.now() + 5000; WM.open('youtube'); const m = document.querySelector('.win [data-mount]'); if (m) this.play(item, m, true); },
+    remoteSetPlaying(on) { this._mute = Date.now() + 3000; try { if (this.player) on ? this.player.playVideo() : this.player.pauseVideo(); } catch (e) {} },
     setVolume(v) { this.vol = v; store.set('yt.vol', v); try { this.player && this.player.setVolume(v); } catch (e) {} },
   };
 
@@ -545,6 +550,7 @@
     title: 'Âm thanh nền', icon: '🎧', width: 340, global: true,
     render(b, { space }) {
       b.innerHTML = `<div class="row"><button class="btn" data-pause></button><span class="grow"></span><label class="small">🔊 <input type="range" min="0" max="100" data-master></label></div>
+        <p class="lock-note" data-lock hidden>🔒 Chủ phòng đang điều khiển âm thanh của phòng. Bạn chỉ chỉnh được âm lượng 🔊 và tạm dừng ở máy mình.</p>
         <div class="mixer"></div>
         <div class="row small wrap"><button class="btn ghost" data-def>↺ Theo không gian</button><button class="btn ghost" data-off>🔇 Tắt hết</button><span class="grow"></span><label class="muted"><input type="checkbox" data-auto> Tự đổi theo không gian</label></div>`;
       const mx = $(b, '.mixer');
@@ -554,8 +560,11 @@
         $(b, '[data-master]').value = Math.round(Sound.getMaster() * 100);
         $(b, '[data-pause]').textContent = Sound.isPaused() ? '▶ Phát' : '⏸ Tạm dừng';
         $(b, '[data-auto]').checked = store.get('autoSound', true);
+        const locked = !!(window.Room && Room.audioLocked && Room.audioLocked());
+        $$(mx, 'input').forEach((i) => (i.disabled = locked)); ['[data-def]', '[data-off]', '[data-auto]'].forEach((q) => ($(b, q).disabled = locked));
+        $(b, '[data-lock]').hidden = !locked; mx.classList.toggle('locked', locked);
       };
-      mx.oninput = (e) => { const l = e.target.closest('.mix'); Sound.init(); Sound.setVol(l.dataset.id, e.target.value / 100); if (Sound.isPaused()) Sound.setPaused(false); l.classList.toggle('on', e.target.value > 0); $(b, '[data-pause]').textContent = '⏸ Tạm dừng'; };
+      mx.oninput = (e) => { if (window.Room && Room.audioLocked && Room.audioLocked()) return draw(); const l = e.target.closest('.mix'); Sound.init(); Sound.setVol(l.dataset.id, e.target.value / 100); if (Sound.isPaused()) Sound.setPaused(false); l.classList.toggle('on', e.target.value > 0); $(b, '[data-pause]').textContent = '⏸ Tạm dừng'; };
       $(b, '[data-master]').oninput = (e) => Sound.setMaster(e.target.value / 100);
       $(b, '[data-pause]').onclick = () => { Sound.setPaused(!Sound.isPaused()); draw(); document.dispatchEvent(new Event('cs:audio')); };
       $(b, '[data-def]').onclick = () => { Sound.setAll(space.sounds); Sound.setPaused(false); draw(); };
@@ -578,7 +587,9 @@
       const mount = $(b, '[data-mount]'), input = $(b, 'input');
       $(b, '[data-vol]').value = YTP.vol;
       $(b, '[data-vol]').oninput = (e) => YTP.setVolume(+e.target.value);
-      const play = (url) => { const it = YTP.parse(url); if (!it) return toast('Link YouTube không hợp lệ'); YTP.play(it, mount); };
+      const locked = () => !!(window.Room && Room.audioLocked && Room.audioLocked());
+      const play = (url) => { if (locked()) return toast('🔒 Chủ phòng đang điều khiển nhạc'); const it = YTP.parse(url); if (!it) return toast('Link YouTube không hợp lệ'); YTP.play(it, mount); };
+      document.addEventListener('cs:audio', () => this.refresh());
       $(b, 'form').onsubmit = (e) => { e.preventDefault(); play(input.value); };
       this._b = b; this._play = play;
       $(b, '[data-save]').onclick = () => {
@@ -597,6 +608,10 @@
     refresh() {
       const b = this._b; if (!b) return;
       const sp = window.currentSpace(), mine = store.get('yt:' + sp.id, []);
+      const lk = !!(window.Room && Room.audioLocked && Room.audioLocked());
+      b.querySelectorAll('form input, form button, [data-save]').forEach((x) => (x.disabled = lk)); b.classList.toggle('yt-locked', lk);
+      let note = b.querySelector('.lock-note'); if (!note) { note = document.createElement('p'); note.className = 'lock-note'; b.querySelector('form').before(note); }
+      note.textContent = '🔒 Chủ phòng đang điều khiển nhạc của phòng – bạn nghe cùng mọi người.'; note.hidden = !lk;
       const s = $(b, '[data-search]');
       s.href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(sp.yt.q); s.textContent = `🔎 Tìm "${sp.yt.q}"`;
       $(b, '.yt-list').innerHTML = [...mine.map((m) => ({ ...m, mine: 1 })), ...sp.yt.picks].map((m) => `<li data-url="${esc(m.url)}"><span>${m.mine ? '⭐' : '🎧'}</span><span class="grow">${esc(m.t)}</span>${m.mine ? '<button class="x" title="Xoá">✕</button>' : ''}</li>`).join('') || '<li class="empty">Bấm 🔎 để tìm nhạc hợp không gian này, copy link rồi dán vào ô trên.</li>';

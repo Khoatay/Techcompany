@@ -117,6 +117,41 @@ revoke execute on function public.create_room(text, text), public.join_room(text
 grant execute on function public.create_room(text, text), public.join_room(text), public.set_room_pomo(text, jsonb),
   public.set_room_space(text, text), public.leaderboard(text), public.is_member(text) to authenticated;
 
+-- ============ ÂM THANH CHUNG CỦA PHÒNG + QUYỀN ĐIỀU KHIỂN ============
+-- audio: trạng thái âm thanh chung (âm thanh nền, nhạc YouTube) do chủ phòng (hoặc người được cho phép) điều khiển
+-- perms: {"audio": "owner" | "all", "users": [uuid, ...]} – ai được điều khiển âm thanh
+alter table public.rooms add column if not exists audio jsonb not null default '{}';
+alter table public.rooms add column if not exists perms jsonb not null default '{"audio":"owner","users":[]}';
+
+create or replace function public.can_audio(p_code text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from rooms r
+    where r.code = p_code and is_member(p_code)
+      and (r.owner = auth.uid() or r.perms->>'audio' = 'all' or coalesce(r.perms->'users', '[]'::jsonb) ? auth.uid()::text)
+  );
+$$;
+
+create or replace function public.set_room_audio(p_code text, p_audio jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not can_audio(p_code) then raise exception 'Bạn chưa được chủ phòng cho phép điều khiển âm thanh'; end if;
+  update rooms set audio = p_audio where code = p_code;
+end $$;
+
+create or replace function public.set_room_perms(p_code text, p_perms jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update rooms set perms = jsonb_build_object(
+      'audio', case when p_perms->>'audio' = 'all' then 'all' else 'owner' end,
+      'users', coalesce(p_perms->'users', '[]'::jsonb))
+    where code = p_code and owner = auth.uid();
+  if not found then raise exception 'Chỉ chủ phòng mới đổi được quyền'; end if;
+end $$;
+
+revoke execute on function public.can_audio(text), public.set_room_audio(text, jsonb), public.set_room_perms(text, jsonb) from public, anon;
+grant execute on function public.can_audio(text), public.set_room_audio(text, jsonb), public.set_room_perms(text, jsonb) to authenticated;
+
 -- ============ QUYỀN TRUY CẬP QUA API ============
 -- (Ghi rõ để không phụ thuộc tuỳ chọn "Grant API access to new tables automatically" khi tạo dự án)
 grant usage on schema public to anon, authenticated;
