@@ -932,6 +932,7 @@
       pp: { '📻': [70, 44], '📒': [22, 72], '⏱️': [34, 74], '📋': [46, 74], '☕': [58, 72], '🎧': [82, 72], '🪴': [12, 60] },
     },
     beach: {
+      live: 'beach', liveBox: [74.4, 3, 64, 0], liveSnow: [[52.5, 76.7, 31.25, 87.8], [12, 94.8, 0, 98.3]], liveFx: [1, 1, 1, 1],
       raw: 'https://images.unsplash.com/photo-1594609878939-6c0e56bef49b?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fHRyb3BpY2FsJTIwYmVhY2glMjBzdW5zZXQlMjBwYWxtJTIwdHJlZXN8ZW58MXwwfHx8MTc5NTE1NTIzOHww&ixlib=rb-4.1.0',
       by: "yang wewe", byUrl: 'https://unsplash.com/@weweclub_wewe',
       pp: { '🌴': [88, 40], '🥥': [70, 74], '📻': [56, 76], '⛵': [22, 56], '🐚': [40, 78], '⛱️': [86, 66] },

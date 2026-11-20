@@ -1,9 +1,75 @@
 /* ChillSpace — "ảnh sống": hiệu ứng chuyển động nhẹ vẽ trực tiếp lên ảnh nền (WebGL).
-   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển).
+   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển), 'beach' = mặt biển lấp lánh, sóng gợn, sóng vỗ mép cát (Bờ biển).
    Tự dừng khi đổi không gian / ẩn app; máy không có WebGL thì giữ ảnh tĩnh. */
 window.Live = (function () {
   const VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
   const SHADERS = {
+    beach: `precision highp float;
+varying vec2 v;
+uniform sampler2D uSharp;
+uniform vec2 uRes, uImg;
+uniform float uT;
+uniform vec4 uS1, uS2;  // mép nước: 4 điểm (x, y) % từ góc trên trái, đi từ chân trời ra sát mép ảnh
+uniform vec4 uBox;      // x = đường chân trời (%), y,z = vị trí mặt trời (%), w = không dùng
+uniform vec4 uFx;       // x = nắng lấp lánh trên mặt biển, y = sóng gợn, z = sóng vỗ mép cát, w = mặt trời ửng sáng
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
+vec2 cover(vec2 uv){ float rs = uRes.x / uRes.y, ri = uImg.x / uImg.y; vec2 s = rs > ri ? vec2(1., ri / rs) : vec2(rs / ri, 1.); return (uv - .5) * s + .5; }
+vec3 tex(vec2 im){ return texture2D(uSharp, vec2(im.x, 1. - im.y)).rgb; }
+float shoreY(float x){
+  vec2 p0 = uS1.xy / 100., p1 = uS1.zw / 100., p2 = uS2.xy / 100., p3 = uS2.zw / 100.;
+  if (x >= p0.x) return -1.;
+  if (x >= p1.x) return mix(p1.y, p0.y, (x - p1.x) / (p0.x - p1.x));
+  if (x >= p2.x) return mix(p2.y, p1.y, (x - p2.x) / (p1.x - p2.x));
+  return mix(p3.y, p2.y, (x - p3.x) / max(.0001, p2.x - p3.x));
+}
+void main(){
+  vec2 iuv = cover(v);
+  vec2 im = vec2(iuv.x, 1. - iuv.y);
+  float asp = uRes.x / uRes.y;
+  float hz = uBox.x / 100.;
+  float sy = shoreY(im.x);
+  float depth = (im.y - hz) / max(.001, sy - hz);                 // 0 ở chân trời → 1 ở mép cát
+  float water = step(hz, im.y) * step(0., sy) * step(im.y, sy);
+  water *= smoothstep(0., .02, im.y - hz);
+  // sóng gợn: lệch nhẹ ảnh mặt biển, gần bờ mạnh hơn, xa thì gần như yên
+  vec2 off = vec2(0.);
+  if (water > 0.) {
+    float w = sin(im.x * 40. + im.y * 260. - uT * 1.6) * .5 + noise(vec2(im.x * 30., im.y * 180. - uT * .9)) - .5;
+    off = vec2(w * .0012, w * .0022) * (.2 + depth) * uFx.y * water;
+  }
+  vec3 col = tex(im + off);
+  float lum = dot(col, vec3(.3, .59, .11));
+  // nắng lấp lánh trên mặt biển: nhiều hơn ở vệt phản chiếu mặt trời
+  if (water > 0.) {
+    vec2 sun = uBox.yz / 100.;
+    float lane = exp(-pow((im.x - sun.x) * 3.2 / (.3 + depth), 2.));
+    vec2 g = im * vec2(420. * asp, 900.);
+    vec2 id = floor(g);
+    float h = hash(id), tw = pow(max(0., sin(uT * (2. + h * 5.) + h * 60.)), 12.);
+    float glint = step(.86, h) * tw * smoothstep(.45, .02, length(fract(g) - .5));
+    col += vec3(1., .85, .6) * glint * (.25 + lane * 1.1) * (1. - depth * .5) * uFx.x * water;
+    // sóng vỗ mép cát: dải bọt trắng tiến vào rồi rút ra
+    float sw = sin(uT * .55) * .5 + .5, sw2 = sin(uT * .55 + 1.7) * .5 + .5;
+    float edge = sy - im.y;                                     // khoảng cách tới mép cát
+    float band = smoothstep(.012 + sw * .01, .0, edge) * smoothstep(-.002, .004, edge);
+    float foam = band * (.55 + .45 * noise(vec2(im.x * 140., uT * .7)));
+    col = mix(col, vec3(1., .93, .88), foam * .45 * uFx.z * (.6 + .4 * sw2));
+  }
+  // nước tràn lên cát rồi rút: lớp nước mỏng óng ánh ngay dưới mép
+  if (sy > 0.) {
+    float sw = sin(uT * .55) * .5 + .5;
+    float below = im.y - sy;
+    float sheet = smoothstep(0., .002, below) * smoothstep(.006 + sw * .016, .0, below);
+    col = mix(col, col * 1.12 + vec3(.05, .04, .04), sheet * .6 * uFx.z);
+  }
+  // mặt trời ửng sáng nhè nhẹ
+  vec2 sun = uBox.yz / 100.;
+  float sg = exp(-length((im - sun) * vec2(asp, 1.)) * 7.);
+  col += vec3(1., .6, .3) * sg * (.06 + .04 * sin(uT * .4)) * uFx.w;
+  gl_FragColor = vec4(col, 1.);
+}`,
     sea: `precision highp float;
 varying vec2 v;
 uniform sampler2D uSharp;
@@ -268,6 +334,8 @@ void main(){
       gl.uniform1i(gl.getUniformLocation(pr, 'uSharp'), 0); gl.uniform1i(gl.getUniformLocation(pr, 'uBlur'), 1);
       gl.uniform2f(gl.getUniformLocation(pr, 'uImg'), img.naturalWidth, img.naturalHeight);
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
+      const sh1 = gl.getUniformLocation(pr, 'uS1'), sh2 = gl.getUniformLocation(pr, 'uS2');
+      if (sh1 && snow && snow.length >= 2) { gl.uniform4f(sh1, ...snow[0]); gl.uniform4f(sh2, ...snow[1]); } // Bờ biển: mép nước (dùng chung tham số thứ 5)
       const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
       const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) { const f = fx || []; gl.uniform4f(uFx, f[0] || 0, f[1] || 0, f[2] || 0, f[3] || 0); }
       const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });
