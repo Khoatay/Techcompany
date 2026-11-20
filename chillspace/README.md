@@ -126,3 +126,6 @@ js/config.js          mã kết nối Supabase
 supabase/             file cài đặt máy chủ + hướng dẫn
 sw.js, manifest       cài đặt như app (PWA)
 ```
+
+## Ảnh nền
+Ảnh trong `img/` từ Unsplash (giấy phép Unsplash: dùng miễn phí, cả thương mại, không bắt buộc ghi tên). Tác giả: xem `by` trong `PHOTOS` ở `js/spaces.js`.

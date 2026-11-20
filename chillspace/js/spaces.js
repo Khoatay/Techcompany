@@ -1011,7 +1011,8 @@
     },
   };
   window.SPACES.forEach((sp) => {
-    const ph = PHOTOS[sp.id] || PHOTOS[sp.parent]; if (!ph) return;
+    const key = PHOTOS[sp.id] ? sp.id : sp.parent, ph = PHOTOS[key]; if (!ph) return;
+    ph.file = key; // ảnh lưu sẵn trong app: img/<key>-1280.webp và img/<key>-2560.webp
     sp.photo = ph;
     const seen = {};
     sp.objects.forEach((o) => { const v = ph.pp[o.e]; if (!v) return; const k = (seen[o.e] = (seen[o.e] || 0) + 1) - 1; o.pp = Array.isArray(v[0]) ? v[Math.min(k, v.length - 1)] : v; });

@@ -192,20 +192,17 @@
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
   // Ảnh nền thật: tải đúng cỡ màn hình, hiện dần lên trên tranh vẽ; mất mạng thì vẫn là tranh vẽ
-  const UTM = '?utm_source=chillspace&utm_medium=referral';
   function loadPhoto(sp) {
-    const cr = $('#photoCredit');
-    photoReady = ''; cr.hidden = true; document.body.classList.remove('has-photo');
+    photoReady = ''; document.body.classList.remove('has-photo');
     if (!sp.photo) return;
-    const w = Math.min(3200, Math.ceil((Math.max(innerWidth, innerHeight * 16 / 9) * Math.min(devicePixelRatio || 1, 2)) / 400) * 400);
-    const url = `${sp.photo.raw}&w=${w}&h=${Math.round((w * 9) / 16)}&fit=crop&crop=center&q=78&fm=webp`;
+    const need = Math.max(innerWidth, innerHeight * 16 / 9) * Math.min(devicePixelRatio || 1, 2);
+    const url = `img/${sp.photo.file}-${need <= 1500 ? 1280 : 2560}.webp`; // ảnh lưu sẵn trong app (giấy phép Unsplash, không bắt buộc ghi tên)
     const img = new Image();
     img.onload = () => {
       if (space !== sp) return;
       const d = document.createElement('div'); d.className = 'photo' + (sp.photo.dim ? ' dim' : ''); d.style.backgroundImage = `url("${url}")`;
       $('#scenery').append(d); requestAnimationFrame(() => d.classList.add('show'));
       photoReady = sp.id; document.body.classList.add('has-photo'); if (!sp.photo.light) document.body.dataset.ink = '';
-      cr.innerHTML = `📷 <a href="${sp.photo.byUrl}${UTM}" target="_blank" rel="noopener">${esc(sp.photo.by)}</a> / <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a>`; cr.hidden = false;
       renderObjects();
     };
     img.src = url;
