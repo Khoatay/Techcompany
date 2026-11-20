@@ -30,7 +30,9 @@ window.Vip = (function () {
   }
   async function loadConfig(c) {
     const { data } = await c.from('vip_config').select('key,value');
-    conf = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
+    conf = Object.fromEntries((data || []).map((r) => [String(r.key || '').trim(), String(r.value || '').trim().replace(/^["']|["']$/g, '')]));
+    // link lịch bay: khoá sheet_url, hoặc bất kỳ dòng nào có link Google Sheet (lỡ đặt tên khoá khác khi thêm tay trên Supabase)
+    if (!/docs\.google\.com\/spreadsheets\/d\//.test(conf.sheet_url || '')) { const v = Object.values(conf).find((x) => /docs\.google\.com\/spreadsheets\/d\//.test(x)); if (v) conf.sheet_url = v; }
     if (conf.sheet_url && conf.sheet_url !== store.get('fl.sheet', '')) {
       store.set('fl.sheet', conf.sheet_url);
       if (window.Flights) { Flights.cache = null; if (window.FlightsOut) FlightsOut.cache = null; Flights.load(true); }
@@ -84,7 +86,7 @@ window.Vip = (function () {
     const vb = document.getElementById('vipBtn'); if (vb) vb.hidden = !st.admin;
     if (locked && !asked) { asked = true; refresh(true); } // mở trang khoá lần đầu: hỏi máy chủ xem đã có chủ chưa
   }
-  document.addEventListener('cs:space', applyLock);
+  document.addEventListener('cs:space', (e) => { applyLock(); if (FAMILY.includes(e.detail.id)) refresh(false); });
   addEventListener('load', () => { applyLock(); refresh(false); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(false); });
   setInterval(() => refresh(false), 10 * 60000);
