@@ -184,10 +184,31 @@
   })());
 
   /* ---------- Không gian ---------- */
+  let photoReady = '';
   function renderObjects() {
-    $('#objects').innerHTML = space.objects.map((o, i) => `<button class="obj" style="left:${o.x}%;top:${o.y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`).join('');
+    const ph = space.photo && photoReady === space.id; // có ảnh thật → đồ vật thành nút kính đặt theo ảnh
+    $('#objects').innerHTML = space.objects.map((o, i) => { const [x, y] = ph && o.pp ? o.pp : [o.x, o.y]; return `<button class="obj${ph ? ' hot' : ''}" style="left:${x}%;top:${y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`; }).join('');
     renderBoards();
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
+  }
+  // Ảnh nền thật: tải đúng cỡ màn hình, hiện dần lên trên tranh vẽ; mất mạng thì vẫn là tranh vẽ
+  const UTM = '?utm_source=chillspace&utm_medium=referral';
+  function loadPhoto(sp) {
+    const cr = $('#photoCredit');
+    photoReady = ''; cr.hidden = true; document.body.classList.remove('has-photo');
+    if (!sp.photo) return;
+    const w = Math.min(3200, Math.ceil((Math.max(innerWidth, innerHeight * 16 / 9) * Math.min(devicePixelRatio || 1, 2)) / 400) * 400);
+    const url = `${sp.photo.raw}&w=${w}&h=${Math.round((w * 9) / 16)}&fit=crop&crop=center&q=78&fm=webp`;
+    const img = new Image();
+    img.onload = () => {
+      if (space !== sp) return;
+      const d = document.createElement('div'); d.className = 'photo'; d.style.backgroundImage = `url("${url}")`;
+      $('#scenery').append(d); requestAnimationFrame(() => d.classList.add('show'));
+      photoReady = sp.id; document.body.classList.add('has-photo'); if (!sp.photo.light) document.body.dataset.ink = '';
+      cr.innerHTML = `📷 <a href="${sp.photo.byUrl}${UTM}" target="_blank" rel="noopener">${esc(sp.photo.by)}</a> / <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a>`; cr.hidden = false;
+      renderObjects();
+    };
+    img.src = url;
   }
   function setSpace(id, first, remote) {
     // Trong Phòng chung: không gian cố định theo phòng (muốn đổi thì rời phòng, tạo phòng mới)
@@ -203,6 +224,7 @@
     stage.classList.add('fade');
     setTimeout(() => {
       $('#scenery').innerHTML = SCENES[space.id](space.id + '-');
+      loadPhoto(space);
       renderObjects();
       stage.classList.remove('fade');
     }, first ? 0 : 280);

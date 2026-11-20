@@ -128,3 +128,27 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: 0; bord
 .dir-switch button { transition: background .25s, color .25s; }
 
 @media (prefers-reduced-motion: reduce) { .stage { transform: none !important; } }
+
+/* ---------- ảnh nền thật ---------- */
+.photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; animation: kenburns 70s ease-in-out infinite alternate; }
+.photo.show { opacity: 1; }
+.photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.42), transparent 26%, transparent 62%, rgba(0,0,0,.5)); }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.045) translate(-.6%, -.4%); } }
+body.has-photo .hero .clock { filter: drop-shadow(0 4px 30px rgba(0,0,0,.55)); }
+body.has-photo .date, body.has-photo .quote { text-shadow: 0 1px 12px rgba(0,0,0,.7); }
+/* nút kính trên ảnh */
+.obj.hot { --hs: calc(var(--u) * (3.4 + var(--s) * .32)); width: var(--hs); height: var(--hs); border-radius: 50%; display: grid; place-items: center; font-size: calc(var(--hs) * .5);
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.32), rgba(255,255,255,.08) 55%, rgba(255,255,255,.04)); border: 1px solid rgba(255,255,255,.38);
+  backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); box-shadow: 0 12px 30px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.4); transition: transform .25s var(--ease), box-shadow .25s, background .25s; }
+.obj.hot .emo { filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+.obj.hot::before { display: none; }
+.obj.hot::after { width: 100%; height: 100%; border-color: rgba(255,255,255,.7); }
+.obj.hot:hover { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 16px 36px -10px rgba(0,0,0,.6), 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.5); background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.42), color-mix(in srgb, var(--accent) 25%, rgba(255,255,255,.1))); }
+.obj.hot:hover .emo { transform: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+.obj.hot .lbl { bottom: calc(100% + 10px); }
+.photo-credit { position: fixed; right: 18px; bottom: 100px; z-index: 15; font-size: 11px; color: rgba(255,255,255,.7); text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.photo-credit a { color: inherit; text-decoration: none; } .photo-credit a:hover { text-decoration: underline; color: #fff; }
+@media (max-width: 720px) { .photo-credit { bottom: auto; top: 58px; right: 12px; font-size: 10px; } body.in-room .photo-credit { display: none; } }
+/* có ảnh thật: chữ đồng hồ luôn trắng (bỏ màu chữ tối dành cho tranh vẽ nền sáng) */
+body.has-photo[data-space] .clock { background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,.75)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 30px rgba(0,0,0,.6)); }
+body.has-photo[data-space] .date, body.has-photo[data-space] .quote { color: rgba(255,255,255,.92); text-shadow: 0 1px 12px rgba(0,0,0,.75); }

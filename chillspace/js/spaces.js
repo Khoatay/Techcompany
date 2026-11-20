@@ -912,5 +912,25 @@
       { e: '🛫', x: 86, y: 51, s: 6, label: 'Chuyến quốc tế đi', tool: 'departures' },
     ],
   });
+  /* Ảnh nền thật từ Unsplash (giấy phép Unsplash: dùng miễn phí, cả thương mại).
+     Theo quy định API Unsplash: ảnh hiển thị trực tiếp từ máy chủ Unsplash và ghi tên tác giả.
+     pp = vị trí nút trên ảnh (% khung 16:9), theo biểu tượng của đồ vật. Tranh vẽ SVG vẫn là nền dự phòng khi chưa tải được ảnh. */
+  const PHOTOS = {
+    border: {
+      raw: 'https://images.unsplash.com/photo-1793969292093-b26442c9ba95?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8YWlycG9ydCUyMHRlcm1pbmFsJTIwd2luZG93JTIwc3Vuc2V0fGVufDF8MHx8fDE3OTUxNTQyNDZ8MA&ixlib=rb-4.1.0',
+      by: 'sander traa', byUrl: 'https://unsplash.com/@sandertraa', light: true,
+      pp: { '⏱️': [14, 72], '☕': [25, 72], '📅': [36, 72], '🛂': [50, 71], '📝': [64, 72], '🎧': [75, 72], '🌏': [86, 72], '✈️': [49.4, 33], '🛫': [49.4, 33] },
+    },
+    study: {
+      raw: 'https://images.unsplash.com/photo-1651739084205-d324925f76a7?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fGNvenklMjBzdHVkeSUyMGRlc2slMjB3aW5kb3clMjBwbGFudHMlMjBib29rcyUyMGxhbXB8ZW58MXwwfHx8MTc5NTE1NDI3N3ww&ixlib=rb-4.1.0',
+      by: 'Annie Spratt', byUrl: 'https://unsplash.com/@anniespratt',
+      pp: { '📻': [10, 42], '⏰': [61, 47], '🎧': [26, 76], '📖': [34, 76], '🗂️': [42, 76], '💻': [50, 75], '☕': [58, 76], '✏️': [66, 76], '📝': [74, 76] },
+    },
+  };
+  window.SPACES.forEach((sp) => {
+    const ph = PHOTOS[sp.id] || PHOTOS[sp.parent]; if (!ph) return;
+    sp.photo = ph;
+    sp.objects.forEach((o) => { if (ph.pp[o.e]) o.pp = ph.pp[o.e]; });
+  });
   window.SCENES = SCENES;
 })();
