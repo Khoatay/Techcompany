@@ -242,3 +242,15 @@ body.vip-lock #objects, body.vip-lock #mboard, body.vip-lock #cornerBar, body.vi
 .vip-code b { font-size: 24px; letter-spacing: .2em; font-family: ui-monospace, monospace; }
 .vip-list { list-style: none; padding: 0; margin: 0 0 6px; } .vip-list li { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; font-size: 13px; }
 .vip-list li:nth-child(odd) { background: rgba(255,255,255,.04); } .vip-list .mono { font-family: ui-monospace, monospace; letter-spacing: .12em; }
+
+/* ---------- bảng hạn lưu trú: ngày nhỏ gọn, xinh hơn ---------- */
+.board .b-stay .sr, .board.b-stay .sr { padding: .32em .75em; border-radius: .8em; }
+.board.b-stay .sr.amber, .board.b-stay .sr.green { font-size: 1.05em; }
+.board.b-stay .sn { font-size: 1.15em; letter-spacing: -.01em; }
+.board.b-stay .sn small { font-size: .62em; }
+.board.b-stay .sd { font-size: .92em; font-weight: 700; letter-spacing: .02em; display: flex; align-items: baseline; gap: .45em; }
+.board.b-stay .sd small { display: inline-block; order: -1; font-size: .7em; font-weight: 600; padding: .12em .5em; border-radius: 999px; background: rgba(255,255,255,.12); color: #cbd5e1; }
+.board.b-stay .sr.amber .sd small { background: rgba(92,68,0,.16); color: #5c4400; }
+.board.b-stay .sr.green .sd small { background: rgba(6,95,70,.16); color: #065f46; }
+.board.b-stay .wheel { --peek: .6em; }
+.board.b-stay.st-max .wheel { --wh: 11em; }
