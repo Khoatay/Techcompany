@@ -10,7 +10,8 @@ uniform sampler2D uSharp;
 uniform vec2 uRes, uImg;
 uniform float uT;
 uniform vec4 uBox;   // vùng lửa trên ảnh (% x0, y0, x1, y1 tính từ góc trên trái)
-uniform vec4 uSnow, uSnow2;  // tối đa 2 vùng nhìn ra ngoài trời có tuyết rơi (cùng cách tính); 0 = không có
+uniform vec4 uSnow, uSnow2;
+uniform vec3 uFx;    // x = tàn lửa bay (0..1), y = sao lấp lánh (0..1), z = độ lan ánh lửa (0 = mặc định)  // tối đa 2 vùng nhìn ra ngoài trời có tuyết rơi (cùng cách tính); 0 = không có
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
@@ -38,9 +39,30 @@ void main(){
   // ánh lửa hắt ra phòng: sáng tối theo nhịp lửa, mạnh gần lò
   float asp = uRes.x / uRes.y;
   float d = length((im - bc) * vec2(asp, 1.));
-  float glow = exp(-d * 2.6) * (fl - .45);
+  float glow = exp(-d * (uFx.z > 0. ? uFx.z : 2.6)) * (fl - .45);
   col *= 1. + glow * .22;
   col += vec3(1., .5, .15) * max(glow, 0.) * .05;
+  // tàn lửa bay lên từ đáy đống lửa, lắc theo gió rồi tắt dần
+  if (uFx.x > 0.) {
+    vec2 e0 = vec2(bc.x, b.w - bs.y * .25);
+    for (int i = 0; i < 28; i++) {
+      float fi = float(i), h = hash(vec2(fi, 3.1)), h2 = hash(vec2(fi, 7.7));
+      float ph = fract(uT * (.12 + h * .18) + h2);
+      vec2 pp = e0 + vec2((h - .5) * bs.x * 1.2 + sin(uT * (1. + h2) + fi) * .015 * ph, -ph * (.35 + h2 * .3));
+      vec2 dd = (im - pp) * vec2(asp, 1.);
+      float r = .0018 + h2 * .0018;
+      float a = smoothstep(0., .08, ph) * (1. - ph) * (.6 + .4 * sin(uT * 20. + fi * 3.));
+      col += vec3(1., .62, .25) * exp(-dot(dd, dd) / (r * r)) * a * 1.4 * uFx.x;
+    }
+  }
+  // sao lấp lánh: chỉ các điểm sáng nhỏ, ít màu ở nửa trên ảnh
+  if (uFx.y > 0.) {
+    float sat = max(max(base.r, base.g), base.b) - min(min(base.r, base.g), base.b);
+    float star = smoothstep(.25, .5, lum) * smoothstep(.18, .05, sat) * smoothstep(.5, .3, im.y);
+    vec2 cell = floor(im * vec2(320., 180.));
+    float tw = .55 + .9 * noise(vec2(uT * (1.5 + hash(cell) * 3.), hash(cell + 2.) * 50.));
+    col = mix(col, col * tw, star * uFx.y);
+  }
   // tuyết rơi ngoài trời (chỉ trong khung cửa)
   float inside = 0., edge = 0.;
   for (int k = 0; k < 2; k++) {
@@ -134,7 +156,7 @@ void main(){
   gl_FragColor = vec4(col * mix(.78, 1., vig), 1.);
 }`,
   };
-  function mount(host, img, kind, box, snow) {
+  function mount(host, img, kind, box, snow, fx) {
     const FS = SHADERS[kind]; if (!FS) return false;
     const cv = document.createElement('canvas');
     cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
@@ -161,6 +183,7 @@ void main(){
       gl.uniform2f(gl.getUniformLocation(pr, 'uImg'), img.naturalWidth, img.naturalHeight);
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
       const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
+      const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) gl.uniform3f(uFx, ...(fx || [0, 0, 0]));
       const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });
       host.append(cv);
       const fit = () => {

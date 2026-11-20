@@ -964,9 +964,10 @@
       pp: { '🕯️': [16, 72], '📖': [30, 74], '🍵': [44, 72], '🐈‍⬛': [58, 74], '📔': [72, 72], '🎧': [86, 74] },
     },
     camp: {
+      live: 'fire', liveBox: [56, 64, 69, 99], liveFx: [1, 1, 1.6],
       raw: 'https://images.unsplash.com/photo-1558571196-0b0152de294c?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8Mnx8Y2FtcGZpcmUlMjBuaWdodCUyMGZvcmVzdCUyMHN0YXJzfGVufDF8MHx8fDE3OTUxNTUyOTR8MA&ixlib=rb-4.1.0',
       by: "Scott Osborn", byUrl: 'https://unsplash.com/@scottosbornphoto',
-      pp: { '⛺': [22, 70], '📔': [38, 74], '🔥': [60, 76], '🎸': [78, 72], '🌠': [30, 18], '🔦': [90, 60] },
+      pp: { '⛺': [22, 70], '📔': [38, 74], '🔥': [49, 79], '🎸': [78, 72], '🌠': [30, 18], '🔦': [90, 60] },
     },
     space: {
       raw: 'https://images.unsplash.com/photo-1768283808210-41196886ebf4?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8ZWFydGglMjBmcm9tJTIwc3BhY2UlMjBzdGF0aW9uJTIwd2luZG93fGVufDF8MHx8fDE3OTUxNTUzMDR8MA&ixlib=rb-4.1.0',
