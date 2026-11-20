@@ -211,6 +211,7 @@
       if (space !== sp) return;
       const d = document.createElement('div'); d.className = 'photo' + (sp.photo.dim ? ' dim' : ''); d.style.backgroundImage = `url("${url}")`;
       $('#scenery').append(d); requestAnimationFrame(() => d.classList.add('show'));
+      if (sp.photo.live && window.Live && Live.mount(d, img, sp.photo.live)) FX.set(null); // ảnh sống (vd. mưa chảy trên kính) thay cho hạt mưa rơi
       photoReady = sp.id; document.body.classList.add('has-photo'); if (!sp.photo.light) document.body.dataset.ink = '';
       renderObjects();
     };

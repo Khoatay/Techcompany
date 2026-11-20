@@ -958,6 +958,7 @@
       pp: { '🕰️': [86, 30], '🥐': [30, 58], '☕': [47, 48], '📓': [72, 58], '🎨': [86, 70], '🎷': [14, 30] },
     },
     rainy: {
+      live: 'rain',
       raw: 'https://images.unsplash.com/photo-1600276871076-49d461d70795?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8Mnx8cmFpbiUyMG9uJTIwd2luZG93JTIwbmlnaHQlMjBjaXR5JTIwbGlnaHRzfGVufDF8MHx8fDE3OTUxNTUyODN8MA&ixlib=rb-4.1.0',
       by: "Ning Shi", byUrl: 'https://unsplash.com/@ningshi',
       pp: { '🕯️': [16, 72], '📖': [30, 74], '🍵': [44, 72], '🐈‍⬛': [58, 74], '📔': [72, 72], '🎧': [86, 74] },
