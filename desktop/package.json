@@ -1,0 +1,25 @@
+{
+  "name": "chillspace",
+  "productName": "ChillSpace",
+  "version": "1.0.0",
+  "description": "Góc làm việc chill: không gian, nhạc, âm thanh nền, Pomodoro",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.17.0"
+  },
+  "build": {
+    "appId": "app.chillspace.desktop",
+    "productName": "ChillSpace",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "offline.html", "build/icon.png"],
+    "win": { "icon": "build/icon.png", "target": ["nsis", "portable"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "shortcutName": "ChillSpace", "artifactName": "ChillSpace-Setup-${version}.exe" },
+    "portable": { "artifactName": "ChillSpace-Portable-${version}.exe" }
+  }
+}

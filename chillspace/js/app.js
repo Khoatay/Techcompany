@@ -77,7 +77,7 @@
     }
     // đổi không gian: chỉ giữ cửa sổ dùng chung (nhạc, âm thanh, pomodoro…) hoặc công cụ không gian mới cũng có;
     // còn lại (vd. Nhật ký giao dịch, Biểu đồ của Bàn trader) đóng hẳn, không mang sang không gian khác
-    const SHARED = new Set(['pomodoro', 'sleep', 'mixer', 'music', 'atmos', 'youtube', 'toolbox', 'room']);
+    const SHARED = new Set(['pomodoro', 'sleep', 'mixer', 'music', 'atmos', 'youtube', 'toolbox', 'room', 'myapps']);
     function onSpace() {
       const here = new Set(space.objects.map((o) => o.tool));
       Object.values(wins).forEach((w) => {
@@ -419,7 +419,7 @@
     if (e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (!$('#welcome').hidden) return;
     const k = e.key.toLowerCase();
-    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos', n: 'music' };
+    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos', n: 'music', ...(window.desktop ? { a: 'myapps' } : {}) };
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
     else if (k === 'f') fs();

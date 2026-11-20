@@ -1,0 +1,40 @@
+# Đóng gói ChillSpace cho Windows (.exe) trên máy Windows của GitHub, rồi đăng lên mục Releases.
+name: App PC (Windows)
+on:
+  push:
+    branches: [claude/stoic-wozniak-1qob7m]
+    paths: ['desktop/**', '.github/workflows/pc-app.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cài thư viện
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Đóng gói .exe
+        working-directory: desktop
+        run: npx electron-builder --win nsis portable --publish never
+      - name: Lấy số phiên bản
+        id: ver
+        shell: bash
+        run: echo "v=$(node -p "require('./desktop/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Đăng lên Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pc-v${{ steps.ver.outputs.v }}
+          name: ChillSpace cho PC ${{ steps.ver.outputs.v }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            **Cài đặt:** tải `ChillSpace-Setup-${{ steps.ver.outputs.v }}.exe` → mở → làm theo hướng dẫn.
+            **Không cần cài:** tải `ChillSpace-Portable-${{ steps.ver.outputs.v }}.exe` → mở là chạy.
+            Windows báo "Windows protected your PC" → bấm **More info → Run anyway** (app chưa mua chữ ký số).
+          files: |
+            desktop/dist/ChillSpace-Setup-*.exe
+            desktop/dist/ChillSpace-Portable-*.exe
