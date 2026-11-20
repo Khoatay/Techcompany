@@ -926,11 +926,95 @@
       by: 'Annie Spratt', byUrl: 'https://unsplash.com/@anniespratt',
       pp: { '📻': [10, 42], '⏰': [61, 47], '🎧': [26, 76], '📖': [34, 76], '🗂️': [42, 76], '💻': [50, 75], '☕': [58, 76], '✏️': [66, 76], '📝': [74, 76] },
     },
+    work: {
+      raw: 'https://images.unsplash.com/photo-1776391853674-92d8ee2369b0?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8aG9tZSUyMG9mZmljZSUyMGRlc2slMjBtb25pdG9yJTIwbmlnaHQlMjBjaXR5JTIwdmlld3xlbnwxfDB8fHwxNzk1MTU1MjMxfDA&ixlib=rb-4.1.0',
+      by: "Bunny Lau", byUrl: 'https://unsplash.com/@bunnystudio',
+      pp: { '📻': [70, 44], '📒': [22, 72], '⏱️': [34, 74], '📋': [46, 74], '☕': [58, 72], '🎧': [82, 72], '🪴': [12, 60] },
+    },
+    beach: {
+      raw: 'https://images.unsplash.com/photo-1594609878939-6c0e56bef49b?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fHRyb3BpY2FsJTIwYmVhY2glMjBzdW5zZXQlMjBwYWxtJTIwdHJlZXN8ZW58MXwwfHx8MTc5NTE1NTIzOHww&ixlib=rb-4.1.0',
+      by: "yang wewe", byUrl: 'https://unsplash.com/@weweclub_wewe',
+      pp: { '🌴': [88, 40], '🥥': [70, 74], '📻': [56, 76], '⛵': [22, 56], '🐚': [40, 78], '⛱️': [86, 66] },
+    },
+    pirate: {
+      raw: 'https://images.unsplash.com/photo-1591454880047-184bd09f04af?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTB8fG9sZCUyMHdvb2RlbiUyMHNhaWxpbmclMjBzaGlwJTIwZGVjayUyMG9jZWFufGVufDF8MHx8fDE3OTUxNTUyNDd8MA&ixlib=rb-4.1.0',
+      by: "Teddy Charti", byUrl: 'https://unsplash.com/@teddycharti',
+      pp: { '⚓': [14, 66], '🦜': [30, 30], '🗺️': [46, 76], '🧭': [60, 74], '🛢️': [74, 76], '🎻': [88, 72], '🚩': [78, 30] },
+    },
+    football: {
+      raw: 'https://images.unsplash.com/photo-1487466365202-1afdb86c764e?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8M3x8Zm9vdGJhbGwlMjBzdGFkaXVtJTIwbmlnaHQlMjBmbG9vZGxpZ2h0c3xlbnwxfDB8fHwxNzk1MTU1MjU2fDA&ixlib=rb-4.1.0',
+      by: "Jonathan Petersson", byUrl: 'https://unsplash.com/@grizzlybear',
+      pp: { '🥅': [52, 57], '⚽': [50, 78], '⏱️': [14, 30], '🥤': [24, 74], '📻': [78, 74], '📣': [88, 40], '📋': [36, 76] },
+    },
+    bedroom: {
+      raw: 'https://images.unsplash.com/photo-1774556443332-de783833a656?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTV8fGNvenklMjBiZWRyb29tJTIwbmlnaHQlMjBmYWlyeSUyMGxpZ2h0c3xlbnwxfDB8fHwxNzk1MTU1MjY0fDA&ixlib=rb-4.1.0',
+      by: "Alicia Christin Gerald", byUrl: 'https://unsplash.com/@allysphotos',
+      pp: { '🧸': [82, 60], '🐈': [68, 74], '📔': [44, 72], '📚': [24, 72], '🎵': [35, 56], '🌙': [52, 24] },
+    },
+    cafe: {
+      dim: true,
+      raw: 'https://images.unsplash.com/photo-1792325416561-76b46e59783c?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTN8fGNvenklMjBjb2ZmZWUlMjBzaG9wJTIwaW50ZXJpb3IlMjB3YXJtJTIwbGlnaHR8ZW58MXwwfHx8MTc5NTE1NTI3M3ww&ixlib=rb-4.1.0',
+      by: "Mustafa Sheikhmouss", byUrl: 'https://unsplash.com/@xalo_mustafa',
+      pp: { '🕰️': [86, 30], '🥐': [30, 58], '☕': [47, 48], '📓': [72, 58], '🎨': [86, 70], '🎷': [14, 30] },
+    },
+    rainy: {
+      raw: 'https://images.unsplash.com/photo-1600276871076-49d461d70795?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8Mnx8cmFpbiUyMG9uJTIwd2luZG93JTIwbmlnaHQlMjBjaXR5JTIwbGlnaHRzfGVufDF8MHx8fDE3OTUxNTUyODN8MA&ixlib=rb-4.1.0',
+      by: "Ning Shi", byUrl: 'https://unsplash.com/@ningshi',
+      pp: { '🕯️': [16, 72], '📖': [30, 74], '🍵': [44, 72], '🐈‍⬛': [58, 74], '📔': [72, 72], '🎧': [86, 74] },
+    },
+    camp: {
+      raw: 'https://images.unsplash.com/photo-1558571196-0b0152de294c?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8Mnx8Y2FtcGZpcmUlMjBuaWdodCUyMGZvcmVzdCUyMHN0YXJzfGVufDF8MHx8fDE3OTUxNTUyOTR8MA&ixlib=rb-4.1.0',
+      by: "Scott Osborn", byUrl: 'https://unsplash.com/@scottosbornphoto',
+      pp: { '⛺': [22, 70], '📔': [38, 74], '🔥': [60, 76], '🎸': [78, 72], '🌠': [30, 18], '🔦': [90, 60] },
+    },
+    space: {
+      raw: 'https://images.unsplash.com/photo-1768283808210-41196886ebf4?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8ZWFydGglMjBmcm9tJTIwc3BhY2UlMjBzdGF0aW9uJTIwd2luZG93fGVufDF8MHx8fDE3OTUxNTUzMDR8MA&ixlib=rb-4.1.0',
+      by: "Muhammad Nishfu", byUrl: 'https://unsplash.com/@nishfu',
+      pp: { '🛰️': [57, 30], '🚀': [82, 22], '👩‍🚀': [12, 40], '📋': [24, 74], '🎛️': [38, 78], '📡': [64, 76], '🎧': [78, 72], '🧃': [90, 60] },
+    },
+    zen: {
+      raw: 'https://images.unsplash.com/photo-1763076704710-2b9c01783505?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTF8fGphcGFuZXNlJTIwZ2FyZGVuJTIwY2hlcnJ5JTIwYmxvc3NvbSUyMHBvbmR8ZW58MXwwfHx8MTc5NTE1NTMwNXww&ixlib=rb-4.1.0',
+      by: "Branden Skeli", byUrl: 'https://unsplash.com/@branden_skeli',
+      pp: { '📻': [18, 72], '📜': [30, 76], '🖌️': [42, 76], '🍵': [40, 48], '🧘': [54, 76], '🪷': [66, 78], '🐟': [78, 76], '🎐': [30, 30], '🎋': [88, 30] },
+    },
+    train: {
+      dim: true,
+      raw: 'https://images.unsplash.com/photo-1583065689608-42b2a025a124?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8dHJhaW4lMjB3aW5kb3clMjBuaWdodCUyMGludGVyaW9yfGVufDF8MHx8fDE3OTUxNTUzMTh8MA&ixlib=rb-4.1.0',
+      by: "Stijn te Strake", byUrl: 'https://unsplash.com/@stijntestrake',
+      pp: { '🧳': [12, 72], '📖': [24, 76], '☕': [37, 78], '💻': [50, 78], '🎫': [63, 78], '🎧': [76, 76], '🌙': [64, 56], '🐈': [88, 72] },
+    },
+    cabin: {
+      raw: 'https://images.unsplash.com/photo-1697299261617-91f3902bfeea?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8Y296eSUyMGNhYmluJTIwZmlyZXBsYWNlJTIwd2ludGVyfGVufDF8MHx8fDE3OTUxNTUzMjd8MA&ixlib=rb-4.1.0',
+      by: "Clay Banks", byUrl: 'https://unsplash.com/@claybanks',
+      pp: { '🕯️': [90, 30], '🧶': [60, 72], '📖': [72, 62], '🍫': [46, 78], '🐕': [82, 76], '🕰️': [24, 26], '🔥': [22, 72], '📻': [10, 58] },
+    },
+    ocean: {
+      raw: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8dW5kZXJ3YXRlciUyMGNvcmFsJTIwcmVlZiUyMHN1bmxpZ2h0fGVufDF8MHx8fDE3OTUxNTUzMzd8MA&ixlib=rb-4.1.0',
+      by: "Hiroko Yoshii", byUrl: 'https://unsplash.com/@hiro0718',
+      pp: { '🪼': [80, 20], '🐡': [60, 40], '🐢': [30, 40], '🐙': [16, 74], '🐚': [40, 76], '🪸': [62, 74], '💎': [84, 72] },
+    },
+    village: {
+      dim: true,
+      raw: 'https://images.unsplash.com/photo-1555980483-93e7b3529e1a?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTR8fHZpZXRuYW0lMjByaWNlJTIwZmllbGQlMjBzdW5zZXR8ZW58MXwwfHx8MTc5NTE1NTM0N3ww&ixlib=rb-4.1.0',
+      by: "Kiril Dobrev", byUrl: 'https://unsplash.com/@kirildobrev',
+      pp: { '🎋': [16, 40], '🐃': [49, 58], '🐓': [24, 74], '🌾': [36, 76], '🍵': [62, 76], '🐸': [74, 78], '🪁': [78, 24], '📻': [88, 70] },
+    },
+    hoian: {
+      raw: 'https://images.unsplash.com/photo-1787060118419-3b54c6746feb?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTR8fGhvaSUyMGFuJTIwbGFudGVybnMlMjBuaWdodHxlbnwxfDB8fHwxNzk1MTU1MzU4fDA&ixlib=rb-4.1.0',
+      by: "Christian", byUrl: 'https://unsplash.com/@axcreativeagency',
+      pp: { '🏮': [[40, 22], [62, 26]], '📜': [16, 72], '🪷': [30, 78], '🛶': [50, 78], '☕': [70, 76], '🌕': [86, 16] },
+    },
+    trader: {
+      raw: 'https://images.unsplash.com/photo-1744782211816-c5224434614f?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fHN0b2NrJTIwdHJhZGluZyUyMGRlc2slMjBtb25pdG9ycyUyMGNoYXJ0cyUyMG5pZ2h0fGVufDF8MHx8fDE3OTUxNTUzNjZ8MA&ixlib=rb-4.1.0',
+      by: "Jakub Żerdzicki", byUrl: 'https://unsplash.com/@jakubzerdzicki',
+      pp: { '🌏': [14, 30], '📈': [62, 22], '📰': [86, 24], '🐂': [30, 52], '⏱️': [12, 62], '📒': [24, 74], '🧮': [80, 74], '✅': [44, 76], '☕': [56, 76], '📅': [66, 76], '🎧': [90, 62], '🐻': [40, 56] },
+    },
   };
   window.SPACES.forEach((sp) => {
     const ph = PHOTOS[sp.id] || PHOTOS[sp.parent]; if (!ph) return;
     sp.photo = ph;
-    sp.objects.forEach((o) => { if (ph.pp[o.e]) o.pp = ph.pp[o.e]; });
+    const seen = {};
+    sp.objects.forEach((o) => { const v = ph.pp[o.e]; if (!v) return; const k = (seen[o.e] = (seen[o.e] || 0) + 1) - 1; o.pp = Array.isArray(v[0]) ? v[Math.min(k, v.length - 1)] : v; });
   });
   window.SCENES = SCENES;
 })();

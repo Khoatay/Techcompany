@@ -170,3 +170,6 @@ body.has-photo[data-space] .date, body.has-photo[data-space] .quote { color: rgb
 .board.m .wheel { --peek: 1em; }
 .board.m.b-stay .wheel { --wh: 7.6em; }
 .board.m.b-flights .wheel, .board.m.b-departures .wheel { --wh: 7.4em; }
+
+/* ảnh sáng: làm tối phần trên để đồng hồ & chữ dễ đọc */
+.photo.dim::after { background: linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,.25) 34%, transparent 58%, rgba(0,0,0,.5)); }

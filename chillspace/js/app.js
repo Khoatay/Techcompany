@@ -202,7 +202,7 @@
     const img = new Image();
     img.onload = () => {
       if (space !== sp) return;
-      const d = document.createElement('div'); d.className = 'photo'; d.style.backgroundImage = `url("${url}")`;
+      const d = document.createElement('div'); d.className = 'photo' + (sp.photo.dim ? ' dim' : ''); d.style.backgroundImage = `url("${url}")`;
       $('#scenery').append(d); requestAnimationFrame(() => d.classList.add('show'));
       photoReady = sp.id; document.body.classList.add('has-photo'); if (!sp.photo.light) document.body.dataset.ink = '';
       cr.innerHTML = `📷 <a href="${sp.photo.byUrl}${UTM}" target="_blank" rel="noopener">${esc(sp.photo.by)}</a> / <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a>`; cr.hidden = false;
