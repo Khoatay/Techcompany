@@ -251,6 +251,15 @@ window.Sound = (function () {
   ];
   const byId = Object.fromEntries(SOUNDS.map((s) => [s.id, s]));
 
+  // file âm thanh thật đặt trong thư mục sounds/ (tên file = id âm thanh, vd. sounds/rain.mp3)
+  const files = {}, pending = {};
+  function loadFile(base) {
+    if (!pending[base]) pending[base] = fetch(`sounds/${base}.mp3`)
+      .then((res) => (res.ok && !/text\/html/.test(res.headers.get('content-type') || '') ? res.arrayBuffer() : Promise.reject()))
+      .then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
+      .then((buf) => (files[base] = buf), () => (files[base] = false));
+    return pending[base];
+  }
   // id 'x:mua' = kênh riêng của bảng Hiệu ứng: chạy song song với Âm thanh nền, không đồng bộ lên Phòng chung
   const baseOf = (id) => (id.startsWith('x:') ? id.slice(2) : id);
   function setVol(id, v) {
@@ -262,8 +271,14 @@ window.Sound = (function () {
     if (v > 0.001) {
       if (!r) {
         const g = ctx.createGain(); g.gain.value = 0; g.connect(master);
-        const t = track(); byId[baseOf(id)].build(g, t);
+        const t = track(), base = baseOf(id);
         r = running[id] = { g, t };
+        // có file thật sounds/<id>.mp3 thì phát file (lặp vô hạn), không có thì dùng tiếng tổng hợp
+        const useFile = (buf) => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(g); src.start(0, Math.random() * buf.duration); t.add(src); };
+        const rr = r, f = files[base];
+        if (f instanceof AudioBuffer) useFile(f);
+        else if (f === false) byId[base].build(g, t);
+        else loadFile(base).then(() => { if (running[id] !== rr) return; files[base] ? useFile(files[base]) : byId[base].build(g, t); });
       }
       clearTimeout(r.kill);
       r.g.gain.cancelScheduledValues(now);
