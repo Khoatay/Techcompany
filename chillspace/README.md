@@ -65,6 +65,10 @@ Tự động: đúng 00:00 giờ Việt Nam app đổ chuông và hiện bảng 
 
 Công tắc **🛬 Nhập cảnh | 🛫 Xuất cảnh** ở góc trên bên trái. Bên Xuất cảnh không có bảng hạn lưu trú, thay bằng bảng **chuyến quốc tế đi**: giờ đi, **mở quầy** (giờ khởi hành − 3 giờ), **hết khách** (giờ khởi hành − 40 phút), tính theo giờ lịch. Chuyến trễ có thêm dòng ghi chú bên dưới: trễ bao lâu, dự kiến đi lúc mấy giờ. Khung dữ liệu từ 1 giờ trước đến 11 giờ tới.
 
+## 📋 Nguồn lịch bay: Google Sheet (khuyên dùng)
+
+Mở bảng chuyến bay → ⚙️ → dán **link Google Sheet lịch bay** → Lưu & tải. Bảng cần mở quyền "Bất kỳ ai có đường liên kết đều xem được". App đọc trang "Lịch D/M" của ngày hôm nay (giờ VN), phần **Lịch bay quốc tế** (chuyến đến bên trái, chuyến đi bên phải), kèm các chuyến sau nửa đêm ("00:30+") ở trang hôm trước. Tự tải lại mỗi 5 phút, không tốn phí. Link chỉ lưu trên máy, **không ghi vào code** vì repo công khai. Chưa có link thì app dùng AeroDataBox (dữ liệu có thể thiếu chuyến).
+
 ## ✈️ Chuyến quốc tế đến (Immigration space)
 
 Bấm ✈️ ngoài cửa kính để xem chuyến quốc tế đến **Cam Ranh** (đổi được sang Nội Bài, Tân Sơn Nhất, Đà Nẵng, Phú Quốc…), lấy trong khung từ 3 giờ trước đến 9 giờ tới. Chuyến nội địa và chuyến hàng đã được lọc bỏ.

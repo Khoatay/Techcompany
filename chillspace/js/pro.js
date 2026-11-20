@@ -347,29 +347,152 @@ const Lunar = (() => {
   // Ghi chú trễ: 'Trễ 1 giờ 20 phút · dự kiến đi 00:20' (chỉ khi trễ từ 5 phút)
   const lateNote = (f) => { if (!f.est || !f.sched || f.est - f.sched < 5 * 60000) return ''; const m = Math.round((f.est - f.sched) / 60000), h = Math.floor(m / 60); return `Trễ ${h ? h + ' giờ ' : ''}${m % 60 ? (m % 60) + ' phút' : ''}`.trim() + ` · dự kiến đi ${hhmm(new Date(f.est))}`; };
   const DEP_STATUS = { ...FL_STATUS, Expected: ['Dự kiến', 'plan'], CheckIn: ['Đang làm thủ tục', 'soon'], Boarding: ['Đang lên máy bay', 'soon'], GateClosed: ['Đã đóng cửa', 'air'], Departed: ['Đã cất cánh', 'done'], EnRoute: ['Đã cất cánh', 'done'] };
+  /* ---------- Nguồn Google Sheet lịch bay (ưu tiên nếu đã dán link) ----------
+     Bảng có mỗi ngày một trang "Lịch D/M". Mỗi trang: phần "Lịch bay quốc tế" (chuyến đến bên trái,
+     chuyến đi bên phải: CB, Chặng, Giờ, PNR, Trạng thái) rồi tới phần "Lịch bay quốc nội" (bỏ qua).
+     Link bảng KHÔNG ghi trong code (repo công khai) – người dùng dán vào app, lưu trên máy. */
+  const AP = {
+    ICN: ['Seoul', 'KR'], GMP: ['Seoul', 'KR'], PUS: ['Busan', 'KR'], CJJ: ['Cheongju', 'KR'], TAE: ['Daegu', 'KR'], MWX: ['Muan', 'KR'], CJU: ['Jeju', 'KR'],
+    VVO: ['Vladivostok', 'RU'], IKT: ['Irkutsk', 'RU'], SVO: ['Moscow', 'RU'], VKO: ['Moscow', 'RU'], DME: ['Moscow', 'RU'], LED: ['St Petersburg', 'RU'], SVX: ['Yekaterinburg', 'RU'],
+    UFA: ['Ufa', 'RU'], BQS: ['Blagoveshchensk', 'RU'], KJA: ['Krasnoyarsk', 'RU'], OVB: ['Novosibirsk', 'RU'], KHV: ['Khabarovsk', 'RU'], KZN: ['Kazan', 'RU'], PEE: ['Perm', 'RU'],
+    CEK: ['Chelyabinsk', 'RU'], OMS: ['Omsk', 'RU'], TJM: ['Tyumen', 'RU'], BAX: ['Barnaul', 'RU'], KEJ: ['Kemerovo', 'RU'], NOZ: ['Novokuznetsk', 'RU'], UUD: ['Ulan-Ude', 'RU'],
+    HTA: ['Chita', 'RU'], YKS: ['Yakutsk', 'RU'], KUF: ['Samara', 'RU'], GOJ: ['Nizhny Novgorod', 'RU'], AER: ['Sochi', 'RU'], ROV: ['Rostov', 'RU'], MRV: ['Mineralnye Vody', 'RU'],
+    ALA: ['Almaty', 'KZ'], NQZ: ['Astana', 'KZ'], CIT: ['Shymkent', 'KZ'], TAS: ['Tashkent', 'UZ'], FRU: ['Bishkek', 'KG'], ULN: ['Ulaanbaatar', 'MN'], UBN: ['Ulaanbaatar', 'MN'],
+    CAN: ['Quảng Châu', 'CN'], CZX: ['Thường Châu', 'CN'], PVG: ['Thượng Hải', 'CN'], SHA: ['Thượng Hải', 'CN'], PEK: ['Bắc Kinh', 'CN'], PKX: ['Bắc Kinh', 'CN'], CTU: ['Thành Đô', 'CN'],
+    TFU: ['Thành Đô', 'CN'], CKG: ['Trùng Khánh', 'CN'], NNG: ['Nam Ninh', 'CN'], KMG: ['Côn Minh', 'CN'], SZX: ['Thâm Quyến', 'CN'], HGH: ['Hàng Châu', 'CN'], NKG: ['Nam Kinh', 'CN'],
+    WUH: ['Vũ Hán', 'CN'], CSX: ['Trường Sa', 'CN'], XIY: ["Tây An", 'CN'], TAO: ['Thanh Đảo', 'CN'], SHE: ['Thẩm Dương', 'CN'], HRB: ['Cáp Nhĩ Tân', 'CN'], DLC: ['Đại Liên', 'CN'],
+    TSN: ['Thiên Tân', 'CN'], CGO: ['Trịnh Châu', 'CN'], HKG: ['Hồng Kông', 'HK'], MFM: ['Ma Cao', 'MO'], TPE: ['Đài Bắc', 'TW'], KHH: ['Cao Hùng', 'TW'], RMQ: ['Đài Trung', 'TW'],
+    NRT: ['Tokyo', 'JP'], HND: ['Tokyo', 'JP'], KIX: ['Osaka', 'JP'], NGO: ['Nagoya', 'JP'], FUK: ['Fukuoka', 'JP'],
+    BKK: ['Bangkok', 'TH'], DMK: ['Bangkok', 'TH'], HKT: ['Phuket', 'TH'], CNX: ['Chiang Mai', 'TH'], SIN: ['Singapore', 'SG'], KUL: ['Kuala Lumpur', 'MY'], MNL: ['Manila', 'PH'],
+    CGK: ['Jakarta', 'ID'], DPS: ['Bali', 'ID'], PNH: ['Phnom Penh', 'KH'], KTI: ['Phnom Penh', 'KH'], REP: ['Siem Reap', 'KH'], VTE: ['Viêng Chăn', 'LA'], RGN: ['Yangon', 'MM'],
+    DEL: ['New Delhi', 'IN'], BOM: ['Mumbai', 'IN'], DXB: ['Dubai', 'AE'], DOH: ['Doha', 'QA'], SYD: ['Sydney', 'AU'], MEL: ['Melbourne', 'AU'], PER: ['Perth', 'AU'],
+  };
+  function parseCSV(text) {
+    const rows = []; let row = [], cell = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ',') { row.push(cell); cell = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+  const SHEET_STATUS = (t) => {
+    const s = (t || '').toLowerCase();
+    if (/hủy|huỷ|cancel/.test(s)) return 'Canceled';
+    if (/trễ|delay/.test(s)) return 'Delayed';
+    if (/đã đến|đã hạ cánh/.test(s)) return 'Arrived';
+    if (/đã cất cánh/.test(s)) return 'Departed';
+    if (/lên máy bay/.test(s)) return 'Boarding';
+    if (/thủ tục/.test(s)) return 'CheckIn';
+    if (/sắp hạ cánh/.test(s)) return 'Approaching';
+    if (/theo lịch|dự kiến/.test(s)) return 'Expected';
+    return 'Unknown';
+  };
+  // giờ "08:30" hoặc "00:30+" (ngày hôm sau) của trang ngày [y, m, d] → mốc thời gian (giờ VN = UTC+7)
+  const sheetTime = (ymd, t) => { const m = /(\d{1,2}):(\d{2})\s*(\+)?/.exec(t || ''); if (!m) return null; return Date.UTC(ymd[0], ymd[1] - 1, ymd[2] + (m[3] ? 1 : 0), +m[1] - 7, +m[2]); };
+  function parseSheet(text) {
+    const rows = parseCSV(text), title = (rows[0] || [])[0] || '';
+    const dm = /Ngày\s+(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(title);
+    if (!dm) throw new Error('Không đọc được bảng lịch bay (sai định dạng hoặc sai link)');
+    const ymd = [+dm[3], +dm[2], +dm[1]];
+    const upd = ((rows.find((r) => /^Cập nhật lúc/i.test(r[0] || '')) || [])[0] || '').replace(/^Cập nhật lúc\s*/i, '');
+    const out = { ymd, iso: `${ymd[0]}-${pad(ymd[1])}-${pad(ymd[2])}`, updated: upd, arr: [], dep: [] };
+    let intl = false, H = null;
+    for (const r of rows) {
+      const c0 = (r[0] || '').trim();
+      if (/^Lịch bay quốc tế/i.test(c0)) { intl = true; continue; }
+      if (/^Lịch bay quốc nội/i.test(c0)) break;
+      if (!intl) continue;
+      if (r.includes('CB đến') || r.includes('CB đi')) {
+        const at = (name, from, to) => { for (let i = from; i < to; i++) if ((r[i] || '').trim().startsWith(name)) return i; return -1; };
+        const a = r.indexOf('CB đến'), d = r.indexOf('CB đi'), n = r.length;
+        const blk = (s, e) => (s < 0 ? null : { cb: s, route: at('Chặng', s, e), time: at('Giờ', s, e), pnr: at('PNR', s, e), st: at('Trạng thái', s, e) });
+        H = { arr: blk(a, d > a ? d : n), dep: blk(d, a > d ? a : n) };
+        continue;
+      }
+      if (!H) continue;
+      for (const [k, b] of [['arr', H.arr], ['dep', H.dep]]) {
+        if (!b) continue;
+        const no = (r[b.cb] || '').trim(); if (!no) continue;
+        const route = (r[b.route] || '').split('-').map((x) => x.trim().toUpperCase());
+        const other = k === 'arr' ? route[0] : route[route.length - 1], ap = AP[other] || [other || '?', ''];
+        const tTxt = r[b.time] || '', stTxt = (r[b.st] || '').trim(), sched = sheetTime(ymd, tTxt);
+        let est = null; const lm = /(\d{1,2}):(\d{2})/.exec(stTxt);
+        if (/trễ/i.test(stTxt) && lm && sched) { est = sheetTime(ymd, `${lm[1]}:${lm[2]}`); while (est < sched - 6 * 3600e3) est += 864e5; }
+        out[k].push({ no: no.replace(/^([A-Z0-9]{2})(\d)/, '$1 $2'), airline: '', status: SHEET_STATUS(stTxt), label: stTxt, from: ap[0], fromCode: other || '', cc: ap[1], sched, est, pnr: (r[b.pnr] || '').trim(), terminal: '', gate: '', belt: '', aircraft: '', cargo: false, src: 'sheet' });
+      }
+    }
+    return out;
+  }
+  const sheetId = (link) => { const m = /\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})/.exec(link || '') || /^([A-Za-z0-9_-]{30,})$/.exec((link || '').trim()); return m ? m[1] : ''; };
+  const SheetSrc = {
+    _p: null,
+    async fetchDay(id, iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      const names = [...new Set([`Lịch ${d}/${m}`, `Lịch ${pad(d)}/${pad(m)}`, `Lịch ${d}/${pad(m)}`])];
+      for (const name of names) {
+        const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`, { cache: 'no-store' });
+        if (!r.ok) throw new Error(r.status === 404 ? 'Không tìm thấy bảng – kiểm tra lại link' : `Google Sheet báo lỗi ${r.status}`);
+        const text = await r.text();
+        if (/^\s*</.test(text)) throw new Error('Bảng chưa mở quyền xem cho "Bất kỳ ai có đường liên kết"');
+        const s = parseSheet(text);
+        if (s.iso === iso) return s; // Google trả trang đầu nếu không có trang ngày này → kiểm tra ngày trên tiêu đề
+        if (name === names[names.length - 1]) return { ...s, mismatch: true };
+      }
+    },
+    load() {
+      if (this._p) return this._p;
+      this._p = (async () => {
+        const id = sheetId(store.get('fl.sheet', '')); if (!id) throw new Error('Chưa dán link Google Sheet');
+        const today = todayISO(), yest = addDays(today, -1);
+        const [t, y] = await Promise.all([this.fetchDay(id, today), this.fetchDay(id, yest).catch(() => null)]);
+        const [ty, tm, td] = today.split('-').map(Number), startToday = Date.UTC(ty, tm - 1, td, -7, 0); // 00:00 giờ VN hôm nay
+        const merge = (k) => {
+          const list = [...(t ? t[k] : [])];
+          if (y && !y.mismatch) y[k].forEach((f) => { if (f.sched >= startToday && !list.some((g) => g.no === f.no && g.sched === f.sched)) list.push(f); }); // chuyến "+" của trang hôm qua
+          return list;
+        };
+        return { arr: merge('arr'), dep: merge('dep'), updated: t.updated, mismatch: t.mismatch ? vn(t.iso) : '' };
+      })().finally(() => setTimeout(() => (this._p = null), 0));
+      return this._p;
+    },
+  };
+
   function makeFL(dir) {
     const dep = dir === 'Departure', ck = dep ? 'fl.cacheD' : 'fl.cache';
     return {
       dir, dep, loading: false, err: '', cache: store.get(ck, null), status: dep ? DEP_STATUS : FL_STATUS,
-      key: () => store.get('fl.key', ''), iata: () => store.get('fl.airport', 'CXR'),
-      fresh() { const c = this.cache; return !!(c && c.iata === this.iata() && Date.now() - c.at < 30 * 60000); },
+      key: () => store.get('fl.key', ''), iata: () => store.get('fl.airport', 'CXR'), sheet: () => store.get('fl.sheet', ''),
+      src() { return sheetId(this.sheet()) ? 'sheet' : 'api'; },
+      configured() { return this.src() === 'sheet' || !!this.key(); },
+      ok(c) { return !!(c && (c.src || 'api') === this.src() && (c.src === 'sheet' || c.iata === this.iata())); },
+      fresh() { const c = this.cache; return this.ok(c) && Date.now() - c.at < (c.src === 'sheet' ? 4 : 30) * 60000; }, // Sheet miễn phí: tải lại mỗi ~5 phút
       emit() { document.dispatchEvent(new Event('cs:flights')); },
       async load(force) {
-        if (!this.key() || this.loading) return;
+        if (!this.configured() || this.loading) return;
         if (!force && (this.fresh() || (this.lastTry && Date.now() - this.lastTry < 60000))) return; // không gọi dồn khi đang lỗi
         this.lastTry = Date.now(); this.loading = true; this.err = ''; this.emit();
         try {
+          if (this.src() === 'sheet') {
+            const r = await SheetSrc.load(), at = Date.now();
+            for (const F of [FL, FLD]) { F.cache = { src: 'sheet', at, updated: r.updated, mismatch: r.mismatch, list: F.dep ? r.dep : r.arr }; F.err = ''; store.set(F.dep ? 'fl.cacheD' : 'fl.cache', F.cache); }
+            this.loading = false; FL.emit(); return;
+          }
           // khung 12 giờ: chuyến đến 3 giờ trước → 9 giờ tới; chuyến đi 1 giờ trước → 11 giờ tới (để thấy quầy mở trước 3 giờ)
           const now = Date.now(), from = new Date(now - (dep ? 1 : 3) * 3600e3), to = new Date(now + (dep ? 11 : 9) * 3600e3 - 60000);
           const list = await fetchFlights(this.key(), this.iata(), from, to, dir);
-          this.cache = { iata: this.iata(), at: Date.now(), from: +from, to: +to, list: list.map((f) => ({ ...f, sched: f.sched && +f.sched, est: f.est && +f.est })) };
+          this.cache = { src: 'api', iata: this.iata(), at: Date.now(), from: +from, to: +to, list: list.map((f) => ({ ...f, sched: f.sched && +f.sched, est: f.est && +f.est })) };
           store.set(ck, this.cache);
-        } catch (e) { this.err = e.message || String(e); if (/Failed to fetch|NetworkError|Load failed/i.test(this.err)) this.err = 'Không kết nối được máy chủ chuyến bay – kiểm tra mạng'; }
+        } catch (e) { this.err = e.message || String(e); if (/Failed to fetch|NetworkError|Load failed/i.test(this.err)) this.err = this.src() === 'sheet' ? 'Không đọc được Google Sheet – kiểm tra mạng hoặc quyền xem của bảng' : 'Không kết nối được máy chủ chuyến bay – kiểm tra mạng'; }
         this.loading = false; this.emit();
       },
       intl() {
         const c = this.cache;
-        return (c && c.iata === this.iata() ? c.list : []).filter((f) => !isDomestic(f) && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
+        return (this.ok(c) ? c.list : []).filter((f) => !isDomestic(f) && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
       },
       isPast(f) {
         const t = f.est || f.sched;
@@ -390,24 +513,29 @@ const Lunar = (() => {
     return {
       title: dep ? 'Chuyến quốc tế đi' : 'Chuyến quốc tế đến', icon: dep ? '🛫' : '✈️', width: 480, global: true, place: 'right',
       render(b) {
-        let filter = 'all', showSet = !F.key(), showRaw = false;
+        let filter = 'all', showSet = !F.configured(), showRaw = false;
         function draw() {
-          const iata = F.iata(), key = F.key(), cache = F.cache && F.cache.iata === iata ? F.cache : null;
+          const iata = F.iata(), key = F.key(), cache = F.ok(F.cache) ? F.cache : null, isSheet = F.src() === 'sheet';
           const used = store.get('fl.used', {})[todayISO().slice(0, 7)] || 0;
           const all = F.intl(), byC = {}; all.forEach((f) => (byC[f.cc] = (byC[f.cc] || 0) + 1));
           const list = filter === 'all' ? all : all.filter((f) => f.cc === filter);
           let nextMarked = false;
           b.innerHTML = `<div class="fl-head"><div class="grow"><b>${flag('VN')} ${esc(AIRPORTS[iata] || iata)} (${esc(iata)}) · chuyến quốc tế ${dep ? 'đi' : 'đến'}</b>
-              <small>${cache ? `Cập nhật ${hhmm(new Date(cache.at))} · từ ${hhmm(new Date(cache.from))} đến ${hhmm(new Date(cache.to))} (giờ VN)` : 'Chưa có dữ liệu'}</small></div>
+              <small>${!cache ? 'Chưa có dữ liệu' : cache.src === 'sheet' ? `Google Sheet · bảng cập nhật ${esc(cache.updated || '?')} · tải lúc ${hhmm(new Date(cache.at))}` : `AeroDataBox · cập nhật ${hhmm(new Date(cache.at))} · từ ${hhmm(new Date(cache.from))} đến ${hhmm(new Date(cache.to))} (giờ VN)`}</small></div>
               <button class="btn ghost" data-r title="Tải lại">${F.loading ? '⏳' : '↻'}</button><button class="btn ghost" data-set title="Cài đặt">⚙️</button></div>
             ${Boards.state(boardId) === 'closed' ? `<button class="btn ghost" data-pin>📌 Hiện lại bảng chuyến ${dep ? 'đi' : 'đến'} trên tường</button>` : ''}
             ${showSet ? `<div class="fl-set">
-                <p class="small"><b>Kết nối dữ liệu chuyến bay (AeroDataBox)</b></p>
-                <ol class="small"><li>Vào <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox/pricing" target="_blank" rel="noopener">rapidapi.com → AeroDataBox ↗</a>, đăng nhập bằng Google</li><li>Chọn gói <b>Basic (miễn phí)</b> → Subscribe</li><li>Sang tab <b>Endpoints</b>, copy giá trị <b>X-RapidAPI-Key</b> rồi dán vào đây</li></ol>
-                <input type="password" data-key placeholder="Dán X-RapidAPI-Key" value="${esc(key)}" autocomplete="off">
-                <div class="row"><select data-ap>${Object.entries(AIRPORTS).map(([k, n]) => `<option value="${k}"${k === iata ? ' selected' : ''}>${n} (${k})</option>`).join('')}</select><span class="grow"></span><button class="btn primary" data-save>Lưu & tải</button></div>
-                <p class="muted small">Khoá dùng chung cho chuyến đến và chuyến đi, chỉ lưu trên máy này. Tháng này đã dùng ${used} lượt. Mỗi lần tải dùng 1 lượt, app tự giữ kết quả 30 phút để tiết kiệm.</p></div>` : ''}
+                <p class="small"><b>Nguồn dữ liệu chuyến bay</b></p>
+                <label class="field">Link Google Sheet lịch bay (chính xác, miễn phí – khuyên dùng)<input data-sheet placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(F.sheet())}" autocomplete="off"></label>
+                <details${!F.sheet() && key ? ' open' : ''}><summary class="small">Hoặc dùng AeroDataBox (dữ liệu có thể thiếu chuyến)</summary>
+                  <ol class="small"><li>Vào <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox/pricing" target="_blank" rel="noopener">rapidapi.com → AeroDataBox ↗</a>, đăng nhập bằng Google</li><li>Chọn gói <b>Basic (miễn phí)</b> → Subscribe</li><li>Copy <b>X-RapidAPI-Key</b> rồi dán vào đây</li></ol>
+                  <input type="password" data-key placeholder="Dán X-RapidAPI-Key" value="${esc(key)}" autocomplete="off">
+                  <select data-ap>${Object.entries(AIRPORTS).map(([k, n]) => `<option value="${k}"${k === iata ? ' selected' : ''}>${n} (${k})</option>`).join('')}</select>
+                  <p class="muted small">Tháng này đã dùng ${used} lượt AeroDataBox.</p></details>
+                <div class="row"><span class="grow"></span><button class="btn primary" data-save>Lưu & tải</button></div>
+                <p class="muted small">Link và khoá chỉ lưu trên máy này. Có link Google Sheet thì app dùng Sheet, không dùng AeroDataBox.</p></div>` : ''}
             ${F.err ? `<p class="fl-err">⚠️ ${esc(F.err)}</p>` : ''}
+            ${cache && cache.mismatch ? `<p class="fl-err">⚠️ Bảng chưa có trang ngày hôm nay – đang hiện lịch ngày ${esc(cache.mismatch)}</p>` : ''}
             ${all.length ? `<div class="chips fl-filter"><button class="chip${filter === 'all' ? ' on' : ''}" data-f="all">Tất cả <b>${all.length}</b></button>${Object.entries(byC).sort((a, c) => c[1] - a[1]).map(([cc, n]) => `<button class="chip${filter === cc ? ' on' : ''}" data-f="${cc}">${flag(cc)} ${esc(COUNTRY[cc] || cc)} <b>${n}</b></button>`).join('')}</div>` : ''}
             <ul class="fl-list">${list.map((f) => {
               const st = F.status[f.status] || F.status.Unknown, past = F.isPast(f);
@@ -415,24 +543,29 @@ const Lunar = (() => {
               const late = f.est && f.sched && f.est - f.sched > 10 * 60000;
               const extra = dep && f.sched ? `<span class="fl-dep">Mở quầy <b>${hhmm(new Date(f.sched - OPEN_BEFORE))}</b> · Hết khách <b>${hhmm(new Date(f.sched - LAST_BEFORE))}</b></span>${lateNote(f) ? `<span class="fl-late">⚠️ ${lateNote(f)}</span>` : ''}` : '';
               return `<li class="${past ? 'past' : ''}${isNext ? ' next' : ''}"><span class="fl-time">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}${!dep && f.est && f.sched && Math.abs(f.est - f.sched) > 5 * 60000 ? `<small class="${late ? 'late' : ''}">→ ${hhmm(new Date(f.est))}</small>` : ''}</span>
-                <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${dep ? '→ ' : ''}${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span>${extra}<small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${!dep && f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}${dep && f.gate ? ' · Cửa ' + esc(f.gate) : ''}</small></span>
-                <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : st[0]}</span></li>`;
-            }).join('') || (F.loading ? '<li class="empty">Đang tải…</li>' : key && !F.err ? `<li class="empty">Không có chuyến quốc tế ${dep ? 'đi' : 'đến'} trong khung giờ này.</li>` : '')}</ul>
+                <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${dep ? '→ ' : ''}${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span>${extra}<small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.pnr && f.pnr !== '–' ? ' · PNR ' + esc(f.pnr) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${!dep && f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}${dep && f.gate ? ' · Cửa ' + esc(f.gate) : ''}</small></span>
+                <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : esc(f.label || st[0])}</span></li>`;
+            }).join('') || (F.loading ? '<li class="empty">Đang tải…</li>' : F.configured() && !F.err ? `<li class="empty">Không có chuyến quốc tế ${dep ? 'đi' : 'đến'} ${isSheet ? 'trong bảng hôm nay' : 'trong khung giờ này'}.</li>` : '')}</ul>
             ${cache ? (() => {
               const raw = cache.list.slice().sort((x, y) => (x.sched || x.est || 0) - (y.sched || y.est || 0));
               const tag = (f) => (f.cargo ? 'hàng' : isDomestic(f) ? 'nội địa' : 'quốc tế');
               const n = { 'quốc tế': 0, 'nội địa': 0, 'hàng': 0 }; raw.forEach((f) => n[tag(f)]++);
-              return `<details class="fl-raw"${showRaw ? ' open' : ''}><summary>🔍 Toàn bộ dữ liệu AeroDataBox trả về: <b>${raw.length}</b> chuyến (${n['quốc tế']} quốc tế · ${n['nội địa']} nội địa · ${n['hàng']} hàng)</summary>
+              return `<details class="fl-raw"${showRaw ? ' open' : ''}><summary>🔍 Toàn bộ dữ liệu ${cache.src === 'sheet' ? 'Google Sheet' : 'AeroDataBox'} trả về: <b>${raw.length}</b> chuyến (${n['quốc tế']} quốc tế · ${n['nội địa']} nội địa · ${n['hàng']} hàng)</summary>
                 <table><tbody>${raw.map((f) => `<tr class="${tag(f) === 'quốc tế' ? '' : 'dim'}"><td>${f.sched ? hhmm(new Date(f.sched)) : f.est ? hhmm(new Date(f.est)) : '--:--'}</td><td><b>${esc(f.no)}</b></td><td>${esc(f.fromCode || '?')} ${esc(f.from)}</td><td>${esc(f.cc || '?')}</td><td>${esc(f.status)}</td><td>${tag(f)}</td></tr>`).join('') || '<tr><td>Không có chuyến nào trong khung giờ này</td></tr>'}</tbody></table></details>`;
             })() : ''}
-            <p class="muted small">Nguồn: AeroDataBox. Giờ hiển thị là giờ Việt Nam.${dep ? ' Mở quầy = giờ khởi hành theo lịch − 3 giờ · Hết khách = giờ khởi hành theo lịch − 40 phút.' : ''} Chỉ để tham khảo – lịch chính thức theo sân bay/hãng bay.</p>`;
+            <p class="muted small">Nguồn: ${isSheet ? 'Google Sheet lịch bay' : 'AeroDataBox'}. Giờ hiển thị là giờ Việt Nam.${dep ? ' Mở quầy = giờ khởi hành theo lịch − 3 giờ · Hết khách = giờ khởi hành theo lịch − 40 phút.' : ''} Chỉ để tham khảo – lịch chính thức theo sân bay/hãng bay.</p>`;
           const q = (s) => b.querySelector(s);
           q('[data-r]').onclick = () => F.load(true);
           q('[data-set]').onclick = () => { showSet = !showSet; draw(); };
           if (q('[data-pin]')) q('[data-pin]').onclick = () => Boards.setState(boardId, 'normal');
           b.querySelectorAll('[data-f]').forEach((x) => (x.onclick = () => { filter = x.dataset.f; draw(); }));
           const rd = q('.fl-raw'); if (rd) rd.ontoggle = () => (showRaw = rd.open);
-          if (showSet) q('[data-save]').onclick = () => { store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value); showSet = !F.key(); filter = 'all'; F.load(true); draw(); };
+          if (showSet) q('[data-save]').onclick = () => {
+            const sh = q('[data-sheet]').value.trim();
+            if (sh && !sheetId(sh)) return toast('Link Google Sheet không hợp lệ');
+            store.set('fl.sheet', sh); store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value);
+            FL.cache = FLD.cache = null; showSet = !F.configured(); filter = 'all'; F.load(true); draw();
+          };
         }
         const on = () => draw();
         document.addEventListener('cs:flights', on); document.addEventListener('cs:boards', on);
@@ -483,6 +616,7 @@ const Lunar = (() => {
 
   /* ================= BẢNG TREO TƯỜNG (thu nhỏ / phóng to / tắt như cửa sổ) ================= */
   window.Flights = FL; window.FlightsOut = FLD;
+  const boardSub = (F) => { const c = F.ok(F.cache) ? F.cache : null; return `${esc(F.src() === 'sheet' ? 'Cam Ranh' : AIRPORTS[F.iata()] || F.iata())}${c ? (c.src === 'sheet' ? ` · bảng cập nhật ${esc((c.updated || '').split(' ')[0])}` : ` · cập nhật ${hhmm(new Date(c.at))}`) : ''}${c && c.mismatch ? ' · ⚠️ chưa có lịch hôm nay' : ''}${F.loading ? ' · đang tải…' : ''}`; };
   const Boards = (window.Boards = {
     state: (id) => store.get('board.' + id, 'normal'),
     setState(id, s) { store.set('board.' + id, s); document.dispatchEvent(new Event('cs:boards')); },
@@ -493,21 +627,21 @@ const Lunar = (() => {
     },
     flights: {
       icon: '✈️', title: 'CHUYẾN QUỐC TẾ ĐẾN', tool: 'flights',
-      sub: () => `${esc(AIRPORTS[FL.iata()] || FL.iata())}${FL.cache && FL.cache.iata === FL.iata() ? ` · cập nhật ${hhmm(new Date(FL.cache.at))}` : ''}${FL.loading ? ' · đang tải…' : ''}`,
+      sub: () => boardSub(FL),
       body(st) {
-        if (!FL.key()) return '<p class="fb-empty">Chưa kết nối dữ liệu chuyến bay.<br><b>Bấm vào đây để cài đặt (5 phút)</b></p>';
+        if (!FL.configured()) return '<p class="fb-empty">Chưa kết nối dữ liệu chuyến bay.<br><b>Bấm vào đây để cài đặt (5 phút)</b></p>';
         if (FL.err) return `<p class="fb-empty err">⚠️ ${esc(FL.err)}<br><b>Bấm để xem chi tiết</b></p>`;
         const up = FL.intl().filter((f) => !FL.isPast(f) && (FL_STATUS[f.status] || FL_STATUS.Unknown)[1] !== 'cancel');
         if (!up.length) return `<p class="fb-empty">${FL.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đến trong 9 giờ tới.'}</p>`;
         const n = st === 'max' ? 10 : 5;
-        return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span><span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : s[0]}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+        return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span><span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : esc(f.label || s[0])}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
       },
     },
     departures: {
       icon: '🛫', title: 'CHUYẾN QUỐC TẾ ĐI', tool: 'departures',
-      sub: () => `${esc(AIRPORTS[FLD.iata()] || FLD.iata())}${FLD.cache && FLD.cache.iata === FLD.iata() ? ` · cập nhật ${hhmm(new Date(FLD.cache.at))}` : ''}${FLD.loading ? ' · đang tải…' : ''}`,
+      sub: () => boardSub(FLD),
       body(st) {
-        if (!FLD.key()) return '<p class="fb-empty">Chưa kết nối dữ liệu chuyến bay.<br><b>Bấm vào đây để cài đặt (5 phút)</b></p>';
+        if (!FLD.configured()) return '<p class="fb-empty">Chưa kết nối dữ liệu chuyến bay.<br><b>Bấm vào đây để cài đặt (5 phút)</b></p>';
         if (FLD.err) return `<p class="fb-empty err">⚠️ ${esc(FLD.err)}<br><b>Bấm để xem chi tiết</b></p>`;
         const up = FLD.intl().filter((f) => !FLD.isPast(f) && (DEP_STATUS[f.status] || DEP_STATUS.Unknown)[1] !== 'cancel');
         if (!up.length) return `<p class="fb-empty">${FLD.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đi trong 11 giờ tới.'}</p>`;
