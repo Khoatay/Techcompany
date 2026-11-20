@@ -127,7 +127,7 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: 0; bord
 .corner-bar .dir-switch, .alarm-corner { box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.12); }
 .dir-switch button { transition: background .25s, color .25s; }
 
-@media (prefers-reduced-motion: reduce) { .stage { transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
 
 /* ---------- ảnh nền thật ---------- */
 .photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; }
