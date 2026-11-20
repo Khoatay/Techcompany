@@ -190,7 +190,7 @@
   }
   function setSpace(id, first, remote) {
     // Trong Phòng chung: không gian cố định theo phòng (muốn đổi thì rời phòng, tạo phòng mới)
-    if (!first && !remote && window.Room && Room.lockSpace && Room.lockSpace() && id !== space.id) { toast('🔒 Không gian của phòng là cố định. Muốn đổi: rời phòng 🚪 rồi tạo phòng mới ở không gian khác', 5000); return; }
+    if (!first && !remote && window.Room && Room.lockSpace && Room.lockSpace(id) && id !== space.id) { toast(Room.room && ['border', 'borderout'].includes(Room.room.space) && ['border', 'borderout'].includes(id) ? '🔒 Chỉ chủ phòng chuyển được Nhập ⇄ Xuất cảnh' : '🔒 Không gian của phòng là cố định. Muốn đổi: rời phòng 🚪 rồi tạo phòng mới ở không gian khác', 5000); return; }
     const next = SPACES.find((s) => s.id === id); if (!next) return;
     const changed = next !== space; space = next;
     store.set('space', id);

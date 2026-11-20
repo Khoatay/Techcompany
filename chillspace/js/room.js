@@ -196,14 +196,7 @@
         if (m.user_id !== user.id && !winOpen) { unread++; const p = profiles[m.user_id]; toast(`${p ? p.name : 'Ai đó'}: ${m.kind === 'done' ? '✅ ' : ''}${m.body}`); }
         emit();
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${r.code}` }, ({ new: nr }) => {
-        const spaceChanged = nr.space !== room.space, permChanged = JSON.stringify(nr.perms) !== JSON.stringify(room.perms);
-        room = nr;
-        if (nr.audio) applyAudio(nr.audio);
-        if (permChanged) { document.dispatchEvent(new Event('cs:audio')); toast(canAudio() ? '🎧 Bạn được chủ phòng cho điều khiển âm thanh' : '🔒 Âm thanh do chủ phòng điều khiển'); }
-        if (spaceChanged && nr.space !== currentSpace().id) { window.setSpace(nr.space, { remote: true }); toast('Chủ phòng đã chuyển không gian ✨'); }
-        Pomo.applyState(nr.pomo); emit();
-      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${r.code}` }, ({ new: nr }) => applyRoomRow(nr))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'rooms', filter: `code=eq.${r.code}` }, () => { toast('Phòng đã bị chủ phòng xoá'); leave(); })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') { lastStatus = statusOf(); channel.track(myState()); }
@@ -213,6 +206,32 @@
     toast(`Đã vào phòng "${r.name}" 👋`);
     emit();
   }
+  function applyRoomRow(nr) {
+    if (!room || !nr || nr.code !== room.code) return;
+    const permChanged = JSON.stringify(nr.perms) !== JSON.stringify(room.perms), pomoChanged = JSON.stringify(nr.pomo) !== JSON.stringify(room.pomo);
+    room = { ...room, ...nr };
+    if (nr.audio) applyAudio(nr.audio);
+    if (permChanged) { document.dispatchEvent(new Event('cs:audio')); toast(canAudio() ? '🎧 Bạn được chủ phòng cho điều khiển âm thanh' : '🔒 Âm thanh do chủ phòng điều khiển'); }
+    if (nr.space && nr.space !== currentSpace().id) { window.setSpace(nr.space, { remote: true }); if (!isOwner()) toast(nr.space === 'borderout' ? '🛫 Chủ phòng chuyển sang Xuất cảnh' : nr.space === 'border' ? '🛬 Chủ phòng chuyển sang Nhập cảnh' : 'Chủ phòng đã chuyển không gian ✨'); }
+    if (pomoChanged) Pomo.applyState(nr.pomo);
+    emit();
+  }
+  // dự phòng: hỏi lại máy chủ mỗi 20 giây, phòng khi mất tín hiệu realtime
+  setInterval(async () => {
+    if (!room || document.hidden || !sb) return;
+    const { data } = await sb.from('rooms').select('code,space,pomo,audio,perms,owner,name').eq('code', room.code).maybeSingle();
+    if (data) applyRoomRow(data);
+  }, 20000);
+
+  // Phòng ở Immigration: chủ phòng (và chỉ chủ phòng) chuyển Nhập ⇄ Xuất cảnh, cả phòng chuyển theo
+  const FAMILY = ['border', 'borderout'];
+  const sameFamily = (a, b) => FAMILY.includes(a) && FAMILY.includes(b);
+  document.addEventListener('cs:space', (ev) => {
+    if (!room || ev.detail.remote || !isOwner() || !sameFamily(room.space, ev.detail.id) || ev.detail.id === room.space) return;
+    room = { ...room, space: ev.detail.id };
+    sb.rpc('set_room_space', { p_code: room.code, p_space: ev.detail.id }).then(({ error }) => error && toast('Không đồng bộ được: ' + error.message));
+  });
+
   async function leave(silent) {
     if (channel) { try { await channel.untrack(); } catch (e) {} sb.removeChannel(channel); channel = null; }
     if (room && !silent) { store.set('room.code', null); toast('Đã rời phòng'); }
@@ -461,5 +480,5 @@
     } catch (e) { toast(errMsg(e)); }
   }
 
-  window.Room = { boot, configured, get room() { return room; }, lockSpace: () => !!room, audioLocked: () => !!room && !canAudio(), isOwner };
+  window.Room = { boot, configured, get room() { return room; }, lockSpace: (id) => !!room && !(isOwner() && sameFamily(room.space, id)), audioLocked: () => !!room && !canAudio(), isOwner };
 })();
