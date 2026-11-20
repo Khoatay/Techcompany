@@ -44,6 +44,7 @@
           el.style.top = Math.max(70, Math.min(innerHeight - 320, 96 + k * 26)) + 'px';
         }
         root.append(el);
+        el.dataset.tool = tool;
         w = wins[key] = { el, def, key };
         el.querySelector('.win-x').onclick = () => close(key);
         el.addEventListener('pointerdown', () => focus(w));
@@ -344,4 +345,33 @@
     Room.boot();
   }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+
+/* ---------- Hiệu ứng giao diện: cảnh nghiêng theo chuột, thanh dưới phóng to, nút đang mở, thanh trượt tô màu ---------- */
+(function () {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, fine = matchMedia('(pointer: fine)').matches;
+  const stage = document.getElementById('stage');
+  if (!reduce && fine) {
+    let raf = 0, tx = 0, ty = 0;
+    addEventListener('mousemove', (e) => {
+      tx = (e.clientX / innerWidth - 0.5) * -14; ty = (e.clientY / innerHeight - 0.5) * -10;
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; stage.style.setProperty('--px', tx.toFixed(1) + 'px'); stage.style.setProperty('--py', ty.toFixed(1) + 'px'); });
+    });
+    const dock = document.getElementById('dock');
+    dock.addEventListener('mousemove', (e) => {
+      dock.querySelectorAll('button').forEach((b) => { const r = b.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); b.style.setProperty('--mag', (1 + 0.42 * Math.max(0, 1 - d / 130)).toFixed(3)); });
+    });
+    dock.addEventListener('mouseleave', () => dock.querySelectorAll('button').forEach((b) => b.style.removeProperty('--mag')));
+  }
+  const fill = (el) => { const min = +el.min || 0, max = +el.max || 100; el.style.setProperty('--fill', ((el.value - min) / (max - min)) * 100 + '%'); };
+  document.addEventListener('input', (e) => { if (e.target.type === 'range') fill(e.target); });
+  const syncUI = () => {
+    document.querySelectorAll('input[type=range]').forEach(fill);
+    document.querySelectorAll('.top-actions [data-open]').forEach((b) => {
+      const w = [...document.querySelectorAll('.win')].find((x) => x.dataset.tool === b.dataset.open || (x.querySelector('.win-title') || {}).textContent === (TOOLS[b.dataset.open] || {}).title);
+      b.classList.toggle('on', !!(w && !w.hidden && !w.classList.contains('collapsed')));
+    });
+  };
+  let t = 0; new MutationObserver(() => { clearTimeout(t); t = setTimeout(syncUI, 60); }).observe(document.getElementById('windows'), { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+  syncUI();
 })();
