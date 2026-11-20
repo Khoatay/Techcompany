@@ -19,15 +19,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+      - name: Tạo khoá ký app
+        run: keytool -genkeypair -v -keystore "$RUNNER_TEMP/cs.keystore" -alias chillspace -keyalg RSA -keysize 2048 -validity 10000 -storepass "$CS_KS_PASS" -keypass "$CS_KS_PASS" -dname "CN=ChillSpace, O=ChillSpace, C=VN"
+        env:
+          CS_KS_PASS: chillspace-${{ github.run_id }}
       - name: Đóng gói .apk
         working-directory: android
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleRelease --no-daemon
+        env:
+          CS_KS: ${{ runner.temp }}/cs.keystore
+          CS_KS_PASS: chillspace-${{ github.run_id }}
       - name: Lấy số phiên bản
         id: ver
         run: |
           v=$(grep -oP 'versionName "\K[^"]+' android/app/build.gradle)
           echo "v=$v" >> "$GITHUB_OUTPUT"
-          cp android/app/build/outputs/apk/debug/app-debug.apk "ChillSpace-$v.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "ChillSpace-$v.apk"
       - name: Đăng lên Releases
         uses: softprops/action-gh-release@v2
         with:
