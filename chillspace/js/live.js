@@ -10,6 +10,7 @@ uniform sampler2D uSharp;
 uniform vec2 uRes, uImg;
 uniform float uT;
 uniform vec4 uBox;   // vùng lửa trên ảnh (% x0, y0, x1, y1 tính từ góc trên trái)
+uniform vec4 uSnow, uSnow2;  // tối đa 2 vùng nhìn ra ngoài trời có tuyết rơi (cùng cách tính); 0 = không có
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
   return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
@@ -40,6 +41,32 @@ void main(){
   float glow = exp(-d * 2.6) * (fl - .45);
   col *= 1. + glow * .22;
   col += vec3(1., .5, .15) * max(glow, 0.) * .05;
+  // tuyết rơi ngoài trời (chỉ trong khung cửa)
+  float inside = 0., edge = 0.;
+  for (int k = 0; k < 2; k++) {
+    vec4 sb = (k == 0 ? uSnow : uSnow2) / 100.;
+    if (sb.z > sb.x) {
+      vec2 sr = (im - sb.xy) / (sb.zw - sb.xy);
+      float ins = step(0., sr.x) * step(sr.x, 1.) * step(0., sr.y) * step(sr.y, 1.);
+      inside = max(inside, ins);
+      edge = max(edge, ins * smoothstep(0., .05, sr.x) * smoothstep(1., .95, sr.x) * smoothstep(0., .03, sr.y) * smoothstep(1., .97, sr.y));
+    }
+  }
+  if (inside > 0.) {
+    float snow = 0.;
+    for (int L = 0; L < 3; L++) {
+      float fl3 = float(L), sc = 55. + fl3 * 35.;              // lớp gần to & nhanh, lớp xa nhỏ & chậm
+      vec2 p = vec2(im.x * sc * asp, im.y * sc - uT * (5. + fl3 * 2.5));
+      p.x += sin(p.y * .35 + fl3 * 3.) * .6 + uT * .4;
+      vec2 id = floor(p), f = fract(p) - .5;
+      vec2 r = vec2(hash(id + fl3), hash(id + fl3 + 4.7));
+      float on = step(.5, r.x);
+      float rad = .1 + r.y * .12;
+      snow += smoothstep(rad, rad * .3, length(f - (r - .5) * .6)) * on * (1. - fl3 * .25);
+    }
+    col = mix(col, col * vec3(.72, .77, .86), .7 * edge);          // trời tuyết: xám lạnh hơn để thấy bông tuyết
+    col = mix(col, vec3(.97, .98, 1.), clamp(snow, 0., 1.) * .95 * edge);
+  }
   gl_FragColor = vec4(col, 1.);
 }`,
     rain: `precision highp float;
@@ -107,7 +134,7 @@ void main(){
   gl_FragColor = vec4(col * mix(.78, 1., vig), 1.);
 }`,
   };
-  function mount(host, img, kind, box) {
+  function mount(host, img, kind, box, snow) {
     const FS = SHADERS[kind]; if (!FS) return false;
     const cv = document.createElement('canvas');
     cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
@@ -134,6 +161,7 @@ void main(){
       gl.uniform2f(gl.getUniformLocation(pr, 'uImg'), img.naturalWidth, img.naturalHeight);
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
       const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
+      const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });
       host.append(cv);
       const fit = () => {
         const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5), k = Math.min(d, 2200 / Math.max(1, r.width));

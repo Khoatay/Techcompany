@@ -1,5 +1,5 @@
 /* Service worker: lưu sẵn giao diện để mở nhanh & dùng offline (YouTube vẫn cần mạng) */
-const CACHE = 'chillspace-v42';
+const CACHE = 'chillspace-v44';
 const ASSETS = ['./', 'index.html', 'css/style.css', 'css/theme.css', 'js/config.js', 'js/spaces.js', 'js/room.js', 'js/pro.js', 'js/audio.js', 'js/noise-worklet.js', 'js/tools.js', 'js/atmos.js', 'js/vip.js', 'js/music.js', 'js/myapps.js', 'music.json', 'sounds/index.json', 'js/live.js', 'js/app.js', 'icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'manifest.webmanifest'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
