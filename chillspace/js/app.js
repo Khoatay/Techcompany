@@ -189,8 +189,8 @@
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
   function setSpace(id, first, remote) {
-    // Trong Phòng chung: chỉ chủ phòng đổi được không gian
-    if (!first && !remote && window.Room && Room.lockSpace && Room.lockSpace() && id !== space.id) { toast('🔒 Bạn đang ở Phòng chung – chỉ chủ phòng đổi được không gian'); return; }
+    // Trong Phòng chung: không gian cố định theo phòng (muốn đổi thì rời phòng, tạo phòng mới)
+    if (!first && !remote && window.Room && Room.lockSpace && Room.lockSpace() && id !== space.id) { toast('🔒 Không gian của phòng là cố định. Muốn đổi: rời phòng 🚪 rồi tạo phòng mới ở không gian khác', 5000); return; }
     const next = SPACES.find((s) => s.id === id); if (!next) return;
     const changed = next !== space; space = next;
     store.set('space', id);

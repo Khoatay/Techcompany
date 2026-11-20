@@ -230,11 +230,7 @@
   }
   function react(e) { if (channel) channel.send({ type: 'broadcast', event: 'react', payload: { e, u: user.id } }); }
 
-  // chủ phòng đổi không gian → cả phòng đổi theo
-  document.addEventListener('cs:space', (ev) => {
-    if (!room || ev.detail.remote) return;
-    if (room.owner === user.id) sb.rpc('set_room_space', { p_code: room.code, p_space: ev.detail.id }).then(() => {});
-  });
+  // Không gian của phòng cố định từ lúc tạo (muốn đổi thì tạo phòng mới) – không đồng bộ đổi không gian nữa
 
   /* ---------- hiển thị trong cảnh ---------- */
   const avatarHtml = (p, cls = 'av') => {
@@ -354,7 +350,7 @@
     b.innerHTML = `<div class="row me-row">${avatarHtml(profile, 'av')}<b class="grow">${esc(profile.name)}</b><button class="btn ghost" data-edit>✏️ Sửa</button></div>
       <h4>Tạo phòng mới</h4>
       <form class="row" data-create><input class="grow" name="n" maxlength="60" placeholder="Tên phòng, vd: Ôn thi cuối kỳ" required><button class="btn primary">＋ Tạo</button></form>
-      <p class="muted small">Phòng sẽ dùng không gian bạn đang ngồi: ${currentSpace().emoji} ${esc(currentSpace().name)}</p>
+      <p class="muted small">🔒 Phòng dùng cố định không gian bạn đang ngồi: <b>${currentSpace().emoji} ${esc(currentSpace().name)}</b>. Muốn không gian khác thì chuyển không gian trước rồi mới tạo phòng.</p>
       <h4>Vào phòng bằng mã</h4>
       <form class="row" data-join><input class="grow code-in" name="c" maxlength="6" placeholder="VD: K7M2QX" autocapitalize="characters" required><button class="btn">Vào</button></form>
       <h4>Phòng của tôi</h4><ul class="rooms" data-list><li class="empty">Đang tải…</li></ul>`;
@@ -375,7 +371,7 @@
     const listEl0 = b.querySelector('.chat'); const atBottom = !listEl0 || listEl0.scrollHeight - listEl0.scrollTop - listEl0.clientHeight < 40;
     const act = store.get('room.act', '📚');
     const p = Pomo;
-    b.innerHTML = `<div class="room-head"><div class="grow"><b>${esc(room.name)}</b><small>${currentSpace().emoji} ${esc(currentSpace().name)} · ${members.length} người đang ngồi</small></div>
+    b.innerHTML = `<div class="room-head"><div class="grow"><b>${esc(room.name)}</b><small>🔒 ${currentSpace().emoji} ${esc(currentSpace().name)} · ${members.length} người đang ngồi</small></div>
         <button class="chip code" data-copy title="Bấm để mời bạn">🔗 ${esc(room.code)}</button><button class="btn ghost" data-leave title="Rời phòng">🚪</button></div>
       <div class="room-pomo st-${p.running ? p.mode : 'idle'}"><span class="t">${CS.mmss(p.remain)}</span><span class="grow small">${p.running ? (p.mode === 'focus' ? '🍅 Cả phòng đang tập trung' : '☕ Cả phòng đang nghỉ') : '⏸ Pomodoro chung'}</span>
         <button class="btn ghost" data-pomo>${p.running ? '⏸' : '▶'}</button><button class="btn ghost" data-pomo-open title="Chỉnh thời lượng">⚙️</button></div>
@@ -465,5 +461,5 @@
     } catch (e) { toast(errMsg(e)); }
   }
 
-  window.Room = { boot, configured, get room() { return room; }, lockSpace: () => !!room && !isOwner(), audioLocked: () => !!room && !canAudio(), isOwner };
+  window.Room = { boot, configured, get room() { return room; }, lockSpace: () => !!room, audioLocked: () => !!room && !canAudio(), isOwner };
 })();

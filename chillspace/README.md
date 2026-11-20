@@ -49,7 +49,7 @@ Tạo phòng, gửi mã hoặc link cho bạn bè, rồi cả nhóm cùng "ngồ
 - **Pomodoro chung**: một người bấm là cả phòng cùng chạy. Vào trễ thì đồng hồ tự khớp
 - **Chat**, **thả emoji bay lên** từ avatar, nút **"✅ Xong việc"** bắn pháo giấy cho cả phòng
 - **Bảng xếp hạng** giờ tập trung trong tuần
-- Chủ phòng đổi không gian thì cả phòng đổi theo
+- Không gian của phòng **cố định từ lúc tạo**: không ai đổi được (kể cả chủ phòng). Muốn không gian khác thì rời phòng và tạo phòng mới
 
 Cần máy chủ Supabase (có gói miễn phí): xem [supabase/HUONG-DAN.md](supabase/HUONG-DAN.md). Chưa cài thì app vẫn chạy bình thường, chỉ tắt tính năng này.
 
