@@ -17,4 +17,8 @@ Trên máy tính làm sẽ nhanh hơn điện thoại (dễ copy/dán, mở đư
 - [ ] Chuyến bay: đăng ký AeroDataBox trên RapidAPI (gói Basic miễn phí), dán khoá vào ✈️ → ⚙️, kiểm tra với lịch thật ở Cam Ranh
 - [ ] Sau này: chuyển khoá API lên máy chủ Supabase để nhiều người dùng chung, không ai phải tự đăng ký
 
+## Khi đóng gói thành app (PC / Android)
+- [ ] Ô **"Ứng dụng của tôi"** trong từng không gian: tự thêm app/web (MT5, TradingView, Notion, Google Sheet…),
+      mở ngay trong ChillSpace (app không bị chặn nhúng như web) hoặc mở app đã cài trên máy
+
 Link app: https://khoatay.github.io/Techcompany/chillspace/
