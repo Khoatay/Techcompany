@@ -152,3 +152,21 @@ body.has-photo .date, body.has-photo .quote { text-shadow: 0 1px 12px rgba(0,0,0
 /* có ảnh thật: chữ đồng hồ luôn trắng (bỏ màu chữ tối dành cho tranh vẽ nền sáng) */
 body.has-photo[data-space] .clock { background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,.75)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 30px rgba(0,0,0,.6)); }
 body.has-photo[data-space] .date, body.has-photo[data-space] .quote { color: rgba(255,255,255,.92); text-shadow: 0 1px 12px rgba(0,0,0,.75); }
+
+/* ---------- vòng xoay trên các bảng ---------- */
+.wheel { position: relative; --peek: 1.15em; height: var(--wh, 8.6em); overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory; scroll-padding-top: var(--peek); padding: var(--peek) 0;
+  scrollbar-width: none; cursor: grab; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--peek), #000 calc(100% - var(--peek)), transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 var(--peek), #000 calc(100% - var(--peek)), transparent 100%); }
+.wheel::-webkit-scrollbar { display: none; }
+.wheel:active { cursor: grabbing; }
+.wheel .wheel-item { scroll-snap-align: start; transform-origin: 50% 50%; will-change: transform, opacity; transition: none; }
+.wheel ul { padding-bottom: var(--peek); }
+.b-stay .wheel { --wh: 8.9em; }
+.b-flights .wheel, .b-departures .wheel { --wh: 8.4em; }
+.board.st-max .wheel { --wh: 15em; }
+.board .sr { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.board .sr.amber { background: linear-gradient(135deg, rgba(251,191,36,.95), rgba(245,158,11,.85)); border-color: rgba(255,236,170,.8); }
+.board .sr.green { background: linear-gradient(135deg, rgba(52,211,153,.95), rgba(16,185,129,.85)); border-color: rgba(190,255,225,.8); }
+.board .fb-more { margin-top: .3em; }
+.board.m .wheel { --peek: 1em; }
+.board.m.b-stay .wheel { --wh: 7.6em; }
+.board.m.b-flights .wheel, .board.m.b-departures .wheel { --wh: 7.4em; }

@@ -258,12 +258,47 @@
         <span class="bc">${B.extra ? B.extra() : ''}<button data-bc="min" title="${st === 'min' ? 'Mở ra' : 'Thu nhỏ'}">${st === 'min' ? '▾' : '–'}</button>${mobile ? '' : `<button data-bc="max" title="${st === 'max' ? 'Thu về cỡ thường' : 'Phóng to'}">${st === 'max' ? '❐' : '▢'}</button>`}<button data-bc="close" title="Tắt bảng">✕</button></span></div>
       ${st === 'min' ? '' : `<div class="bb" data-tool="${B.tool}">${B.body(st)}</div>`}</div>`;
   }
+  // Vòng xoay: hiện rõ 2 mục ở giữa, các mục khác nghiêng & mờ dần; vuốt / lăn chuột / kéo chuột để xoay
+  const wheelPos = {}; let wheelDragAt = 0;
+  function initWheels() {
+    document.querySelectorAll('[data-wheel]').forEach((w) => {
+      const key = w.dataset.wheel + (w.closest('.board.m') ? ':m' : ''), items = [...w.querySelectorAll('.wheel-item')];
+      if (!items.length || !w.offsetParent) return; // bảng đang ẩn: chưa đo được, đợi lần hiện sau
+      const peek = () => parseFloat(getComputedStyle(w).scrollPaddingTop) || 0;
+      const paint = () => {
+        const mid = w.scrollTop + w.clientHeight / 2, half = w.clientHeight / 2;
+        items.forEach((it) => {
+          const d = (it.offsetTop + it.offsetHeight / 2 - mid) / (half - peek()), a = Math.min(Math.abs(d), 1.4);
+          it.style.transform = `perspective(500px) rotateX(${(Math.sign(d) * -Math.max(0, a - 0.78) * 60).toFixed(1)}deg) scale(${(1 - Math.max(0, a - 0.78) * 0.2).toFixed(3)})`;
+          it.style.opacity = Math.max(0.12, 1 - Math.max(0, a - 0.9) * 1.8).toFixed(2);
+        });
+      };
+      // khung vừa khít 2 mục (phóng to: 4 mục) + phần hé lộ trên/dưới
+      const n = w.closest('.st-max') ? 4 : 2, st0 = Math.min(+w.dataset.start || 0, Math.max(0, items.length - n));
+      const gap = parseFloat(getComputedStyle(items[0].parentElement).rowGap) || 0;
+      let h = 0; for (let i = st0; i < Math.min(items.length, st0 + n); i++) h += items[i].offsetHeight + (i > st0 ? gap : 0);
+      w.style.height = h + peek() * 2 + 'px';
+      w.scrollTop = wheelPos[key] != null ? wheelPos[key] : items[st0].offsetTop - peek();
+      let raf = 0;
+      w.onscroll = () => { wheelPos[key] = w.scrollTop; if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); };
+      w.onpointerdown = (e) => {
+        if (e.pointerType !== 'mouse') return; // cảm ứng: dùng vuốt có sẵn
+        const y0 = e.clientY, t0 = w.scrollTop; let moved = false;
+        const mv = (ev) => { if (Math.abs(ev.clientY - y0) > 4) { moved = true; w.style.scrollSnapType = 'none'; } if (moved) w.scrollTop = t0 - (ev.clientY - y0); };
+        const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); w.style.scrollSnapType = ''; if (moved) { wheelDragAt = Date.now(); const it = items.reduce((b, x) => (Math.abs(x.offsetTop - peek() - w.scrollTop) < Math.abs(b.offsetTop - peek() - w.scrollTop) ? x : b)); w.scrollTo({ top: it.offsetTop - peek(), behavior: 'smooth' }); } };
+        addEventListener('pointermove', mv); addEventListener('pointerup', up);
+      };
+      paint();
+    });
+  }
+  addEventListener('resize', () => { clearTimeout(window._wr); window._wr = setTimeout(initWheels, 200); });
   function renderBoards() {
     document.querySelectorAll('#objects .board').forEach((e) => e.remove());
     const ids = space.boards || [];
     $('#objects').insertAdjacentHTML('beforeend', ids.map((id) => boardHtml(id, false)).join(''));
     $('#mboard').innerHTML = ids.map((id) => boardHtml(id, true)).join('');
     document.body.classList.toggle('board-max', ids.some((id) => Boards.state(id) === 'max'));
+    initWheels();
     if (ids.includes('flights') && Boards.state('flights') !== 'closed' && window.Flights) setTimeout(() => Flights.load(false), 0);
     if (ids.includes('departures') && Boards.state('departures') !== 'closed' && window.FlightsOut) setTimeout(() => FlightsOut.load(false), 0);
   }
@@ -277,6 +312,7 @@
       return;
     }
     if (st === 'min') return Boards.setState(id, 'normal');
+    if (Date.now() - wheelDragAt < 300) return; // vừa kéo vòng xoay → không mở cửa sổ
     if (e.target.closest('.bb')) WM.open(Boards[id].tool);
   });
   document.addEventListener('cs:boards', renderBoards);

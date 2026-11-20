@@ -96,7 +96,7 @@ const Lunar = (() => {
   const STAY_DAYS = [21, 30, 45, 90, 180];
   const HOT = { 30: 'amber', 45: 'green' }; // 2 mốc dùng nhiều nhất: nổi bật
   const expiry = (n) => addDays(todayISO(), n - 1); // ngày nhập cảnh = ngày thứ 1
-  const stayRows = () => STAY_DAYS.map((n) => { const e = expiry(n); return `<li class="sr ${HOT[n] || ''}" data-n="${n}"><span class="sn">${n}<small>ngày</small></span><span class="sd">${vn(e)}<small>${dow(e)}</small></span></li>`; }).join('');
+  const stayRows = () => STAY_DAYS.map((n) => { const e = expiry(n); return `<li class="sr wheel-item ${HOT[n] || ''}" data-n="${n}"><span class="sn">${n}<small>ngày</small></span><span class="sd">${vn(e)}<small>${dow(e)}</small></span></li>`; }).join('');
   window.StayBoard = { html: () => `<div class="sb-head">HẠN LƯU TRÚ<small>nhập cảnh hôm nay ${vn(todayISO())}</small></div><ul class="sb">${stayRows()}</ul>`, expiry };
 
   TOOLS.stay = {
@@ -623,7 +623,7 @@ const Lunar = (() => {
     stay: {
       icon: '🛂', title: 'HẠN LƯU TRÚ', tool: 'stay',
       sub: () => `nhập cảnh hôm nay ${vn(todayISO())}`,
-      body: () => `<ul class="sb">${stayRows()}</ul>`,
+      body: () => `<div class="wheel" data-wheel="stay" data-start="1"><ul class="sb">${stayRows()}</ul></div>`,
     },
     flights: {
       icon: '✈️', title: 'CHUYẾN QUỐC TẾ ĐẾN', tool: 'flights',
@@ -633,8 +633,7 @@ const Lunar = (() => {
         if (FL.err) return `<p class="fb-empty err">⚠️ ${esc(FL.err)}<br><b>Bấm để xem chi tiết</b></p>`;
         const up = FL.intl().filter((f) => !FL.isPast(f) && (FL_STATUS[f.status] || FL_STATUS.Unknown)[1] !== 'cancel');
         if (!up.length) return `<p class="fb-empty">${FL.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đến trong 9 giờ tới.'}</p>`;
-        const n = st === 'max' ? 10 : 5;
-        return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span>${FL.src() === 'sheet' ? `<span class="fp"><b>${f.pnr && f.pnr !== '–' ? esc(f.pnr) : '–'}</b><small>PNR</small></span>` : ''}<span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : esc(f.label || s[0])}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+        return `<div class="wheel" data-wheel="flights" data-start="0"><ul class="fb">${up.map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr wheel-item${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span>${FL.src() === 'sheet' ? `<span class="fp"><b>${f.pnr && f.pnr !== '–' ? esc(f.pnr) : '–'}</b><small>PNR</small></span>` : ''}<span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : esc(f.label || s[0])}</span></li>`; }).join('')}</ul></div><p class="fb-more">${up.length} chuyến sắp đến · vuốt để xem · bấm để mở danh sách</p>`;
       },
     },
     departures: {
@@ -645,9 +644,8 @@ const Lunar = (() => {
         if (FLD.err) return `<p class="fb-empty err">⚠️ ${esc(FLD.err)}<br><b>Bấm để xem chi tiết</b></p>`;
         const up = FLD.intl().filter((f) => !FLD.isPast(f) && (DEP_STATUS[f.status] || DEP_STATUS.Unknown)[1] !== 'cancel');
         if (!up.length) return `<p class="fb-empty">${FLD.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đi trong 11 giờ tới.'}</p>`;
-        const n = st === 'max' ? 10 : 6;
         return `<div class="dh"><span>Giờ đi</span><span>Chuyến bay</span><span>Mở quầy</span><span>Hết khách</span></div>
-          <ul class="fb">${up.slice(0, n).map((f, i) => { const ln = lateNote(f); return `<li class="dr${i === 0 ? ' next' : ''}${ln ? ' has-late' : ''}"><span class="ft">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}</span><span class="fm"><b>${esc(f.no)}</b><small>→ ${flag(f.cc)} ${esc(f.from)}</small></span><span class="dt">${f.sched ? hhmm(new Date(f.sched - OPEN_BEFORE)) : '--:--'}</span><span class="dt last">${f.sched ? hhmm(new Date(f.sched - LAST_BEFORE)) : '--:--'}</span>${ln ? `<span class="dnote">⚠️ ${ln}</span>` : ''}</li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+          <div class="wheel" data-wheel="departures" data-start="0"><ul class="fb">${up.map((f, i) => { const ln = lateNote(f); return `<li class="dr wheel-item${i === 0 ? ' next' : ''}${ln ? ' has-late' : ''}"><span class="ft">${f.sched ? hhmm(new Date(f.sched)) : '--:--'}</span><span class="fm"><b>${esc(f.no)}</b><small>→ ${flag(f.cc)} ${esc(f.from)}</small></span><span class="dt">${f.sched ? hhmm(new Date(f.sched - OPEN_BEFORE)) : '--:--'}</span><span class="dt last">${f.sched ? hhmm(new Date(f.sched - LAST_BEFORE)) : '--:--'}</span>${ln ? `<span class="dnote">⚠️ ${ln}</span>` : ''}</li>`; }).join('')}</ul></div><p class="fb-more">${up.length} chuyến sắp đi · vuốt để xem · bấm để mở danh sách</p>`;
       },
     },
   });
