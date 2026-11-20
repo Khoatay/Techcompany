@@ -301,6 +301,9 @@ const Lunar = (() => {
   /* ================= CHUYẾN BAY QUỐC TẾ ĐẾN / ĐI (AeroDataBox qua RapidAPI) ================= */
   const FL_HOST = 'aerodatabox.p.rapidapi.com';
   const AIRPORTS = { CXR: 'Cam Ranh', HAN: 'Nội Bài', SGN: 'Tân Sơn Nhất', DAD: 'Đà Nẵng', PQC: 'Phú Quốc', HPH: 'Cát Bi', VCA: 'Cần Thơ', VDO: 'Vân Đồn' };
+  // Sân bay Việt Nam (để nhận ra chuyến nội địa kể cả khi dữ liệu thiếu mã nước)
+  const VN_AIRPORTS = new Set(['HAN', 'SGN', 'DAD', 'CXR', 'PQC', 'HPH', 'VCA', 'VDO', 'VII', 'HUI', 'DLI', 'BMV', 'UIH', 'TBB', 'PXU', 'VKG', 'CAH', 'VCS', 'VCL', 'THD', 'DIN', 'VDH', 'VVTS', 'VVNB', 'VVDN', 'VVCR', 'VVPQ']);
+  const isDomestic = (f) => f.cc === 'VN' || VN_AIRPORTS.has((f.fromCode || '').toUpperCase());
   const COUNTRY = { KR: 'Hàn Quốc', CN: 'Trung Quốc', TW: 'Đài Loan', HK: 'Hồng Kông', MO: 'Ma Cao', JP: 'Nhật Bản', RU: 'Nga', KZ: 'Kazakhstan', UZ: 'Uzbekistan', IN: 'Ấn Độ', TH: 'Thái Lan', SG: 'Singapore', MY: 'Malaysia', KH: 'Campuchia', LA: 'Lào', PH: 'Philippines', ID: 'Indonesia', AU: 'Úc', US: 'Mỹ', MN: 'Mông Cổ', AE: 'UAE', QA: 'Qatar' };
   const FL_STATUS = {
     Arrived: ['Đã hạ cánh', 'done'], Approaching: ['Sắp hạ cánh', 'soon'], EnRoute: ['Đang bay', 'air'], Departed: ['Đã cất cánh', 'air'],
@@ -366,7 +369,7 @@ const Lunar = (() => {
       },
       intl() {
         const c = this.cache;
-        return (c && c.iata === this.iata() ? c.list : []).filter((f) => f.cc && f.cc !== 'VN' && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
+        return (c && c.iata === this.iata() ? c.list : []).filter((f) => !isDomestic(f) && !f.cargo).sort((a, b) => (a.est || a.sched) - (b.est || b.sched));
       },
       isPast(f) {
         const t = f.est || f.sched;
@@ -387,7 +390,7 @@ const Lunar = (() => {
     return {
       title: dep ? 'Chuyến quốc tế đi' : 'Chuyến quốc tế đến', icon: dep ? '🛫' : '✈️', width: 480, global: true, place: 'right',
       render(b) {
-        let filter = 'all', showSet = !F.key();
+        let filter = 'all', showSet = !F.key(), showRaw = false;
         function draw() {
           const iata = F.iata(), key = F.key(), cache = F.cache && F.cache.iata === iata ? F.cache : null;
           const used = store.get('fl.used', {})[todayISO().slice(0, 7)] || 0;
@@ -415,12 +418,20 @@ const Lunar = (() => {
                 <span class="fl-main"><b>${esc(f.no)}</b> <span class="fl-from">${dep ? '→ ' : ''}${flag(f.cc)} ${esc(f.from)}${f.fromCode ? ` (${esc(f.fromCode)})` : ''}</span>${extra}<small>${esc(f.airline)}${f.aircraft ? ' · ' + esc(f.aircraft) : ''}${f.terminal ? ' · Nhà ga ' + esc(f.terminal) : ''}${!dep && f.belt ? ' · Băng chuyền ' + esc(f.belt) : ''}${dep && f.gate ? ' · Cửa ' + esc(f.gate) : ''}</small></span>
                 <span class="fl-st ${st[1]}">${isNext ? 'Chuyến kế tiếp' : st[0]}</span></li>`;
             }).join('') || (F.loading ? '<li class="empty">Đang tải…</li>' : key && !F.err ? `<li class="empty">Không có chuyến quốc tế ${dep ? 'đi' : 'đến'} trong khung giờ này.</li>` : '')}</ul>
+            ${cache ? (() => {
+              const raw = cache.list.slice().sort((x, y) => (x.sched || x.est || 0) - (y.sched || y.est || 0));
+              const tag = (f) => (f.cargo ? 'hàng' : isDomestic(f) ? 'nội địa' : 'quốc tế');
+              const n = { 'quốc tế': 0, 'nội địa': 0, 'hàng': 0 }; raw.forEach((f) => n[tag(f)]++);
+              return `<details class="fl-raw"${showRaw ? ' open' : ''}><summary>🔍 Toàn bộ dữ liệu AeroDataBox trả về: <b>${raw.length}</b> chuyến (${n['quốc tế']} quốc tế · ${n['nội địa']} nội địa · ${n['hàng']} hàng)</summary>
+                <table><tbody>${raw.map((f) => `<tr class="${tag(f) === 'quốc tế' ? '' : 'dim'}"><td>${f.sched ? hhmm(new Date(f.sched)) : f.est ? hhmm(new Date(f.est)) : '--:--'}</td><td><b>${esc(f.no)}</b></td><td>${esc(f.fromCode || '?')} ${esc(f.from)}</td><td>${esc(f.cc || '?')}</td><td>${esc(f.status)}</td><td>${tag(f)}</td></tr>`).join('') || '<tr><td>Không có chuyến nào trong khung giờ này</td></tr>'}</tbody></table></details>`;
+            })() : ''}
             <p class="muted small">Nguồn: AeroDataBox. Giờ hiển thị là giờ Việt Nam.${dep ? ' Mở quầy = giờ khởi hành theo lịch − 3 giờ · Hết khách = giờ khởi hành theo lịch − 40 phút.' : ''} Chỉ để tham khảo – lịch chính thức theo sân bay/hãng bay.</p>`;
           const q = (s) => b.querySelector(s);
           q('[data-r]').onclick = () => F.load(true);
           q('[data-set]').onclick = () => { showSet = !showSet; draw(); };
           if (q('[data-pin]')) q('[data-pin]').onclick = () => Boards.setState(boardId, 'normal');
           b.querySelectorAll('[data-f]').forEach((x) => (x.onclick = () => { filter = x.dataset.f; draw(); }));
+          const rd = q('.fl-raw'); if (rd) rd.ontoggle = () => (showRaw = rd.open);
           if (showSet) q('[data-save]').onclick = () => { store.set('fl.key', q('[data-key]').value.trim()); store.set('fl.airport', q('[data-ap]').value); showSet = !F.key(); filter = 'all'; F.load(true); draw(); };
         }
         const on = () => draw();

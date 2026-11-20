@@ -642,3 +642,10 @@ body.zen .corner-bar { opacity: .5; }
 .dnote { grid-column: 1 / -1; margin-top: .15em; padding: .2em .55em; border-radius: .35em; font-size: .78em; font-weight: 700; background: rgba(251,191,36,.18); color: #fcd34d; }
 .dr.next .dnote { background: rgba(4,36,58,.2); color: #7c2d12; }
 .fl-late { display: block; margin-top: 3px; font-size: 12px; font-weight: 700; color: #fcd34d; }
+
+/* xem toàn bộ dữ liệu chuyến bay */
+.fl-raw { font-size: 12px; border-radius: 10px; background: rgba(255,255,255,.04); padding: 8px 10px; }
+.fl-raw summary { cursor: pointer; color: #cbd5e1; }
+.fl-raw table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.fl-raw td { padding: 3px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.fl-raw tr.dim td { opacity: .45; }
