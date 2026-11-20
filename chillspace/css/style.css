@@ -654,3 +654,5 @@ body.zen .corner-bar { opacity: .5; }
 .fr:has(.fp) { grid-template-columns: 3.6em 1fr 3em auto; }
 .fp { text-align: center; line-height: 1.05; } .fp b { font-size: 1.15em; font-variant-numeric: tabular-nums; } .fp small { display: block; font-size: .6em; color: #94a3b8; letter-spacing: .05em; }
 .fr.next .fp small { color: #0c4a6e; }
+
+.invite { padding: 10px 12px; border-radius: 12px; background: rgba(56,189,248,.15); border: 1px solid rgba(56,189,248,.45); font-size: 13.5px; }

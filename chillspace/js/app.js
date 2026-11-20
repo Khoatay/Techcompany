@@ -327,5 +327,11 @@
 
   setSpace(space.id, true);
   syncPlay();
+  // Mở bằng link mời (?room=MÃ): bỏ qua màn chào, vào thẳng phòng
+  if (/[?&]room=[A-Za-z0-9]{6}\b/.test(location.search) && window.Room) {
+    welcome.hidden = true; store.set('seenTips', 1);
+    document.addEventListener('pointerdown', () => Sound.init(), { once: true }); // âm thanh bật ở lần chạm đầu
+    Room.boot();
+  }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

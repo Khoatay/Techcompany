@@ -239,11 +239,11 @@
   function paintProfile(b, editing) {
     b._lock = true;
     let emoji = (profile && profile.avatar_emoji) || '🙂', usePhoto = !!(profile && profile.avatar_url), file = null;
-    b.innerHTML = `<p><b>${editing ? 'Sửa hồ sơ' : 'Chào bạn! Mọi người sẽ thấy bạn thế này:'}</b></p>
+    b.innerHTML = `${!editing && pendingCode ? `<p class="invite">🔗 Bạn được mời vào phòng <b>${esc(pendingCode)}</b>. Đặt tên rồi bấm <b>Vào phòng</b>.</p>` : ''}<p><b>${editing ? 'Sửa hồ sơ' : 'Chào bạn! Mọi người sẽ thấy bạn thế này:'}</b></p>
       <div class="prof-prev"><span class="av big" data-prev></span><input data-name maxlength="40" placeholder="Tên hiển thị" value="${esc((profile && profile.name) || store.get('room.name', ''))}"></div>
       <div class="tabs"><button data-m="emoji">😀 Emoji</button><button data-m="photo">📷 Ảnh thật</button></div>
       <div data-pane></div>
-      <div class="row"><span class="grow"></span>${editing ? '<button class="btn" data-cancel>Huỷ</button>' : ''}<button class="btn primary" data-save>Lưu & tiếp tục</button></div>
+      <div class="row"><span class="grow"></span>${editing ? '<button class="btn" data-cancel>Huỷ</button>' : ''}<button class="btn primary" data-save>${!editing && pendingCode ? '👉 Vào phòng' : 'Lưu & tiếp tục'}</button></div>
       <p class="muted small">Không cần email hay mật khẩu. Ảnh chỉ dùng làm ảnh đại diện trong phòng.</p>`;
     const prev = b.querySelector('[data-prev]'), pane = b.querySelector('[data-pane]');
     let previewUrl = usePhoto ? profile.avatar_url : null;
@@ -374,7 +374,7 @@
     if (!pendingCode && !store.get('room.code', null)) return;
     try {
       await init();
-      if (!profile) { WM.open('room'); if (pendingCode) toast('Đặt tên & ảnh đại diện để vào phòng nhé 👋'); return; }
+      if (!profile) { WM.open('room'); return; }
       await afterProfile();
       if (room) WM.open('room');
     } catch (e) { toast(errMsg(e)); }
