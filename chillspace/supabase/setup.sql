@@ -117,6 +117,12 @@ revoke execute on function public.create_room(text, text), public.join_room(text
 grant execute on function public.create_room(text, text), public.join_room(text), public.set_room_pomo(text, jsonb),
   public.set_room_space(text, text), public.leaderboard(text), public.is_member(text) to authenticated;
 
+-- ============ QUYỀN TRUY CẬP QUA API ============
+-- (Ghi rõ để không phụ thuộc tuỳ chọn "Grant API access to new tables automatically" khi tạo dự án)
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.profiles, public.rooms, public.room_members, public.messages, public.focus_log to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+
 -- ============ BẢO MẬT (RLS) ============
 alter table public.profiles enable row level security;
 alter table public.rooms enable row level security;
