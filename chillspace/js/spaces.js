@@ -469,31 +469,70 @@
     /* ===== Quầy cửa khẩu (không gian riêng) ===== */
     border: (p) =>
       svg(
-        lg(p + 'wall', [[0, '#1b2738'], [1, '#2a3b50']]) +
-          lg(p + 'sky', [[0, '#2a2d5c'], [0.55, '#b9647a'], [1, '#f4b26b']]) +
-          lg(p + 'floor', [[0, '#3a4658'], [1, '#232c3a']]) +
-          lg(p + 'counter', [[0, '#3b5068'], [1, '#203046']]) +
-          rg(p + 'glow', [[0, '#9fd8ff', 0.25], [1, '#9fd8ff', 0]]),
+        lg(p + 'wall', [[0, '#121b29'], [0.6, '#1d2a3c'], [1, '#243449']]) +
+          lg(p + 'sky', [[0, '#141b45'], [0.35, '#3d2f6e'], [0.62, '#b25a7c'], [0.82, '#f08a6a'], [1, '#fbc07a']]) +
+          lg(p + 'haze', [[0, '#fbc07a', 0], [1, '#ffd9a8', 0.55]]) +
+          lg(p + 'floor', [[0, '#2a3546'], [0.35, '#1a2230'], [1, '#0d121b']]) +
+          lg(p + 'counterTop', [[0, '#f4f7fb'], [0.5, '#c9d3df'], [1, '#93a1b3']]) +
+          lg(p + 'counter', [[0, '#34485f'], [0.5, '#22324a'], [1, '#141f30']]) +
+          lg(p + 'metal', [[0, '#5b6b80'], [0.5, '#2c3a4d'], [1, '#1a2433']], 1, 0) +
+          lg(p + 'streak', [[0, '#ffffff', 0], [0.5, '#ffffff', 0.22], [1, '#ffffff', 0]], 1, 1) +
+          rg(p + 'sun', [[0, '#fff3cf', 1], [0.25, '#ffd08a', 0.75], [1, '#ff9a6a', 0]]) +
+          rg(p + 'pool', [[0, '#cfe8ff', 0.22], [1, '#cfe8ff', 0]]) +
+          `<filter id="${p}b2"><feGaussianBlur stdDeviation="2"/></filter>
+           <filter id="${p}b6"><feGaussianBlur stdDeviation="6"/></filter>
+           <filter id="${p}b14"><feGaussianBlur stdDeviation="14"/></filter>
+           <filter id="${p}glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+           <filter id="${p}tex"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .05 0"/></filter>
+           <clipPath id="${p}winClip"><rect x="640" y="90" width="920" height="470"/></clipPath>
+           <clipPath id="${p}floorClip"><rect y="640" width="1600" height="260"/></clipPath>`,
         `<rect width="1600" height="900" fill="url(#${p}wall)"/>
-         <rect x="640" y="90" width="920" height="470" fill="url(#${p}sky)"/>
-         ${stars(25, 640, 90, 920, 120, 171, 1.1)}
-         <circle cx="1250" cy="470" r="46" fill="#ffd49a" opacity=".9"/>
-         <path d="M640 470 L760 450 L820 462 L900 440 L980 458 L1080 446 L1180 462 L1300 448 L1420 460 L1560 450 V560 H640Z" fill="#3b3550" opacity=".8"/>
-         <rect x="640" y="478" width="920" height="82" fill="#2a2e3a"/>
-         <rect x="640" y="505" width="920" height="20" fill="#1a1d26"/>
-         ${(() => { let s = ''; for (let x = 660; x < 1560; x += 60) s += `<rect x="${x}" y="513" width="30" height="3" fill="#f1f1f1" opacity=".7"/>`; for (let x = 650; x < 1560; x += 40) s += `<circle cx="${x}" cy="530" r="2.5" fill="${x % 80 ? '#7dd3fc' : '#fbbf24'}" class="tw" style="animation-delay:${((x / 40) % 6) * 0.3}s"/>`; return s; })()}
-         <rect x="1440" y="330" width="22" height="150" fill="#4a5568"/><rect x="1414" y="300" width="74" height="36" rx="6" fill="#4a5568"/><rect x="1420" y="306" width="62" height="20" fill="#9fd8ff" opacity=".85"/>
-         <g class="takeoff"><g fill="#eef2f8"><ellipse cx="0" cy="0" rx="62" ry="9"/><polygon points="-12,2 22,2 -6,34 -22,34"/><polygon points="-12,-2 22,-2 -6,-30 -20,-30" opacity=".75"/><polygon points="-62,-2 -46,-2 -58,-24 -66,-24"/></g><circle cx="48" cy="-2" r="3" fill="#9fd8ff"/></g>
-         ${[870, 1100, 1330].map((x) => `<rect x="${x - 5}" y="90" width="10" height="470" fill="#0f1724"/>`).join('')}
-         <rect x="640" y="90" width="920" height="470" fill="none" stroke="#0f1724" stroke-width="16"/>
+         ${(() => { let s = ''; for (let x = 0; x < 640; x += 80) s += `<rect x="${x}" y="70" width="2" height="570" fill="#ffffff" opacity=".035"/>`; return s; })()}
+         <rect width="1600" height="900" filter="url(#${p}tex)"/>
+         <!-- trần + dải đèn LED -->
+         <rect width="1600" height="64" fill="#0b1019"/>
+         ${[160, 480, 800, 1120, 1440].map((x) => `<rect x="${x - 110}" y="26" width="220" height="7" rx="3" fill="#eaf6ff" filter="url(#${p}glow)"/><ellipse cx="${x}" cy="760" rx="210" ry="38" fill="url(#${p}pool)"/>`).join('')}
+         <!-- cửa kính lớn: cảnh hoàng hôn đường băng -->
+         <g id="${p}win"><g clip-path="url(#${p}winClip)">
+           <rect x="640" y="90" width="920" height="470" fill="url(#${p}sky)"/>
+           ${stars(30, 640, 90, 920, 110, 171, 1)}
+           <ellipse cx="900" cy="250" rx="180" ry="20" fill="#f6a3b5" opacity=".35" filter="url(#${p}b14)"/><ellipse cx="1330" cy="300" rx="220" ry="16" fill="#ffc29a" opacity=".35" filter="url(#${p}b14)"/>
+           <circle cx="1250" cy="455" r="170" fill="url(#${p}sun)"/><circle cx="1250" cy="458" r="38" fill="#fff1c9"/>
+           <path d="M640 455 L720 430 L800 446 L880 420 L960 440 L1060 424 L1160 442 L1260 428 L1380 444 L1480 430 L1560 440 V490 H640Z" fill="#5a3f6a" opacity=".75"/>
+           <path d="M640 470 L760 456 L860 468 L980 452 L1100 466 L1220 455 L1340 468 L1460 458 L1560 466 V500 H640Z" fill="#3a2e52" opacity=".9"/>
+           <rect x="640" y="430" width="920" height="70" fill="url(#${p}haze)"/>
+           ${(() => { const r = rnd(301); let s = ''; for (let i = 0; i < 40; i++) s += `<circle cx="${(660 + r() * 880).toFixed(0)}" cy="${(472 + r() * 18).toFixed(0)}" r="${(0.8 + r() * 1.4).toFixed(1)}" fill="${r() > 0.5 ? '#ffe2a8' : '#ffffff'}" opacity="${(0.5 + r() * 0.5).toFixed(2)}" filter="url(#${p}b2)"/>`; return s; })()}
+           <rect x="640" y="492" width="920" height="68" fill="#1c2130"/>
+           <polygon points="640,520 1560,505 1560,522 640,545" fill="#11151f"/>
+           ${(() => { let s = ''; for (let x = 660; x < 1560; x += 64) { const y = 532 - ((x - 640) / 920) * 20; s += `<rect x="${x}" y="${y.toFixed(1)}" width="30" height="2.5" fill="#f2f4f8" opacity=".75"/>`; } for (let x = 650; x < 1560; x += 36) { const y1 = 520 - ((x - 640) / 920) * 15, y2 = 546 - ((x - 640) / 920) * 24; s += `<circle cx="${x}" cy="${y1.toFixed(1)}" r="2.6" fill="#60a5fa" filter="url(#${p}glow)" class="tw" style="animation-delay:${((x / 36) % 7) * 0.25}s"/><circle cx="${x}" cy="${y2.toFixed(1)}" r="2.6" fill="#fbbf24" filter="url(#${p}glow)"/>`; } return s; })()}
+           <rect x="1442" y="330" width="20" height="165" fill="#2d3748"/><rect x="1412" y="296" width="80" height="40" rx="7" fill="#2d3748"/><rect x="1419" y="303" width="66" height="22" rx="3" fill="#bfe6ff" opacity=".9" filter="url(#${p}glow)"/><circle cx="1452" cy="290" r="3" fill="#ef4444" class="tw" filter="url(#${p}glow)"/>
+           <g opacity=".95"><path d="M700 485 L780 485 L800 478 L780 471 L712 471 Z" fill="#cfd6e3"/><path d="M712 471 L700 452 L708 452 L728 471Z" fill="#e5e9f0"/><circle cx="702" cy="456" r="2.5" fill="#ef4444" filter="url(#${p}glow)" class="tw"/></g>
+           <g class="takeoff"><g fill="#eef2f8"><ellipse cx="0" cy="0" rx="62" ry="9"/><polygon points="-12,2 22,2 -6,34 -22,34"/><polygon points="-12,-2 22,-2 -6,-30 -20,-30" opacity=".75"/><polygon points="-62,-2 -46,-2 -58,-24 -66,-24"/></g>
+             <circle cx="-14" cy="34" r="3" fill="#22c55e" filter="url(#${p}glow)"/><circle cx="-12" cy="-30" r="3" fill="#ef4444" filter="url(#${p}glow)"/><circle cx="-60" cy="-24" r="3.5" fill="#fff" class="tw" filter="url(#${p}glow)"/></g>
+         </g></g>
+         <!-- khung kính + vệt phản sáng -->
+         <g clip-path="url(#${p}winClip)" opacity=".9"><polygon points="700,90 790,90 650,560 640,560 640,300" fill="url(#${p}streak)"/><polygon points="1180,90 1230,90 1100,560 1060,560" fill="url(#${p}streak)" opacity=".7"/></g>
+         ${[870, 1100, 1330].map((x) => `<rect x="${x - 6}" y="90" width="12" height="470" fill="#0c131e"/><rect x="${x - 6}" y="90" width="2" height="470" fill="#5d728f" opacity=".5"/>`).join('')}
+         <rect x="640" y="90" width="920" height="470" fill="none" stroke="#0c131e" stroke-width="18"/><rect x="649" y="99" width="902" height="452" fill="none" stroke="#56708f" stroke-opacity=".35" stroke-width="1.5"/>
+         <!-- sàn bóng phản chiếu cửa kính -->
          <rect y="640" width="1600" height="260" fill="url(#${p}floor)"/>
-         <circle cx="800" cy="560" r="420" fill="url(#${p}glow)"/>
-         <rect x="250" y="360" width="1100" height="238" fill="#bfe3ff" opacity=".06" stroke="#cfe8ff" stroke-opacity=".25" stroke-width="3"/>
-         <rect x="555" y="360" width="6" height="238" fill="#cfe8ff" opacity=".2"/><rect x="1040" y="360" width="6" height="238" fill="#cfe8ff" opacity=".2"/>
-         <rect x="160" y="596" width="1280" height="26" rx="6" fill="#d3dce8"/>
+         <g clip-path="url(#${p}floorClip)"><g transform="translate(0 1280) scale(1 -1)" opacity=".22" filter="url(#${p}b6)"><use href="#${p}win"/></g>
+           ${(() => { let s = ''; for (let i = -10; i <= 30; i++) s += `<line x1="${800 + i * 60}" y1="640" x2="${800 + i * 160}" y2="900" stroke="#ffffff" stroke-opacity=".035"/>`; [690, 750, 830].forEach((y) => (s += `<line x1="0" y1="${y}" x2="1600" y2="${y}" stroke="#ffffff" stroke-opacity=".03"/>`)); return s; })()}
+           ${[160, 480, 800, 1120, 1440].map((x) => `<ellipse cx="${x}" cy="700" rx="120" ry="8" fill="#eaf6ff" opacity=".12" filter="url(#${p}b6)"/>`).join('')}</g>
+         <!-- vách kính quầy -->
+         <rect x="250" y="360" width="1100" height="238" fill="#bfe3ff" opacity=".05" stroke="#cfe8ff" stroke-opacity=".28" stroke-width="2.5"/>
+         <polygon points="300,360 360,360 290,598 250,598 250,520" fill="url(#${p}streak)" opacity=".6"/><polygon points="900,360 930,360 870,598 840,598" fill="url(#${p}streak)" opacity=".5"/>
+         <rect x="555" y="360" width="5" height="238" fill="#cfe8ff" opacity=".25"/><rect x="1040" y="360" width="5" height="238" fill="#cfe8ff" opacity=".25"/>
+         <!-- quầy: mặt đá sáng + thân kim loại + dải LED -->
+         <ellipse cx="800" cy="606" rx="700" ry="30" fill="#000" opacity=".35" filter="url(#${p}b14)"/>
+         <rect x="160" y="594" width="1280" height="28" rx="6" fill="url(#${p}counterTop)"/>
+         <rect x="160" y="594" width="1280" height="3" rx="1.5" fill="#ffffff" opacity=".9"/>
          <rect x="180" y="622" width="1240" height="278" fill="url(#${p}counter)"/>
-         <rect x="560" y="690" width="480" height="62" rx="10" fill="#14202f" stroke="#38bdf8" stroke-opacity=".5" stroke-width="2"/>
-         <text x="800" y="730" text-anchor="middle" font-family="'Be Vietnam Pro',sans-serif" font-size="26" font-weight="700" fill="#e0f2fe" letter-spacing="3">NHẬP CẢNH · IMMIGRATION</text>`
+         <rect x="180" y="622" width="1240" height="278" fill="url(#${p}metal)" opacity=".35"/>
+         <rect x="180" y="626" width="1240" height="4" fill="#38bdf8" filter="url(#${p}glow)" opacity=".85"/>
+         ${[420, 1180].map((x) => `<rect x="${x}" y="640" width="3" height="260" fill="#ffffff" opacity=".06"/>`).join('')}
+         <rect x="560" y="690" width="480" height="62" rx="12" fill="#0b1522" stroke="#38bdf8" stroke-opacity=".7" stroke-width="2"/>
+         <text x="800" y="730" text-anchor="middle" font-family="'Be Vietnam Pro',sans-serif" font-size="26" font-weight="700" fill="#e0f2fe" letter-spacing="3" filter="url(#${p}glow)">NHẬP CẢNH · IMMIGRATION</text>`
       ),
 
     /* ===== Bàn trader ===== */
