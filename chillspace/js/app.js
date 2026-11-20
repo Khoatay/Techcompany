@@ -369,7 +369,7 @@
     if (e.target.closest('input,textarea,select,[contenteditable]') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (!$('#welcome').hidden) return;
     const k = e.key.toLowerCase();
-    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos' };
+    const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos', n: 'music' };
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
     else if (k === 'f') fs();

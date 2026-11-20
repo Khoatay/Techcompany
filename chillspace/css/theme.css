@@ -200,3 +200,19 @@ body.has-photo[data-space] .date, body.has-photo[data-space] .quote { color: rgb
 .atm-levels .mix { margin-bottom: 4px; }
 .atm-light { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 10px 0 6px; } .atm-light input { flex: 1; }
 @media (max-width: 420px) { .atm-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- 🎵 Nhạc ---------- */
+.mu-now { padding: 4px 2px 10px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }
+.mu-title { font-weight: 600; font-size: 14px; text-align: center; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-bar { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
+.mu-bar input { flex: 1; }
+.mu-ctl { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 10px 0 6px; }
+.mu-ctl .btn { min-width: 40px; } .mu-ctl .btn.on { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.mu-play { width: 52px; height: 52px; border-radius: 50%; font-size: 20px; }
+.mu-vol { display: flex; align-items: center; gap: 8px; font-size: 12px; } .mu-vol input { flex: 1; }
+.mu-list { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow-y: auto; }
+.mu-list li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; cursor: pointer; font-size: 13px; }
+.mu-list li:hover { background: rgba(255,255,255,.07); }
+.mu-list li.on { background: color-mix(in srgb, var(--accent) 25%, rgba(255,255,255,.05)); }
+.mu-n { width: 18px; text-align: center; color: rgba(255,255,255,.55); font-size: 12px; } .mu-t { flex: 1; } .mu-d { color: rgba(255,255,255,.5); font-size: 11px; }
+.mu-list .mu-empty { cursor: default; color: rgba(255,255,255,.6); }
