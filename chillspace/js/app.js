@@ -195,18 +195,20 @@
   /* ---------- Không gian ---------- */
   let photoReady = '';
   function renderObjects() {
-    const ph = space.photo && photoReady === space.id; // có ảnh thật → đồ vật thành nút kính đặt theo ảnh
+    const ph = !!space.photo && photoReady !== 'fail:' + space.id; // có ảnh thật → nút kính đặt theo ảnh ngay từ đầu (ảnh lỗi thì về tranh vẽ)
     $('#objects').innerHTML = space.objects.map((o, i) => { const [x, y] = ph && o.pp ? o.pp : [o.x, o.y]; return `<button class="obj${ph ? ' hot' : ''}" style="left:${x}%;top:${y}%;--s:${o.s};animation-delay:${(i * 0.4) % 3}s" data-i="${i}" aria-label="${esc(o.label)}"><span class="emo">${o.e}</span><span class="lbl">${esc(o.label)}</span></button>`; }).join('');
     renderBoards();
     $('#quickbar').innerHTML = space.objects.map((o, i) => `<button data-i="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('');
   }
-  // Ảnh nền thật: tải đúng cỡ màn hình, hiện dần lên trên tranh vẽ; mất mạng thì vẫn là tranh vẽ
+  // Ảnh nền thật: tải đúng cỡ màn hình. Trong lúc chờ chỉ là nền tối cùng tông (không hiện tranh vẽ cũ);
+  // ảnh lỗi / mất mạng mà chưa lưu sẵn thì mới dùng tranh vẽ.
+  const photoUrl = (sp) => { const need = Math.max(innerWidth, innerHeight * 16 / 9) * Math.min(devicePixelRatio || 1, 2); return `img/${sp.photo.file}-${need <= 1500 ? 1280 : 2560}.webp`; };
   function loadPhoto(sp) {
     photoReady = ''; document.body.classList.remove('has-photo');
     if (!sp.photo) return;
-    const need = Math.max(innerWidth, innerHeight * 16 / 9) * Math.min(devicePixelRatio || 1, 2);
-    const url = `img/${sp.photo.file}-${need <= 1500 ? 1280 : 2560}.webp`; // ảnh lưu sẵn trong app (giấy phép Unsplash, không bắt buộc ghi tên)
+    const url = photoUrl(sp); // ảnh lưu sẵn trong app (giấy phép Unsplash, không bắt buộc ghi tên)
     const img = new Image();
+    img.onerror = () => { if (space !== sp) return; photoReady = 'fail:' + sp.id; $('#scenery').innerHTML = SCENES[sp.id](sp.id + '-'); renderObjects(); };
     img.onload = () => {
       if (space !== sp) return;
       const d = document.createElement('div'); d.className = 'photo' + (sp.photo.dim ? ' dim' : ''); d.style.backgroundImage = `url("${url}")`;
@@ -231,7 +233,7 @@
     const stage = $('#stage');
     stage.classList.add('fade');
     setTimeout(() => {
-      $('#scenery').innerHTML = SCENES[space.id](space.id + '-');
+      $('#scenery').innerHTML = space.photo ? '<div class="ph-wait"></div>' : SCENES[space.id](space.id + '-');
       loadPhoto(space);
       renderObjects();
       stage.classList.remove('fade');
@@ -250,6 +252,12 @@
     if (!first) document.dispatchEvent(new CustomEvent('cs:space', { detail: { id, remote: !!remote } }));
   }
   window.setSpace = (id, o = {}) => setSpace(id, false, o.remote);
+  setTimeout(() => {
+    const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ''))) return;
+    const q = SPACES.filter((s) => s.photo && !s.parent).map(photoUrl);
+    const next = () => { const u = q.shift(); if (!u) return; const im = new Image(); im.onload = im.onerror = () => setTimeout(next, 400); im.src = u; };
+    if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 3000 }); else setTimeout(next, 1500);
+  }, 4000);
   const $$ = (s) => [...document.querySelectorAll(s)];
 
   const VISIBLE = SPACES.filter((s) => !s.hidden);

@@ -130,7 +130,7 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border: 0; bord
 @media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
 
 /* ---------- ảnh nền thật ---------- */
-.photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; }
+.photo { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity .55s ease; }
 .photo.show { opacity: 1; }
 .photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.42), transparent 26%, transparent 62%, rgba(0,0,0,.5)); }
 body.has-photo .hero .clock { filter: drop-shadow(0 4px 30px rgba(0,0,0,.55)); }
@@ -306,3 +306,6 @@ body.vip-lock #objects, body.vip-lock #mboard, body.vip-lock #cornerBar, body.vi
 .sp-splash { opacity: 0; animation: dSplash var(--dur) ease-out var(--d) infinite; }
 @keyframes dSplash { 0%, 62% { opacity: 0; } 64%, 66% { opacity: .9; } 72%, 84% { opacity: 0; } 88%, 90% { opacity: .9; } 96%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sp * { animation-duration: 4s !important; } }
+
+/* chờ ảnh nền: nền tối cùng tông không gian (không hiện tranh vẽ cũ) */
+.ph-wait { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--accent) 22%, #10131c), #07090f 75%); }
