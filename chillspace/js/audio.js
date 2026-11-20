@@ -1,5 +1,6 @@
 /* ChillSpace — âm thanh nền tự tổng hợp bằng Web Audio API (không cần file, không lo bản quyền) */
 window.Sound = (function () {
+  let wl = Promise.resolve(), wlOK = false, wlDone = false;
   let ctx = null, master = null, masterVol = 0.8, paused = false, quiet = false;
   const buffers = {}, running = {}, vols = {};
 
@@ -13,6 +14,8 @@ window.Sound = (function () {
       master = ctx.createGain();
       master.gain.value = paused ? 0 : masterVol;
       master.connect(ctx.destination);
+      // bộ tạo nhiễu chạy liên tục (không lặp); trình duyệt cũ thì dùng đoạn nhiễu dựng sẵn
+      wl = ctx.audioWorklet && window.AudioWorkletNode ? ctx.audioWorklet.addModule('js/noise-worklet.js').then(() => (wlOK = true), () => {}).then(() => (wlDone = true)) : ((wlDone = true), Promise.resolve());
       Object.keys(vols).forEach((id) => vols[id] > 0 && setVol(id, vols[id]));
     }
     if (ctx.state === 'suspended') ctx.resume();
@@ -51,11 +54,22 @@ window.Sound = (function () {
     };
     return t;
   };
-  const noise = (t, type) => { const s = ctx.createBufferSource(); s.buffer = noiseBuffer(type); s.loop = true; s.start(0, Math.random() * 23); return t.add(s); };
+  const noise = (t, type) => {
+    if (wlOK) { const n = new AudioWorkletNode(ctx, 'cs-noise', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: { type } }); n.stop = () => n.port.postMessage('stop'); return t.add(n); }
+    const s = ctx.createBufferSource(); s.buffer = noiseBuffer(type); s.loop = true; s.start(0, Math.random() * 23); return t.add(s); };
   const filt = (t, type, f, Q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = Q; return t.add(n); };
   const gain = (t, v) => { const g = ctx.createGain(); g.gain.value = v; return t.add(g); };
   const osc = (t, f, type = 'sine') => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.start(); return t.add(o); };
-  const lfo = (t, f, depth, param, type = 'sine') => { const o = osc(t, f, type), g = gain(t, depth); o.connect(g); g.connect(param); return o; };
+  const lfo = (t, f, depth, param, type = 'sine') => {
+    const o = osc(t, f, type), g = gain(t, depth); o.connect(g); g.connect(param);
+    const k = type === 'sine' ? [0.55, 1.6, 0.4, 1.3] : [0.9, 1.12, 0.85, 1.1]; // nhịp đều (tiếng dế…) chỉ lệch nhẹ
+    t.every(2500 + Math.random() * 3000, () => {
+      const now = ctx.currentTime;
+      o.frequency.setTargetAtTime(f * (k[0] + Math.random() * (k[1] - k[0])), now, 1.5);
+      g.gain.setTargetAtTime(depth * (k[2] + Math.random() * (k[3] - k[2])), now, 1.5);
+    });
+    return o;
+  };
   const chain = (...n) => { for (let i = 0; i < n.length - 1; i++) n[i].connect(n[i + 1]); return n[n.length - 1]; };
   const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -252,9 +266,11 @@ window.Sound = (function () {
   const byId = Object.fromEntries(SOUNDS.map((s) => [s.id, s]));
 
   // file âm thanh thật đặt trong thư mục sounds/ (tên file = id âm thanh, vd. sounds/rain.mp3)
-  const files = {}, pending = {};
+  const files = {}, pending = {}; let idx = null;
   function loadFile(base) {
-    if (!pending[base]) pending[base] = fetch(`sounds/${base}.mp3`)
+    // sounds/index.json = danh sách file đang có, vd. ["rain", "waves"] → chỉ tải những file có thật
+    if (!idx) idx = fetch('sounds/index.json').then((r) => (r.ok ? r.json() : [])).catch(() => []);
+    if (!pending[base]) pending[base] = idx.then((have) => (Array.isArray(have) && have.includes(base) ? fetch(`sounds/${base}.mp3`) : Promise.reject()))
       .then((res) => (res.ok && !/text\/html/.test(res.headers.get('content-type') || '') ? res.arrayBuffer() : Promise.reject()))
       .then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
       .then((buf) => (files[base] = buf), () => (files[base] = false));
@@ -277,8 +293,8 @@ window.Sound = (function () {
         const useFile = (buf) => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(g); src.start(0, Math.random() * buf.duration); t.add(src); };
         const rr = r, f = files[base];
         if (f instanceof AudioBuffer) useFile(f);
-        else if (f === false) byId[base].build(g, t);
-        else loadFile(base).then(() => { if (running[id] !== rr) return; files[base] ? useFile(files[base]) : byId[base].build(g, t); });
+        else if (f === false && wlDone) byId[base].build(g, t);
+        else Promise.all([loadFile(base), wl]).then(() => { if (running[id] !== rr) return; files[base] ? useFile(files[base]) : byId[base].build(g, t); });
       }
       clearTimeout(r.kill);
       r.g.gain.cancelScheduledValues(now);

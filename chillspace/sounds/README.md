@@ -1,6 +1,6 @@
 # Âm thanh thật cho ChillSpace
 
-Bỏ file **.mp3** vào thư mục này, đặt **đúng tên** như bảng dưới. Có file thì app phát file (lặp liên tục), chưa có thì dùng tiếng tổng hợp như cũ.
+Bỏ file **.mp3** vào thư mục này, đặt **đúng tên** như bảng dưới, rồi thêm tên (không có .mp3) vào `index.json`, vd. `["rain", "waves"]`. Có file thì app phát file (lặp liên tục), chưa có thì dùng tiếng tổng hợp như cũ.
 Áp dụng cho cả bảng 🎧 Âm thanh lẫn ✨ Hiệu ứng.
 
 Mẹo: cắt đoạn dài 1–3 phút, đầu và cuối nối mượt (không có tiếng nói / nhạc đột ngột), 128 kbps là đủ, mỗi file nên dưới 3 MB.
