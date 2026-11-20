@@ -634,7 +634,7 @@ const Lunar = (() => {
         const up = FL.intl().filter((f) => !FL.isPast(f) && (FL_STATUS[f.status] || FL_STATUS.Unknown)[1] !== 'cancel');
         if (!up.length) return `<p class="fb-empty">${FL.loading ? 'Đang tải…' : 'Không còn chuyến quốc tế đến trong 9 giờ tới.'}</p>`;
         const n = st === 'max' ? 10 : 5;
-        return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span><span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : esc(f.label || s[0])}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
+        return `<ul class="fb">${up.slice(0, n).map((f, i) => { const s = FL_STATUS[f.status] || FL_STATUS.Unknown, late = f.est && f.sched && f.est - f.sched > 10 * 60000; return `<li class="fr${i === 0 ? ' next' : ''}"><span class="ft">${hhmm(new Date(f.est || f.sched))}${late ? '<small>trễ</small>' : ''}</span><span class="fm"><b>${esc(f.no)}</b><small>${flag(f.cc)} ${esc(f.from)}</small></span>${FL.src() === 'sheet' ? `<span class="fp"><b>${f.pnr && f.pnr !== '–' ? esc(f.pnr) : '–'}</b><small>PNR</small></span>` : ''}<span class="fs ${s[1]}">${i === 0 ? 'Kế tiếp' : esc(f.label || s[0])}</span></li>`; }).join('')}</ul>${up.length > n ? `<p class="fb-more">+ ${up.length - n} chuyến nữa · bấm để xem tất cả</p>` : ''}`;
       },
     },
     departures: {

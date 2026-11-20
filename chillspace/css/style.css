@@ -649,3 +649,8 @@ body.zen .corner-bar { opacity: .5; }
 .fl-raw table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 .fl-raw td { padding: 3px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .fl-raw tr.dim td { opacity: .45; }
+
+/* khách dự kiến (PNR) trên bảng chuyến đến */
+.fr:has(.fp) { grid-template-columns: 3.6em 1fr 3em auto; }
+.fp { text-align: center; line-height: 1.05; } .fp b { font-size: 1.15em; font-variant-numeric: tabular-nums; } .fp small { display: block; font-size: .6em; color: #94a3b8; letter-spacing: .05em; }
+.fr.next .fp small { color: #0c4a6e; }
