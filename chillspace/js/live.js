@@ -1,9 +1,109 @@
 /* ChillSpace — "ảnh sống": hiệu ứng chuyển động nhẹ vẽ trực tiếp lên ảnh nền (WebGL).
-   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển), 'beach' = mặt biển lấp lánh, sóng gợn, sóng vỗ mép cát (Bờ biển).
+   Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển), 'beach' = mặt biển lấp lánh, sóng gợn, sóng vỗ mép cát (Bờ biển), 'amb' = ghép các lớp theo vùng: đèn, nước, cỏ, sương, bụi nắng, hoa rơi, đom đóm, sao, hơi nóng, bóng mây, màn hình.
    Tự dừng khi đổi không gian / ẩn app; máy không có WebGL thì giữ ảnh tĩnh. */
 window.Live = (function () {
   const VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
   const SHADERS = {
+    amb: `precision highp float;
+varying vec2 v;
+uniform sampler2D uSharp;
+uniform vec2 uRes, uImg;
+uniform float uT;
+// tối đa 6 lớp hiệu ứng, mỗi lớp: uR = vùng (% x0, y0, x1, y1 từ góc trên trái), uP = (loại, độ mạnh, tham số 1, tham số 2)
+// loại: 1 đèn lung linh · 2 mặt nước gợn + lấp lánh · 3 cây cỏ đung đưa · 4 sương trôi · 5 bụi nắng · 6 cánh hoa rơi
+//       7 đom đóm · 8 sao lấp lánh · 9 hơi nóng · 10 bóng mây trôi · 11 màn hình sáng nhịp
+uniform vec4 uR[6];
+uniform vec4 uP[6];
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }
+float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * noise(p); p *= 2.03; a *= .5; } return s; }
+vec2 cover(vec2 uv){ float rs = uRes.x / uRes.y, ri = uImg.x / uImg.y; vec2 s = rs > ri ? vec2(1., ri / rs) : vec2(rs / ri, 1.); return (uv - .5) * s + .5; }
+vec3 tex(vec2 im){ return texture2D(uSharp, vec2(im.x, 1. - im.y)).rgb; }
+float rmask(vec2 im, vec4 r){ vec4 b = r / 100.; vec2 q = (im - b.xy) / max(b.zw - b.xy, vec2(.001));
+  return smoothstep(0., .12, q.x) * smoothstep(1., .88, q.x) * smoothstep(0., .12, q.y) * smoothstep(1., .88, q.y); }
+vec2 rrel(vec2 im, vec4 r){ vec4 b = r / 100.; return (im - b.xy) / max(b.zw - b.xy, vec2(.001)); }
+void main(){
+  vec2 iuv = cover(v);
+  vec2 im = vec2(iuv.x, 1. - iuv.y);
+  float asp = uRes.x / uRes.y;
+  // lượt 1: các lớp làm lệch ảnh (nước gợn, cỏ đung đưa, hơi nóng)
+  vec2 off = vec2(0.);
+  for (int i = 0; i < 6; i++) {
+    float ty = uP[i].x, k = uP[i].y; if (ty < .5) continue;
+    float m = rmask(im, uR[i]); if (m <= 0.) continue;
+    if (abs(ty - 2.) < .1) { float w = sin(im.x * 50. + im.y * 300. - uT * 1.4) * .5 + noise(vec2(im.x * 40., im.y * 220. - uT * .8)) - .5;
+      off += vec2(w * .0008, w * .0018) * uP[i].z * k * m * (.4 + rrel(im, uR[i]).y); }
+    else if (abs(ty - 3.) < .1) { float g = noise(vec2(im.x * 6. - uT * .35, im.y * 2.)) - .5;
+      float w = sin(im.x * 22. + uT * (1. + uP[i].w) + g * 4.) * .6 + g;
+      off.x += w * .0022 * uP[i].z * k * m * (1.2 - rrel(im, uR[i]).y * .5); }
+    else if (abs(ty - 9.) < .1) { float w = sin(im.x * 140. + uT * 3.5 + noise(im * 30. + uT) * 4.) + noise(vec2(im.x * 60., uT * 2.)) - .5;
+      off += vec2(0., w * .0007) * uP[i].z * k * m; }
+  }
+  vec3 col = tex(im + off);
+  float lum = dot(col, vec3(.3, .59, .11));
+  // lượt 2: các lớp thêm ánh sáng / hạt
+  for (int i = 0; i < 6; i++) {
+    float ty = uP[i].x, k = uP[i].y; if (ty < .5) continue;
+    float m = rmask(im, uR[i]); if (m <= 0.) continue;
+    vec2 rl = rrel(im, uR[i]);
+    if (abs(ty - 1.) < .1) {                       // đèn lung linh: chỉ điểm sáng, mỗi cụm một nhịp
+      float sp = uP[i].w;   // nhịp loang mềm theo không gian, không chia ô
+      float f = noise(vec2(im.x * 22. + uT * sp * .8, im.y * 13. - uT * sp * .55)) * .6 + noise(vec2(uT * sp * 1.4, (im.x + im.y) * 7.)) * .4;
+      float hot = smoothstep(uP[i].z, uP[i].z + .25, lum) * m;
+      col *= 1. + hot * (f - .45) * .55 * k;
+      col += vec3(1., .7, .35) * hot * max(f - .5, 0.) * .12 * k;
+    } else if (abs(ty - 2.) < .1) {                // mặt nước lấp lánh
+      vec2 g = im * vec2(380. * asp, 700.); vec2 id = floor(g);
+      float h = hash(id), tw = pow(max(0., sin(uT * (2. + h * 5.) + h * 60.)), 12.);
+      col += vec3(1., .95, .85) * step(.88, h) * tw * smoothstep(.45, .02, length(fract(g) - .5)) * uP[i].w * k * m * (.4 + lum);
+    } else if (abs(ty - 4.) < .1) {                // sương trôi
+      float f = fbm(vec2(im.x * 3. * asp - uT * .04 * uP[i].w, im.y * 6. + uT * .01));
+      col = mix(col, vec3(.92, .94, .96), smoothstep(.35, .85, f) * uP[i].z * k * m);
+    } else if (abs(ty - 5.) < .1) {                // bụi nắng lơ lửng
+      for (int L = 0; L < 2; L++) {
+        float sc = 55. + float(L) * 40.;
+        vec2 p = im * vec2(sc * asp, sc) + vec2(sin(uT * .2 + float(L)) * .8, -uT * (.15 + float(L) * .1));
+        vec2 id = floor(p), f = fract(p) - .5; vec2 r = vec2(hash(id + float(L) * 7.), hash(id + 9.));
+        float tw = .5 + .5 * sin(uT * (.8 + r.y * 1.5) + r.x * 40.);
+        float d = smoothstep(.16, .02, length(f - (r - .5) * .6)) * step(1. - uP[i].z * .12, r.x);
+        col += mix(vec3(.85, .9, 1.), vec3(1., .88, .65), uP[i].w) * d * tw * .45 * k * m;
+      }
+    } else if (abs(ty - 6.) < .1) {                // cánh hoa rơi chéo, xoay lật
+      for (int L = 0; L < 2; L++) {
+        float sc = 16. + float(L) * 10.;
+        vec2 p = im * vec2(sc * asp, sc) + vec2(-uT * (.35 + float(L) * .15), -uT * (.6 + float(L) * .25));
+        p.x += sin(p.y * .9 + uT * .8) * .35;
+        vec2 id = floor(p), f = fract(p) - .5; vec2 r = vec2(hash(id + float(L)), hash(id + 4.));
+        float a = uT * (1. + r.y * 2.) + r.x * 6.28;
+        vec2 q = f - (r - .5) * .5; q = mat2(cos(a), -sin(a), sin(a), cos(a)) * q; q.y /= .35 + .65 * abs(sin(a * 1.3));
+        float d = smoothstep(.09, .05, length(q * vec2(1., 1.8))) * step(.72, r.x);
+        col = mix(col, vec3(1., .78, .86), d * .9 * k * m);
+      }
+    } else if (abs(ty - 7.) < .1) {                // đom đóm
+      vec2 p = im * vec2(14. * asp, 14.); vec2 id = floor(p), f = fract(p) - .5; vec2 r = vec2(hash(id), hash(id + 2.));
+      vec2 c = (r - .5) * .6 + vec2(sin(uT * (.4 + r.x) + r.y * 9.), cos(uT * (.3 + r.y) + r.x * 7.)) * .18;
+      float g = exp(-dot(f - c, f - c) * 260.) * step(.55, r.y) * max(0., sin(uT * (.8 + r.x) + r.y * 20.));
+      col += vec3(.85, 1., .45) * g * 1.2 * k * m;
+    } else if (abs(ty - 8.) < .1) {                // sao lấp lánh
+      float sat = max(max(col.r, col.g), col.b) - min(min(col.r, col.g), col.b);
+      float around = (dot(tex(im + vec2(.012, 0.)), vec3(.33)) + dot(tex(im - vec2(.012, 0.)), vec3(.33)) + dot(tex(im + vec2(0., .02)), vec3(.33)) + dot(tex(im - vec2(0., .02)), vec3(.33))) * .25;
+      float star = smoothstep(.22, .5, lum) * smoothstep(.2, .05, sat) * smoothstep(.12, .04, around);   // chỉ chấm sáng giữa nền tối
+      vec2 cell = floor(im * vec2(320., 180.));
+      col = mix(col, col * (.5 + noise(vec2(uT * (1.5 + hash(cell) * 3.), hash(cell + 2.) * 50.))), star * k * m);
+    } else if (abs(ty - 10.) < .1) {               // bóng mây trôi rất chậm
+      float f = fbm(vec2(im.x * 4. * asp - uT * .02 * uP[i].w, im.y * 4. + uT * .005));
+      col *= 1. - smoothstep(.45, .8, f) * .28 * uP[i].z * k * m;
+      col += vec3(1.) * smoothstep(.6, .9, fbm(vec2(im.x * 5. * asp + 3. - uT * .025 * uP[i].w, im.y * 5.))) * .06 * k * m;
+    } else if (abs(ty - 11.) < .1) {               // màn hình sáng nhịp + vệt quét
+      float hot = smoothstep(uP[i].z, uP[i].z + .2, lum) * m;
+      float pulse = .5 + .5 * sin(uT * uP[i].w + im.x * 4.);
+      float band = exp(-pow((rl.y - fract(uT * .07)) * 14., 2.));
+      col *= 1. + hot * (pulse * .1 + band * .12) * k;
+    }
+  }
+  gl_FragColor = vec4(col, 1.);
+}`,
     beach: `precision highp float;
 varying vec2 v;
 uniform sampler2D uSharp;
@@ -336,6 +436,12 @@ void main(){
       const uRes = gl.getUniformLocation(pr, 'uRes'), uT = gl.getUniformLocation(pr, 'uT');
       const sh1 = gl.getUniformLocation(pr, 'uS1'), sh2 = gl.getUniformLocation(pr, 'uS2');
       if (sh1 && snow && snow.length >= 2) { gl.uniform4f(sh1, ...snow[0]); gl.uniform4f(sh2, ...snow[1]); } // Bờ biển: mép nước (dùng chung tham số thứ 5)
+      if (kind === 'amb') { // box = danh sách lớp [[x0, y0, x1, y1, loại, độ mạnh, tham số 1, tham số 2], …]
+        const L = (box || []).slice(0, 6);
+        for (let i = 0; i < 6; i++) { const l = L[i] || [0, 0, 0, 0, 0, 0, 0, 0];
+          gl.uniform4f(gl.getUniformLocation(pr, `uR[${i}]`), l[0], l[1], l[2], l[3]); gl.uniform4f(gl.getUniformLocation(pr, `uP[${i}]`), l[4], l[5], l[6], l[7]); }
+        box = null;
+      }
       const uBox = gl.getUniformLocation(pr, 'uBox'); if (uBox && box) gl.uniform4f(uBox, box[0], box[1], box[2], box[3]);
       const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) { const f = fx || []; gl.uniform4f(uFx, f[0] || 0, f[1] || 0, f[2] || 0, f[3] || 0); }
       const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });

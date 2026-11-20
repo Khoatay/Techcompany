@@ -917,16 +917,19 @@
      pp = vị trí nút trên ảnh (% khung 16:9), theo biểu tượng của đồ vật. Tranh vẽ SVG vẫn là nền dự phòng khi chưa tải được ảnh. */
   const PHOTOS = {
     border: {
+      live: 'amb', liveBox: [[0, 44, 100, 60, 9, 1, 1, 0], [20, 52, 34, 80, 1, 0.6, 0.5, 0.5], [0, 0, 100, 44, 10, 0.35, 0.35, 0.4]],
       raw: 'https://images.unsplash.com/photo-1793969292093-b26442c9ba95?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8YWlycG9ydCUyMHRlcm1pbmFsJTIwd2luZG93JTIwc3Vuc2V0fGVufDF8MHx8fDE3OTUxNTQyNDZ8MA&ixlib=rb-4.1.0',
       by: 'sander traa', byUrl: 'https://unsplash.com/@sandertraa', light: true,
       pp: { '⏱️': [14, 72], '☕': [25, 72], '📅': [36, 72], '🛂': [50, 71], '📝': [64, 72], '🎧': [75, 72], '🌏': [86, 72], '✈️': [49.4, 33], '🛫': [49.4, 33] },
     },
     study: {
+      live: 'amb', liveBox: [[30, 5, 78, 85, 5, 0.9, 0.7, 1], [0, 35, 40, 90, 3, 0.5, 0.35, 0.3], [80, 35, 100, 90, 3, 0.4, 0.3, 0.2], [52, 38, 62, 50, 1, 0.4, 0.55, 0.6]],
       raw: 'https://images.unsplash.com/photo-1651739084205-d324925f76a7?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fGNvenklMjBzdHVkeSUyMGRlc2slMjB3aW5kb3clMjBwbGFudHMlMjBib29rcyUyMGxhbXB8ZW58MXwwfHx8MTc5NTE1NDI3N3ww&ixlib=rb-4.1.0',
       by: 'Annie Spratt', byUrl: 'https://unsplash.com/@anniespratt',
       pp: { '📻': [10, 42], '⏰': [61, 47], '🎧': [26, 76], '📖': [34, 76], '🗂️': [42, 76], '💻': [50, 75], '☕': [58, 76], '✏️': [66, 76], '📝': [74, 76] },
     },
     work: {
+      live: 'amb', liveBox: [[0, 0, 48, 52, 1, 1, 0.28, 0.9], [60, 32, 80, 58, 11, 0.8, 0.2, 0.5], [42, 25, 62, 60, 5, 0.6, 0.5, 1]],
       raw: 'https://images.unsplash.com/photo-1776391853674-92d8ee2369b0?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8N3x8aG9tZSUyMG9mZmljZSUyMGRlc2slMjBtb25pdG9yJTIwbmlnaHQlMjBjaXR5JTIwdmlld3xlbnwxfDB8fHwxNzk1MTU1MjMxfDA&ixlib=rb-4.1.0',
       by: "Bunny Lau", byUrl: 'https://unsplash.com/@bunnystudio',
       pp: { '📻': [70, 44], '📒': [22, 72], '⏱️': [34, 74], '📋': [46, 74], '☕': [58, 72], '🎧': [82, 72], '🪴': [12, 60] },
@@ -938,21 +941,25 @@
       pp: { '🌴': [88, 40], '🥥': [70, 74], '📻': [56, 76], '⛵': [22, 56], '🐚': [40, 78], '⛱️': [86, 66] },
     },
     pirate: {
+      live: 'amb', liveBox: [[53, 57, 100, 84, 2, 1, 0.8, 1], [0, 0, 100, 55, 10, 0.6, 0.5, 0.5]],
       raw: 'https://images.unsplash.com/photo-1591454880047-184bd09f04af?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTB8fG9sZCUyMHdvb2RlbiUyMHNhaWxpbmclMjBzaGlwJTIwZGVjayUyMG9jZWFufGVufDF8MHx8fDE3OTUxNTUyNDd8MA&ixlib=rb-4.1.0',
       by: "Teddy Charti", byUrl: 'https://unsplash.com/@teddycharti',
       pp: { '⚓': [14, 66], '🦜': [30, 30], '🗺️': [46, 76], '🧭': [60, 74], '🛢️': [74, 76], '🎻': [88, 72], '🚩': [78, 30] },
     },
     football: {
+      live: 'amb', liveBox: [[14, 26, 27, 42, 1, 1, 0.55, 2.2], [74, 26, 87, 42, 1, 1, 0.55, 2.0], [0, 38, 100, 64, 4, 0.7, 0.22, 0.5]],
       raw: 'https://images.unsplash.com/photo-1487466365202-1afdb86c764e?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8M3x8Zm9vdGJhbGwlMjBzdGFkaXVtJTIwbmlnaHQlMjBmbG9vZGxpZ2h0c3xlbnwxfDB8fHwxNzk1MTU1MjU2fDA&ixlib=rb-4.1.0',
       by: "Jonathan Petersson", byUrl: 'https://unsplash.com/@grizzlybear',
       pp: { '🥅': [52, 57], '⚽': [50, 78], '⏱️': [14, 30], '🥤': [24, 74], '📻': [78, 74], '📣': [88, 40], '📋': [36, 76] },
     },
     bedroom: {
+      live: 'amb', liveBox: [[38, 0, 64, 32, 1, 0.45, 0.45, 0.5], [30, 5, 72, 62, 5, 0.8, 0.7, 1]],
       raw: 'https://images.unsplash.com/photo-1774556443332-de783833a656?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTV8fGNvenklMjBiZWRyb29tJTIwbmlnaHQlMjBmYWlyeSUyMGxpZ2h0c3xlbnwxfDB8fHwxNzk1MTU1MjY0fDA&ixlib=rb-4.1.0',
       by: "Alicia Christin Gerald", byUrl: 'https://unsplash.com/@allysphotos',
       pp: { '🧸': [82, 60], '🐈': [68, 74], '📔': [44, 72], '📚': [24, 72], '🎵': [35, 56], '🌙': [52, 24] },
     },
     cafe: {
+      live: 'amb', liveBox: [[0, 0, 75, 62, 5, 1, 0.8, 1], [0, 0, 62, 38, 9, 0.4, 0.6, 0]],
       dim: true,
       raw: 'https://images.unsplash.com/photo-1792325416561-76b46e59783c?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTN8fGNvenklMjBjb2ZmZWUlMjBzaG9wJTIwaW50ZXJpb3IlMjB3YXJtJTIwbGlnaHR8ZW58MXwwfHx8MTc5NTE1NTI3M3ww&ixlib=rb-4.1.0',
       by: "Mustafa Sheikhmouss", byUrl: 'https://unsplash.com/@xalo_mustafa',
@@ -971,16 +978,19 @@
       pp: { '⛺': [22, 70], '📔': [38, 74], '🔥': [49, 79], '🎸': [78, 72], '🌠': [30, 18], '🔦': [90, 60] },
     },
     space: {
+      live: 'amb', liveBox: [[2, 28, 97, 98, 10, 1, 0.9, 0.4], [25, 0, 100, 24, 8, 1, 0, 0]],
       raw: 'https://images.unsplash.com/photo-1768283808210-41196886ebf4?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8ZWFydGglMjBmcm9tJTIwc3BhY2UlMjBzdGF0aW9uJTIwd2luZG93fGVufDF8MHx8fDE3OTUxNTUzMDR8MA&ixlib=rb-4.1.0',
       by: "Muhammad Nishfu", byUrl: 'https://unsplash.com/@nishfu',
       pp: { '🛰️': [57, 30], '🚀': [82, 22], '👩‍🚀': [12, 40], '📋': [24, 74], '🎛️': [38, 78], '📡': [64, 76], '🎧': [78, 72], '🧃': [90, 60] },
     },
     zen: {
+      live: 'amb', liveBox: [[0, 66, 100, 100, 2, 1, 1, 0.35], [0, 0, 100, 80, 6, 1, 0, 0], [55, 18, 100, 52, 3, 0.6, 0.5, 0.3], [0, 15, 40, 45, 3, 0.4, 0.4, 0.2]],
       raw: 'https://images.unsplash.com/photo-1763076704710-2b9c01783505?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTF8fGphcGFuZXNlJTIwZ2FyZGVuJTIwY2hlcnJ5JTIwYmxvc3NvbSUyMHBvbmR8ZW58MXwwfHx8MTc5NTE1NTMwNXww&ixlib=rb-4.1.0',
       by: "Branden Skeli", byUrl: 'https://unsplash.com/@branden_skeli',
       pp: { '📻': [18, 72], '📜': [30, 76], '🖌️': [42, 76], '🍵': [40, 48], '🧘': [54, 76], '🪷': [66, 78], '🐟': [78, 76], '🎐': [30, 30], '🎋': [88, 30] },
     },
     train: {
+      live: 'amb', liveBox: [[26, 29, 77, 72, 4, 1, 0.55, 0.8], [25, 5, 77, 24, 4, 0.7, 0.5, 0.6]],
       dim: true,
       raw: 'https://images.unsplash.com/photo-1583065689608-42b2a025a124?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MXx8dHJhaW4lMjB3aW5kb3clMjBuaWdodCUyMGludGVyaW9yfGVufDF8MHx8fDE3OTUxNTUzMTh8MA&ixlib=rb-4.1.0',
       by: "Stijn te Strake", byUrl: 'https://unsplash.com/@stijntestrake',
@@ -999,17 +1009,20 @@
       pp: { '🪼': [80, 20], '🐡': [60, 40], '🐢': [30, 40], '🐙': [16, 74], '🐚': [40, 76], '🪸': [62, 74], '💎': [84, 72] },
     },
     village: {
+      live: 'amb', liveBox: [[0, 64, 100, 100, 3, 1, 1.2, 0.4], [8, 28, 82, 64, 3, 0.8, 0.8, 0.6], [0, 55, 100, 98, 7, 0.7, 0, 0], [0, 52, 100, 66, 4, 0.6, 0.25, 0.6]],
       dim: true,
       raw: 'https://images.unsplash.com/photo-1555980483-93e7b3529e1a?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTR8fHZpZXRuYW0lMjByaWNlJTIwZmllbGQlMjBzdW5zZXR8ZW58MXwwfHx8MTc5NTE1NTM0N3ww&ixlib=rb-4.1.0',
       by: "Kiril Dobrev", byUrl: 'https://unsplash.com/@kirildobrev',
       pp: { '🎋': [16, 40], '🐃': [49, 58], '🐓': [24, 74], '🌾': [36, 76], '🍵': [62, 76], '🐸': [74, 78], '🪁': [78, 24], '📻': [88, 70] },
     },
     hoian: {
+      live: 'amb', liveBox: [[15, 12, 90, 62, 1, 1, 0.42, 1.6], [0, 35, 40, 70, 1, 0.6, 0.5, 1.0], [20, 15, 85, 55, 5, 0.6, 0.5, 1]],
       raw: 'https://images.unsplash.com/photo-1787060118419-3b54c6746feb?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTR8fGhvaSUyMGFuJTIwbGFudGVybnMlMjBuaWdodHxlbnwxfDB8fHwxNzk1MTU1MzU4fDA&ixlib=rb-4.1.0',
       by: "Christian", byUrl: 'https://unsplash.com/@axcreativeagency',
       pp: { '🏮': [[40, 22], [62, 26]], '📜': [16, 72], '🪷': [30, 78], '🛶': [50, 78], '☕': [70, 76], '🌕': [86, 16] },
     },
     trader: {
+      live: 'amb', liveBox: [[0, 0, 100, 48, 11, 1, 0.25, 0.6], [20, 62, 62, 100, 11, 0.8, 0.2, 0.8]],
       raw: 'https://images.unsplash.com/photo-1744782211816-c5224434614f?ixid=M3wxMTM5MjYzfDB8MXxzZWFyY2h8MTJ8fHN0b2NrJTIwdHJhZGluZyUyMGRlc2slMjBtb25pdG9ycyUyMGNoYXJ0cyUyMG5pZ2h0fGVufDF8MHx8fDE3OTUxNTUzNjZ8MA&ixlib=rb-4.1.0',
       by: "Jakub Żerdzicki", byUrl: 'https://unsplash.com/@jakubzerdzicki',
       pp: { '🌏': [14, 30], '📈': [62, 22], '📰': [86, 24], '🐂': [30, 52], '⏱️': [12, 62], '📒': [24, 74], '🧮': [80, 74], '✅': [44, 76], '☕': [56, 76], '📅': [66, 76], '🎧': [90, 62], '🐻': [40, 56] },
