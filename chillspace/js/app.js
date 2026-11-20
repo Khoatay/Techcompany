@@ -75,8 +75,17 @@
       const w = wins[tool];
       if (w && !w.el.hidden && !w.el.classList.contains('collapsed') && w.el.classList.contains('top')) close(tool); else open(tool);
     }
+    // đổi không gian: chỉ giữ cửa sổ dùng chung (nhạc, âm thanh, pomodoro…) hoặc công cụ không gian mới cũng có;
+    // còn lại (vd. Nhật ký giao dịch, Biểu đồ của Bàn trader) đóng hẳn, không mang sang không gian khác
+    const SHARED = new Set(['pomodoro', 'sleep', 'mixer', 'music', 'atmos', 'youtube', 'toolbox', 'room']);
     function onSpace() {
-      Object.values(wins).forEach((w) => { if (!w.global) close(w.key); else if (w.def.refresh) w.def.refresh(); });
+      const here = new Set(space.objects.map((o) => o.tool));
+      Object.values(wins).forEach((w) => {
+        const tool = w.el.dataset.tool;
+        if (SHARED.has(tool) || here.has(tool)) { if (w.def.refresh) w.def.refresh(); return; }
+        if (w.def.collapse) return;
+        w.cleanup && w.cleanup(); w.el.remove(); delete wins[w.key];
+      });
     }
     function closeTop() { const w = Object.values(wins).filter((x) => !x.el.hidden).sort((a, b) => +b.el.style.zIndex - +a.el.style.zIndex)[0]; if (w) close(w.key); }
     return { open, close, toggle, onSpace, closeTop };
@@ -250,10 +259,13 @@
   function boardHtml(id, mobile) {
     const B = window.Boards && Boards[id]; if (!B) return '';
     const st = Boards.state(id); if (st === 'closed') return '';
-    return `<div class="board b-${id} st-${st}${mobile ? ' m' : ''}" data-bid="${id}">
+    // vị trí & cỡ do người dùng kéo thả (lưu theo từng bảng); bảng đang phóng to thì theo cỡ phóng to
+    const L = !mobile && st !== 'max' && store.get('blay:' + id, null);
+    const sty = L ? ` style="left:${L.x}%;top:${L.y}%;right:auto;width:${L.w}%;font-size:calc(var(--u) * ${L.f})"` : '';
+    return `<div class="board b-${id} st-${st}${mobile ? ' m' : ''}${L ? ' moved' : ''}" data-bid="${id}"${sty}>
       <div class="bh" data-bh><span class="bt">${B.icon} ${B.title}<small>${B.sub()}</small></span>
         <span class="bc">${B.extra ? B.extra() : ''}<button data-bc="min" title="${st === 'min' ? 'Mở ra' : 'Thu nhỏ'}">${st === 'min' ? '▾' : '–'}</button>${mobile ? '' : `<button data-bc="max" title="${st === 'max' ? 'Thu về cỡ thường' : 'Phóng to'}">${st === 'max' ? '❐' : '▢'}</button>`}<button data-bc="close" title="Tắt bảng">✕</button></span></div>
-      ${st === 'min' ? '' : `<div class="bb" data-tool="${B.tool}">${B.body(st)}</div>`}</div>`;
+      ${st === 'min' ? '' : `<div class="bb" data-tool="${B.tool}">${B.body(st)}</div>`}${mobile || st !== 'normal' ? '' : '<i class="b-rs" data-brs title="Kéo để phóng to / thu nhỏ"></i>'}</div>`;
   }
   // Vòng xoay: hiện rõ 2 mục ở giữa, các mục khác nghiêng & mờ dần; vuốt / lăn chuột / kéo chuột để xoay
   const wheelPos = {}; let wheelDragAt = 0;
@@ -299,8 +311,46 @@
     if (ids.includes('flights') && Boards.state('flights') !== 'closed' && window.Flights) setTimeout(() => Flights.load(false), 0);
     if (ids.includes('departures') && Boards.state('departures') !== 'closed' && window.FlightsOut) setTimeout(() => FlightsOut.load(false), 0);
   }
+  // Kéo thanh tiêu đề để di chuyển bảng, kéo góc dưới phải để phóng to / thu nhỏ (chữ to nhỏ theo); bấm đúp tiêu đề = về chỗ cũ
+  let boardDragAt = 0;
+  document.addEventListener('pointerdown', (e) => {
+    const bd = e.target.closest('#objects .board'); if (!bd || bd.classList.contains('st-max')) return;
+    const rs = e.target.closest('[data-brs]'), hd = e.target.closest('[data-bh]');
+    if (!rs && (!hd || e.target.closest('button'))) return;
+    e.preventDefault();
+    const id = bd.dataset.bid, box = $('#objects').getBoundingClientRect(), r = bd.getBoundingClientRect(), u = box.height / 100;
+    const f0 = parseFloat(getComputedStyle(bd).fontSize) / u, x0 = e.clientX, y0 = e.clientY;
+    let L = { x: ((r.left - box.left) / box.width) * 100, y: ((r.top - box.top) / box.height) * 100, w: (r.width / box.width) * 100, f: f0 }, moved = false;
+    const paint = () => { Object.assign(bd.style, { left: L.x + '%', top: L.y + '%', right: 'auto', width: L.w + '%', fontSize: `calc(var(--u) * ${L.f})` }); };
+    const mv = (ev) => {
+      const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      moved = true; bd.classList.add('moving');
+      if (rs) {
+        const w = Math.max(14, Math.min(70, ((r.width + dx) / box.width) * 100));
+        L = { ...L, w, f: f0 * (w / ((r.width / box.width) * 100)) };
+      } else {
+        L = { ...L, x: Math.max(-L.w + 8, Math.min(96, ((r.left - box.left + dx) / box.width) * 100)), y: Math.max(0, Math.min(92, ((r.top - box.top + dy) / box.height) * 100)) };
+      }
+      paint();
+    };
+    const up = () => {
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
+      bd.classList.remove('moving');
+      if (!moved) return;
+      boardDragAt = Date.now();
+      store.set('blay:' + id, { x: +L.x.toFixed(2), y: +L.y.toFixed(2), w: +L.w.toFixed(2), f: +L.f.toFixed(3) });
+      if (rs) renderBoards(); // đo lại vòng xoay theo cỡ mới
+    };
+    addEventListener('pointermove', mv); addEventListener('pointerup', up);
+  });
+  document.addEventListener('dblclick', (e) => {
+    const hd = e.target.closest('#objects .board [data-bh]'); if (!hd || e.target.closest('button')) return;
+    store.set('blay:' + hd.closest('.board').dataset.bid, null); renderBoards();
+  });
   document.addEventListener('click', (e) => {
     const bd = e.target.closest('.board'); if (!bd) return;
+    if (Date.now() - boardDragAt < 300) return; // vừa kéo / đổi cỡ bảng → không bấm
     const id = bd.dataset.bid, st = Boards.state(id), c = e.target.closest('[data-bc]');
     if (c) {
       const a = c.dataset.bc;

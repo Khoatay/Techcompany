@@ -216,3 +216,11 @@ body.has-photo[data-space] .date, body.has-photo[data-space] .quote { color: rgb
 .mu-list li.on { background: color-mix(in srgb, var(--accent) 25%, rgba(255,255,255,.05)); }
 .mu-n { width: 18px; text-align: center; color: rgba(255,255,255,.55); font-size: 12px; } .mu-t { flex: 1; } .mu-d { color: rgba(255,255,255,.5); font-size: 11px; }
 .mu-list .mu-empty { cursor: default; color: rgba(255,255,255,.6); }
+
+/* ---------- bảng kéo thả & đổi cỡ ---------- */
+#objects .board [data-bh] { cursor: grab; touch-action: none; }
+#objects .board.moving { transition: none; cursor: grabbing; opacity: .92; z-index: 5; }
+#objects .board.moving [data-bh] { cursor: grabbing; }
+.b-rs { position: absolute; right: 4px; bottom: 4px; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none; opacity: .45; transition: opacity .2s;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.75) 50%, rgba(255,255,255,.75) 58%, transparent 58%, transparent 70%, rgba(255,255,255,.75) 70%, rgba(255,255,255,.75) 78%, transparent 78%); border-bottom-right-radius: 6px; }
+.board:hover .b-rs { opacity: .9; }
