@@ -21,7 +21,7 @@ window.Sound = (function () {
 
   function noiseBuffer(type) {
     if (buffers[type]) return buffers[type];
-    const len = ctx.sampleRate * 6, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    const len = ctx.sampleRate * 24, buf = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
       const d = buf.getChannelData(ch);
       let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, last = 0;
@@ -51,7 +51,7 @@ window.Sound = (function () {
     };
     return t;
   };
-  const noise = (t, type) => { const s = ctx.createBufferSource(); s.buffer = noiseBuffer(type); s.loop = true; s.start(0, Math.random() * 5); return t.add(s); };
+  const noise = (t, type) => { const s = ctx.createBufferSource(); s.buffer = noiseBuffer(type); s.loop = true; s.start(0, Math.random() * 23); return t.add(s); };
   const filt = (t, type, f, Q = 0.7) => { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = Q; return t.add(n); };
   const gain = (t, v) => { const g = ctx.createGain(); g.gain.value = v; return t.add(g); };
   const osc = (t, f, type = 'sine') => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.start(); return t.add(o); };
