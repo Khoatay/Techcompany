@@ -121,7 +121,22 @@
     if (a.yt && a.yt.item && (!ytNow || ytNow.key !== a.yt.key)) { ytNow = a.yt; CS.YTP.remotePlay(a.yt.item); }
     if (typeof a.playing === 'boolean' && a.playing !== ytPlaying) { ytPlaying = a.playing; if (ytNow) CS.YTP.remoteSetPlaying(a.playing); }
     document.dispatchEvent(new Event('cs:audio'));
+    setTimeout(checkUnlock, 2000);
   }
+  function checkUnlock() {
+    let el = document.getElementById('audioUnlock');
+    const a = room && room.audio, has = a && ((a.vols && Object.keys(a.vols).length) || a.yt);
+    const ytWaiting = room && ytNow && ytPlaying !== false && CS.YTP.state !== 1;
+    const need = !!(has && (Sound.needsUnlock() || ytWaiting));
+    if (!need) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('button'); el.id = 'audioUnlock'; el.className = 'audio-unlock';
+      el.textContent = '🔈 Chạm vào đây để nghe nhạc & âm thanh của phòng';
+      el.onclick = () => { Sound.init(); if (ytNow) { if (CS.YTP.player) CS.YTP.remoteSetPlaying(true); else CS.YTP.remotePlay(ytNow.item); } setTimeout(checkUnlock, 1500); };
+      document.body.append(el);
+    }
+  }
+  document.addEventListener('cs:unlock', () => setTimeout(checkUnlock, 300));
   const pushAudio = debounce(() => {
     if (!room || !canAudio()) return;
     const a = { vols: Sound.getAll(), yt: ytNow, playing: ytPlaying };
@@ -231,7 +246,7 @@
     const st = document.getElementById('stage').getBoundingClientRect(), p = m.pos;
     let x, y;
     if (p && isFinite(p.x) && isFinite(p.y)) { x = st.left + (p.x / 100) * st.width; y = st.top + (p.y / 100) * st.height; }
-    else { const gap = Math.min(110, (innerWidth - 80) / Math.max(n, 1)); x = innerWidth / 2 + (i - (n - 1) / 2) * gap; y = innerWidth <= 720 ? 175 : innerHeight * 0.44; }
+    else { const gap = Math.min(110, (innerWidth - 80) / Math.max(n, 1)); x = innerWidth / 2 + (i - (n - 1) / 2) * gap; y = innerWidth <= 720 ? 172 : innerHeight * 0.44; }
     return [Math.max(44, Math.min(innerWidth - 44, x)), Math.max(70, Math.min(innerHeight - 120, y))];
   }
   function renderSeats() {
@@ -275,7 +290,7 @@
 
   /* ---------- cửa sổ Phòng chung ---------- */
   const isOpen = () => { const w = document.querySelector('.win[data-tool="room"]'); return !!(w && !w.hidden && !w.classList.contains('collapsed')); };
-  document.addEventListener('cs:win', (e) => { if (e.detail.key === 'room' && !e.detail.collapsed) { unread = 0; updateBadge(); } });
+  document.addEventListener('cs:win', (e) => { if (e.detail.key === 'room') { if (!e.detail.collapsed) unread = 0; updateBadge(); } });
   const errMsg = (e) => (e && e.message) || String(e);
 
   TOOLS.room = {
@@ -286,7 +301,7 @@
       b.innerHTML = '<p class="empty">Đang kết nối…</p>';
       if (!configured) { paintUnconfigured(b); return; }
       init().then(() => { draw(); subs.add(draw); }).catch((e) => (b.innerHTML = `<p class="empty">${esc(errMsg(e))}</p>`));
-      unread = 0; updateBadge();
+      unread = 0; setTimeout(updateBadge, 0);
       return () => subs.delete(draw);
     },
   };
@@ -308,7 +323,7 @@
       <div class="prof-prev"><span class="av big" data-prev></span><input data-name maxlength="40" placeholder="Tên hiển thị" value="${esc((profile && profile.name) || store.get('room.name', ''))}"></div>
       <div class="tabs"><button data-m="emoji">😀 Emoji</button><button data-m="photo">📷 Ảnh thật</button></div>
       <div data-pane></div>
-      <div class="row"><span class="grow"></span>${editing ? '<button class="btn" data-cancel>Huỷ</button>' : ''}<button class="btn primary" data-save>${!editing && pendingCode ? '👉 Vào phòng' : 'Lưu & tiếp tục'}</button></div>
+      <div class="row sticky-actions"><span class="grow"></span>${editing ? '<button class="btn" data-cancel>Huỷ</button>' : ''}<button class="btn primary" data-save>${!editing && pendingCode ? '👉 Vào phòng' : 'Lưu & tiếp tục'}</button></div>
       <p class="muted small">Không cần email hay mật khẩu. Ảnh chỉ dùng làm ảnh đại diện trong phòng.</p>`;
     const prev = b.querySelector('[data-prev]'), pane = b.querySelector('[data-pane]');
     let previewUrl = usePhoto ? profile.avatar_url : null;
@@ -382,8 +397,8 @@
     if (view === 'chat') {
       v.innerHTML = `<ul class="chat">${messages.map(msgHtml).join('') || '<li class="empty">Chưa có tin nhắn. Chào mọi người một tiếng đi 👋</li>'}</ul>
         <div class="reacts">${REACTS.map((e) => `<button data-r="${e}">${e}</button>`).join('')}</div>
-        <form class="row" data-send><input class="grow" data-msg maxlength="300" placeholder="Nhắn gì đó…"><button class="btn primary">➤</button></form>
-        <button class="btn done-btn" data-done>✅ Mình vừa xong một việc!</button>`;
+        <div class="sticky-actions col"><form class="row" data-send><input class="grow" data-msg maxlength="300" placeholder="Nhắn gì đó…"><button class="btn primary">➤</button></form>
+        <button class="btn done-btn" data-done>✅ Mình vừa xong một việc!</button></div>`;
       const ul = v.querySelector('.chat'); if (atBottom) ul.scrollTop = ul.scrollHeight; else if (listEl0) ul.scrollTop = listEl0.scrollTop;
       const input = v.querySelector('[data-msg]'); input.value = draft; if (hadFocus) input.focus();
       v.querySelector('[data-send]').onsubmit = (e) => { e.preventDefault(); const t = input.value; input.value = ''; send('chat', t); };
@@ -423,7 +438,7 @@
     try { await navigator.clipboard.writeText(`${text}\n${url}`); toast('Đã copy link mời – dán gửi bạn bè nhé 📋'); } catch (e) { prompt('Copy link này gửi bạn bè:', url); }
   }
 
-  function updateBadge() { const t = document.querySelector('.win[data-tool="room"] .win-title'); if (t) t.textContent = `Phòng chung${room ? ` · ${members.length} người` : ''}${unread ? ` · 💬 ${unread} tin mới` : ''}`;
+  function updateBadge() { document.body.classList.toggle('room-open', isOpen()); const t = document.querySelector('.win[data-tool="room"] .win-title'); if (t) t.textContent = `Phòng chung${room ? ` · ${members.length} người` : ''}${unread ? ` · 💬 ${unread} tin mới` : ''}`;
     const el = document.getElementById('roomBadge'); if (el) { el.textContent = unread > 9 ? '9+' : unread; el.hidden = !unread; } }
   subs.add(updateBadge);
   Pomo.subs.add(debounce(() => { if (room && isOpen()) { const t = document.querySelector('.room-pomo .t'); if (t) t.textContent = CS.mmss(Pomo.remain); } }, 0));

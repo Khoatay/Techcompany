@@ -258,6 +258,7 @@ window.Sound = (function () {
     onChange: null,
     setMaster(v) { masterVol = v; applyMaster(0.05); },
     getMaster: () => masterVol,
+    needsUnlock: () => !ctx || ctx.state !== 'running', // iPhone: cần một lần chạm hợp lệ
     isPaused: () => paused,
     setPaused(p) { paused = p; ensure(); applyMaster(); },
     fadeOut(sec = 20) { paused = true; if (master) { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(0, ctx.currentTime, sec / 4); } },

@@ -671,3 +671,22 @@ body.zen .corner-bar { opacity: .5; }
 .mixer.locked .mix { opacity: .45; }
 .yt-locked .yt-list li { cursor: not-allowed; opacity: .55; }
 @media (max-width: 720px) { .win.collapsed { left: auto !important; right: 8px; min-width: 0; } }
+
+/* nút giữ luôn nhìn thấy ở đáy cửa sổ */
+.sticky-actions { position: sticky; bottom: -14px; z-index: 3; margin: 0 -14px -14px; padding: 10px 14px 24px; background: rgba(22,24,36,.96); border-top: 1px solid var(--line); }
+.sticky-actions.col { display: flex; flex-direction: column; gap: 8px; }
+/* chạm để nghe âm thanh của phòng (iPhone) */
+.audio-unlock { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 90; padding: 10px 16px; border-radius: 999px; border: 0; background: #f97316; color: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 10px 30px -8px rgba(249,115,22,.8); animation: pulse-u 1.6s ease-in-out infinite; max-width: calc(100vw - 24px); }
+@keyframes pulse-u { 50% { transform: translateX(-50%) scale(1.04); } }
+@media (max-width: 720px) {
+  body.room-open #mboard, body.room-open .corner-bar { display: none !important; }
+  .win[data-tool="room"] { max-height: 55vh; }
+  .win[data-tool="room"] .win-body { gap: 8px; padding-bottom: 0; }
+  .win[data-tool="room"] .sticky-actions { bottom: 0; margin-bottom: 0; padding-bottom: 12px; }
+  .stickers button { width: 44px; padding: 4px 0; font-size: 20px; } .stickers button small { display: none; }
+  .room-head small { display: none; }
+  .room-pomo { padding: 6px 10px; } .room-pomo .t { font-size: 18px; }
+  .chat { max-height: 26vh; }
+  .emoji-grid button { font-size: 19px; padding: 3px 0; }
+  .audio-unlock { top: 58px; font-size: 13px; }
+}
