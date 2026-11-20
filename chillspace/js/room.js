@@ -342,7 +342,7 @@
   }
   function msgHtml(m) {
     const p = profiles[m.user_id] || {}, mine = user && m.user_id === user.id;
-    const time = new Date(m.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const time = new Date(m.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
     if (m.kind === 'sticker') return `<li class="sys">${avatarHtml(p, 'av sm')} <b>${esc(p.name || 'Ai đó')}</b> đang <span class="big-e">${esc(m.body)}</span> ${esc((STICKERS.find((s) => s[0] === m.body) || [, ''])[1].toLowerCase())} <small>${time}</small></li>`;
     if (m.kind === 'done') return `<li class="sys done">${avatarHtml(p, 'av sm')} <b>${esc(p.name || 'Ai đó')}</b> ✅ ${esc(m.body)} 🎉 <small>${time}</small></li>`;
     return `<li class="${mine ? 'mine' : ''}">${mine ? '' : avatarHtml(p, 'av sm')}<div class="bubble">${mine ? '' : `<b>${esc(p.name || 'Ai đó')}</b>`}${esc(m.body)}<small>${time}</small></div></li>`;
