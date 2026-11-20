@@ -264,3 +264,45 @@ body.vip-lock #objects, body.vip-lock #mboard, body.vip-lock #cornerBar, body.vi
 .ma-add { border-style: dashed; color: rgba(255,255,255,.7); }
 .ma-web { display: grid; grid-template-columns: 1fr 1.6fr auto; gap: 6px; }
 .ma-web input { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07); color: #fff; }
+
+/* ---------- nhân vật động trên ảnh nền ---------- */
+.sprites { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sp { position: absolute; transform: translate(-50%, -100%); }
+.scenery .sprites svg, .sp svg { position: static; inset: auto; width: 100%; height: auto; display: block; overflow: visible; }
+.scenery .sp-candles svg { height: 100%; }
+.sp svg * { transform-box: view-box; }
+/* mèo thần tài vẫy tay */
+.sp-luckycat { filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+.sp-wave { transform-origin: 84px 74px; animation: lcWave .9s ease-in-out infinite alternate; }
+@keyframes lcWave { from { transform: rotate(-10deg); } to { transform: rotate(16deg); } }
+.sp-coin { animation: lcShine 3s ease-in-out infinite; } @keyframes lcShine { 50% { filter: brightness(1.25); } }
+/* nến nhảy */
+.sp-candles { mix-blend-mode: screen; filter: drop-shadow(0 0 4px rgba(34,211,238,.6)); height: 100%; }
+.sp-candles svg { height: 100%; }
+/* chim nhảy trên mái */
+.sp-bird { transition: left .35s ease; }
+.sp-bird.turn svg { transform: scaleX(-1); }
+.sp-hop { animation: bHop 2.6s ease-in-out var(--d) infinite; transform-origin: 20px 28px; }
+@keyframes bHop { 0%, 60%, 100% { transform: translateY(0); } 66% { transform: translateY(-5px); } 72% { transform: translateY(0); } 78% { transform: translateY(-3px); } 84% { transform: translateY(0); } }
+.sp-peck { animation: bPeck 3.4s ease-in-out var(--d) infinite; transform-origin: 20px 24px; }
+@keyframes bPeck { 0%, 30%, 45%, 100% { transform: rotate(0); } 35%, 40% { transform: rotate(18deg); } }
+/* mèo nằm quẫy đuôi */
+.sp-cat.flip { transform: scaleX(-1); }
+.sp-tail { transform-origin: 30px 64px; animation: cTail 2.2s ease-in-out var(--d) infinite alternate; }
+@keyframes cTail { from { transform: rotate(-16deg); } to { transform: rotate(20deg); } }
+.sp-head { transform-origin: 120px 60px; animation: cHead 7s ease-in-out var(--d) infinite; }
+@keyframes cHead { 0%, 70%, 100% { transform: rotate(0); } 78%, 90% { transform: rotate(-7deg); } }
+.sp-eye { animation: cBlink 5s steps(1) var(--d) infinite; } @keyframes cBlink { 0%, 92%, 100% { opacity: 1; } 94% { opacity: 0; } }
+/* mòng biển bay ngang trời */
+.sp-gull { animation: gFly var(--dur) linear var(--d) infinite; }
+@keyframes gFly { from { left: -8%; } to { left: 108%; } }
+.sp-flap { transform-origin: 30px 12px; animation: gFlap .55s ease-in-out infinite alternate; }
+@keyframes gFlap { from { transform: scaleY(1); } to { transform: scaleY(-.35) translateY(-4px); } }
+/* cá heo nhảy */
+.sp-jump { transform-origin: 50px 40px; animation: dJump var(--dur) ease-in-out var(--d) infinite; opacity: 0; }
+@keyframes dJump { 0%, 62% { opacity: 0; transform: translate(-30px, 30px) rotate(-35deg); }
+  64% { opacity: 1; transform: translate(-30px, 18px) rotate(-35deg); } 72% { transform: translate(-6px, -14px) rotate(-8deg); }
+  80% { transform: translate(18px, -10px) rotate(22deg); } 88% { opacity: 1; transform: translate(38px, 22px) rotate(42deg); } 90%, 100% { opacity: 0; transform: translate(40px, 34px) rotate(45deg); } }
+.sp-splash { opacity: 0; animation: dSplash var(--dur) ease-out var(--d) infinite; }
+@keyframes dSplash { 0%, 62% { opacity: 0; } 64%, 66% { opacity: .9; } 72%, 84% { opacity: 0; } 88%, 90% { opacity: .9; } 96%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sp * { animation-duration: 4s !important; } }

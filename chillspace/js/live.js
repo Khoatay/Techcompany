@@ -11,7 +11,7 @@ uniform vec2 uRes, uImg;
 uniform float uT;
 // tối đa 6 lớp hiệu ứng, mỗi lớp: uR = vùng (% x0, y0, x1, y1 từ góc trên trái), uP = (loại, độ mạnh, tham số 1, tham số 2)
 // loại: 1 đèn lung linh · 2 mặt nước gợn + lấp lánh · 3 cây cỏ đung đưa · 4 sương trôi · 5 bụi nắng · 6 cánh hoa rơi
-//       7 đom đóm · 8 sao lấp lánh · 9 hơi nóng · 10 bóng mây trôi · 11 màn hình sáng nhịp
+//       7 đom đóm · 8 sao lấp lánh · 9 hơi nóng · 10 bóng mây trôi · 11 màn hình sáng nhịp · 12 cảnh ngoài cửa sổ trôi
 uniform vec4 uR[6];
 uniform vec4 uP[6];
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -95,6 +95,17 @@ void main(){
       float f = fbm(vec2(im.x * 4. * asp - uT * .02 * uP[i].w, im.y * 4. + uT * .005));
       col *= 1. - smoothstep(.45, .8, f) * .28 * uP[i].z * k * m;
       col += vec3(1.) * smoothstep(.6, .9, fbm(vec2(im.x * 5. * asp + 3. - uT * .025 * uP[i].w, im.y * 5.))) * .06 * k * m;
+    } else if (abs(ty - 12.) < .1) {               // cảnh ngoài cửa sổ trôi (tàu đang chạy): 2 lớp lệch pha ghép liền, không thấy chỗ nối
+      vec4 bb = uR[i] / 100.;
+      float W = bb.z - bb.x, sp = uP[i].z * .02;
+      float p1 = fract(uT * sp), p2 = fract(uT * sp + .5), w1 = 1. - abs(2. * p1 - 1.);
+      vec2 s1 = vec2(bb.x + fract(rl.x + p1 * .35) * W, im.y), s2 = vec2(bb.x + fract(rl.x + p2 * .35) * W, im.y);
+      vec3 sc = mix(tex(s2), tex(s1), w1);
+      // cột điện / cây ven đường vụt qua
+      float ph = fract(uT * uP[i].w * .35), hb = hash(vec2(floor(uT * uP[i].w * .35), 4.));
+      float px = 1.2 - ph * 1.4, bar = smoothstep(.035, .0, abs(rl.x - px)) * step(.45, hb) * smoothstep(.0, .1, rl.y);
+      sc = mix(sc, vec3(.18, .19, .21), bar * .8);
+      col = mix(col, sc, m * k);
     } else if (abs(ty - 11.) < .1) {               // màn hình sáng nhịp + vệt quét
       float hot = smoothstep(uP[i].z, uP[i].z + .2, lum) * m;
       float pulse = .5 + .5 * sin(uT * uP[i].w + im.x * 4.);
