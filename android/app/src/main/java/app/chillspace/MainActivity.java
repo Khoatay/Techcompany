@@ -4,7 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.webkit.JavascriptInterface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.ValueCallback;
@@ -30,6 +34,8 @@ public class MainActivity extends Activity {
   private FrameLayout root;
   private ValueCallback<Uri[]> fileCallback;
   private View fullView;
+  private boolean immersive;
+  private android.content.SharedPreferences prefs;
 
   @Override
   protected void onCreate(Bundle state) {
@@ -40,6 +46,15 @@ public class MainActivity extends Activity {
     web.setBackgroundColor(Color.rgb(13, 15, 23));
     root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     setContentView(root);
+    prefs = getSharedPreferences("chillspace", MODE_PRIVATE);
+    immersive = prefs.getBoolean("immersive", true); // mặc định: toàn màn hình
+    applyImmersive();
+    // cầu nối cho nút ⛶ trên trang
+    web.addJavascriptInterface(new Object() {
+      @JavascriptInterface public boolean isFullscreen() { return immersive; }
+      @JavascriptInterface public void toggleFullscreen() { runOnUiThread(() -> setImmersive(!immersive)); }
+      @JavascriptInterface public void setFullscreen(boolean on) { runOnUiThread(() -> setImmersive(on)); }
+    }, "ChillAndroid");
 
     WebSettings s = web.getSettings();
     s.setJavaScriptEnabled(true);
@@ -96,6 +111,40 @@ public class MainActivity extends Activity {
 
     if (state != null) web.restoreState(state);
     else web.loadUrl(APP_URL);
+  }
+
+  private void setImmersive(boolean on) {
+    immersive = on;
+    prefs.edit().putBoolean("immersive", on).apply();
+    applyImmersive();
+    if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('cs:fs'))", null);
+  }
+
+  // ẩn / hiện thanh trạng thái + thanh điều hướng (vuốt từ mép để hiện tạm)
+  @SuppressWarnings("deprecation")
+  private void applyImmersive() {
+    if (Build.VERSION.SDK_INT >= 30) {
+      getWindow().setDecorFitsSystemWindows(!immersive);
+      WindowInsetsController c = getWindow().getInsetsController();
+      if (c != null) {
+        if (immersive) {
+          c.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+          c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        } else c.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+      }
+    } else {
+      View d = getWindow().getDecorView();
+      d.setSystemUiVisibility(immersive
+          ? View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+          : View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+    }
+  }
+
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && immersive) applyImmersive(); // quay lại app (sau thông báo, bàn phím…) thì ẩn thanh lại
   }
 
   @Override

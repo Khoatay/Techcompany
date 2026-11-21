@@ -399,9 +399,13 @@
       else { const r = (EL.requestFullscreen || EL.webkitRequestFullscreen).call(EL); if (r && r.catch) r.catch(() => toast('Trình duyệt không cho bật toàn màn hình')); }
     } catch (e) { toast('Trình duyệt không hỗ trợ toàn màn hình'); }
   };
-  const fsSync = () => { const on = !!fsEl(); $('#fsBtn').textContent = on ? '🗗' : '⛶'; $('#fsBtn').title = on ? 'Thoát toàn màn hình (F hoặc Esc)' : 'Toàn màn hình (F)'; };
-  if (!fsCan) $('#fsBtn').hidden = true;
-  $('#fsBtn').onclick = fs;
+  // App Android: dùng chế độ toàn màn hình của chính Android (ẩn thanh trạng thái + thanh điều hướng)
+  const NA = window.ChillAndroid && window.ChillAndroid.toggleFullscreen ? window.ChillAndroid : null;
+  const fsOn = () => (NA ? !!NA.isFullscreen() : !!fsEl());
+  const fsSync = () => { const on = fsOn(); $('#fsBtn').textContent = on ? '🗗' : '⛶'; $('#fsBtn').title = on ? 'Thoát toàn màn hình (F hoặc Esc)' : 'Toàn màn hình (F)'; };
+  if (!fsCan && !NA) $('#fsBtn').hidden = true;
+  $('#fsBtn').onclick = NA ? () => { NA.toggleFullscreen(); setTimeout(fsSync, 50); } : fs;
+  if (NA) { addEventListener('cs:fs', fsSync); fsSync(); }
   D.addEventListener('fullscreenchange', fsSync); D.addEventListener('webkitfullscreenchange', fsSync);
   $('#playBtn').onclick = () => { Sound.init(); Sound.setPaused(!Sound.isPaused()); syncPlay(); document.dispatchEvent(new Event('cs:audio')); };
   const syncPlay = () => { $('#playBtn').textContent = Sound.isPaused() ? '🔇' : '🔊'; $('#playBtn').title = Sound.isPaused() ? 'Bật âm thanh nền' : 'Tắt âm thanh nền'; };
@@ -438,7 +442,7 @@
     const map = { m: 'mixer', y: 'youtube', p: 'pomodoro', t: 'toolbox', r: 'room', e: 'atmos', n: 'music', ...(window.desktop ? { a: 'myapps' } : {}) };
     if (map[k]) { Sound.init(); WM.toggle(map[k]); }
     else if (k === 'h') zen();
-    else if (k === 'f') fs();
+    else if (k === 'f') $('#fsBtn').click();
     else if (k === 'escape') { if (document.body.classList.contains('zen')) zen(false); else WM.closeTop(); }
     else if (/^[0-9]$/.test(k)) { const s = VISIBLE[(+k + 9) % 10]; if (s) setSpace(s.id); }
     else if (k === ' ' && document.body.classList.contains('zen')) { e.preventDefault(); Pomo.running ? Pomo.pause() : Pomo.start(); }

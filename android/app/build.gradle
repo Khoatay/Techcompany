@@ -6,8 +6,8 @@ android {
     applicationId "app.chillspace"
     minSdk 21
     targetSdk 34
-    versionCode 2
-    versionName "1.0.1"
+    versionCode 3
+    versionName "1.0.2"
   }
   // khoá ký app: tạo trong lúc đóng gói (xem .github/workflows/android-app.yml); ký đủ v1 + v2 + v3 để máy cũ và máy mới đều cài được
   signingConfigs {
