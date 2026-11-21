@@ -2,7 +2,8 @@
    Cảnh đứng yên, chỉ chi tiết nhỏ chuyển động. Hiện có: 'rain' = mưa chảy trên kính (Đêm mưa), 'fire' = lửa bập bùng + ánh lửa hắt ra phòng (Cabin, Lửa trại), 'sea' = tia nắng, vân sáng, bọt khí dưới nước (Đáy biển), 'beach' = mặt biển lấp lánh, sóng gợn, sóng vỗ mép cát (Bờ biển), 'amb' = ghép các lớp theo vùng: đèn, nước, cỏ, sương, bụi nắng, hoa rơi, đom đóm, sao, hơi nóng, bóng mây, màn hình.
    Tự dừng khi đổi không gian / ẩn app; máy không có WebGL thì giữ ảnh tĩnh. */
 window.Live = (function () {
-  const VS = 'attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }';
+  // uView: canvas chỉ phủ phần khung cảnh đang hiện trên màn hình → v vẫn là toạ độ trên cả khung cảnh
+  const VS = 'attribute vec2 p; uniform vec4 uView; varying vec2 v; void main(){ v = uView.xy + (p * .5 + .5) * uView.zw; gl_Position = vec4(p, 0., 1.); }';
   const SHADERS = {
     amb: `precision highp float;
 varying vec2 v;
@@ -422,7 +423,7 @@ void main(){
   function mount(host, img, kind, box, snow, fx) {
     const FS = SHADERS[kind]; if (!FS) return false;
     const cv = document.createElement('canvas');
-    cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+    cv.style.cssText = 'position:absolute;display:block';
     const gl = cv.getContext('webgl', { antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' });
     if (!gl) return false;
     const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
@@ -459,12 +460,19 @@ void main(){
       host.append(cv);
       // độ phân giải vẽ: máy tính ~1,4 triệu điểm ảnh, chế độ mượt ~0,4 triệu (ảnh nền vốn mềm nên khó thấy khác)
       const lite = !!window.LITE;
-      let maxPx = lite ? 420000 : 1400000;
+      let maxPx = lite ? 600000 : 1600000;
+      const uView = gl.getUniformLocation(pr, 'uView');
       const fit = () => {
-        const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5);
-        const k = Math.min(d, Math.sqrt(maxPx / Math.max(1, r.width * r.height)));
-        cv.width = Math.max(2, Math.round(r.width * k)); cv.height = Math.max(2, Math.round(r.height * k));
-        gl.viewport(0, 0, cv.width, cv.height); gl.uniform2f(uRes, cv.width, cv.height);
+        // chỉ vẽ phần khung cảnh lọt vào màn hình (điện thoại dọc chỉ thấy ~1/3 bề ngang) → nét hơn, nhẹ hơn
+        const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+        const x0 = Math.max(r.left, 0), y0 = Math.max(r.top, 0), x1 = Math.min(r.right, innerWidth), y1 = Math.min(r.bottom, innerHeight);
+        const vw = Math.max(1, x1 - x0), vh = Math.max(1, y1 - y0);
+        const k = Math.min(d, Math.sqrt(maxPx / (vw * vh)));
+        Object.assign(cv.style, { left: x0 - r.left + 'px', top: y0 - r.top + 'px', width: vw + 'px', height: vh + 'px', inset: 'auto' });
+        cv.width = Math.max(2, Math.round(vw * k)); cv.height = Math.max(2, Math.round(vh * k));
+        gl.viewport(0, 0, cv.width, cv.height);
+        gl.uniform2f(uRes, r.width * k, r.height * k);                       // tỉ lệ cả khung cảnh (dùng cho hình dạng giọt mưa, bông tuyết…)
+        gl.uniform4f(uView, (x0 - r.left) / r.width, (r.bottom - y1) / r.height, vw / r.width, vh / r.height);
       };
       fit(); addEventListener('resize', fit);
       const t0 = performance.now(), minGap = lite ? 31 : 0;   // chế độ mượt: 30 hình/giây
