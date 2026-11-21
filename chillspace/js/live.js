@@ -457,16 +457,28 @@ void main(){
       const uFx = gl.getUniformLocation(pr, 'uFx'); if (uFx) { const f = fx || []; gl.uniform4f(uFx, f[0] || 0, f[1] || 0, f[2] || 0, f[3] || 0); }
       const sn = snow || [], z = [0, 0, 0, 0]; ['uSnow', 'uSnow2'].forEach((u, i) => { const l = gl.getUniformLocation(pr, u); if (l) gl.uniform4f(l, ...(sn[i] || z)); });
       host.append(cv);
+      // độ phân giải vẽ: máy tính ~1,4 triệu điểm ảnh, chế độ mượt ~0,4 triệu (ảnh nền vốn mềm nên khó thấy khác)
+      const lite = !!window.LITE;
+      let maxPx = lite ? 420000 : 1400000;
       const fit = () => {
-        const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5), k = Math.min(d, 2200 / Math.max(1, r.width));
+        const r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 1.5);
+        const k = Math.min(d, Math.sqrt(maxPx / Math.max(1, r.width * r.height)));
         cv.width = Math.max(2, Math.round(r.width * k)); cv.height = Math.max(2, Math.round(r.height * k));
         gl.viewport(0, 0, cv.width, cv.height); gl.uniform2f(uRes, cv.width, cv.height);
       };
       fit(); addEventListener('resize', fit);
-      const t0 = performance.now();
+      const t0 = performance.now(), minGap = lite ? 31 : 0;   // chế độ mượt: 30 hình/giây
+      let last = 0, n = 0, sum = 0, stopped = false;
       const loop = (now) => {
         if (!cv.isConnected) { removeEventListener('resize', fit); const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext(); return; }
-        if (!document.hidden) { gl.uniform1f(uT, (now - t0) / 1000 + 40); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+        if (stopped) return;
+        if (!document.hidden && now - last >= minGap) {
+          // tự giảm tải: khung hình chậm thì giảm độ phân giải; vẫn chậm ở mức thấp nhất thì dừng (giữ ảnh tĩnh)
+          if (last) { sum += now - last; if (++n >= 60) { const avg = sum / n; n = sum = 0;
+            if (avg > (lite ? 48 : 34)) { if (maxPx > 160000) { maxPx = Math.round(maxPx * .7); fit(); } else { stopped = true; cv.style.transition = 'opacity .8s'; cv.style.opacity = '0'; return; } } } }
+          last = now;
+          gl.uniform1f(uT, (now - t0) / 1000 + 40); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);

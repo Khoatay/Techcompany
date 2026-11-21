@@ -650,11 +650,13 @@
       const all = ['room', 'stay', 'flights', 'calendar', 'clocks', 'chart', 'possize', 'tjournal', 'checklist', 'tlinks', 'pomodoro', 'todo', 'notes', 'sketch', 'flashcards', 'library', 'journal', 'breathing', 'stretch', 'tracker', 'cheer', 'lantern', 'sleep', 'mixer', 'music', 'atmos', 'youtube', ...(window.Vip && Vip.admin() ? ['vip'] : []), ...(window.desktop ? ['myapps'] : [])];
       b.innerHTML = `<h4>${sp.emoji} Trong ${esc(sp.name)}</h4><div class="grid">${sp.objects.map((o, i) => `<button class="tile" data-o="${i}"><span>${o.e}</span>${esc(o.label)}</button>`).join('')}</div>
         <h4>Tất cả công cụ</h4><div class="grid">${all.map((t) => `<button class="tile" data-t="${t}"><span>${TOOLS[t].icon}</span>${TOOLS[t].title}</button>`).join('')}</div>
+        <label class="row small" style="margin:6px 0 8px">⚡ Chế độ mượt<span class="grow"></span><select data-lite><option value="auto">Tự động</option><option value="on">Bật (máy yếu, điện thoại)</option><option value="off">Tắt (đẹp nhất)</option></select></label>
         <button class="btn" data-reload style="width:100%">🔄 Tải lại app (lấy bản mới nhất)</button>
         <p class="muted small">Phím tắt: <kbd>M</kbd> âm thanh · <kbd>N</kbd> nhạc · <kbd>E</kbd> hiệu ứng · <kbd>Y</kbd> YouTube · <kbd>P</kbd> Pomodoro · <kbd>T</kbd> công cụ · <kbd>H</kbd> ẩn giao diện · <kbd>F</kbd> toàn màn hình · <kbd>1</kbd>–<kbd>0</kbd> đổi không gian</p>`;
       $$(b, '[data-o]').forEach((x) => (x.onclick = () => window.openObject(sp.objects[+x.dataset.o])));
       $$(b, '[data-t]').forEach((x) => (x.onclick = () => WM.open(x.dataset.t)));
       $(b, '[data-reload]').onclick = () => location.reload();
+      const ls = $(b, '[data-lite]'); ls.value = store.get('lite', 'auto'); ls.onchange = () => { store.set('lite', ls.value); location.reload(); };
     },
   };
 

@@ -5,6 +5,12 @@
   let space = SPACES.find((s) => s.id === store.get('space', 'study')) || SPACES[0];
   window.currentSpace = () => space;
 
+  // Chế độ mượt (điện thoại, máy tính bảng, máy yếu): bỏ kính mờ, ảnh sống vẽ nhẹ hơn. 'auto' | 'on' | 'off'
+  const autoLite = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (navigator.hardwareConcurrency || 8) <= 2 || (navigator.deviceMemory || 8) <= 2;
+  const liteSet = store.get('lite', 'auto');
+  window.LITE = liteSet === 'auto' ? autoLite : liteSet === 'on';
+  document.body.classList.toggle('lite', window.LITE);
+
   /* ---------- Quản lý cửa sổ ---------- */
   const WM = (window.WM = (() => {
     const root = $('#windows'), wins = {};
@@ -255,7 +261,7 @@
   setTimeout(() => {
     const c = navigator.connection; if (c && (c.saveData || /2g/.test(c.effectiveType || ''))) return;
     const q = SPACES.filter((s) => s.photo && !s.parent).map(photoUrl);
-    const next = () => { const u = q.shift(); if (!u) return; const im = new Image(); im.onload = im.onerror = () => setTimeout(next, 400); im.src = u; };
+    const next = () => { const u = q.shift(); if (!u) return; fetch(u, { priority: 'low' }).then((r) => r.blob()).catch(() => {}).then(() => setTimeout(next, window.LITE ? 1200 : 400)); };
     if (window.requestIdleCallback) requestIdleCallback(next, { timeout: 3000 }); else setTimeout(next, 1500);
   }, 4000);
   const $$ = (s) => [...document.querySelectorAll(s)];
