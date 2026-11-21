@@ -52,8 +52,8 @@ public class MainActivity extends Activity {
     // cầu nối cho nút ⛶ trên trang
     web.addJavascriptInterface(new Object() {
       @JavascriptInterface public boolean isFullscreen() { return immersive; }
-      @JavascriptInterface public void toggleFullscreen() { runOnUiThread(() -> setImmersive(!immersive)); }
-      @JavascriptInterface public void setFullscreen(boolean on) { runOnUiThread(() -> setImmersive(on)); }
+      @JavascriptInterface public void toggleFullscreen() { runOnUiThread(() -> setFullMode(!immersive)); }
+      @JavascriptInterface public void setFullscreen(boolean on) { runOnUiThread(() -> setFullMode(on)); }
     }, "ChillAndroid");
 
     WebSettings s = web.getSettings();
@@ -113,7 +113,7 @@ public class MainActivity extends Activity {
     else web.loadUrl(APP_URL);
   }
 
-  private void setImmersive(boolean on) {
+  private void setFullMode(boolean on) {
     immersive = on;
     prefs.edit().putBoolean("immersive", on).apply();
     applyImmersive();
